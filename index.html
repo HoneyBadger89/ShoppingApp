@@ -35,6 +35,190 @@
             font-size: 1.5rem;
         }
 
+        /* Auth Styles */
+        .auth-container {
+            padding: 30px;
+        }
+
+        .auth-container h2 {
+            text-align: center;
+            margin-bottom: 25px;
+            color: #333;
+        }
+
+        .auth-tabs {
+            display: flex;
+            margin-bottom: 20px;
+            gap: 10px;
+        }
+
+        .auth-tab {
+            flex: 1;
+            padding: 12px;
+            border: none;
+            background: #e9ecef;
+            border-radius: 10px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .auth-tab.active {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .auth-form {
+            display: none;
+        }
+
+        .auth-form.active {
+            display: block;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 500;
+            color: #555;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 15px;
+            font-size: 1rem;
+            border: 2px solid #e9ecef;
+            border-radius: 12px;
+            outline: none;
+            transition: border-color 0.3s ease;
+        }
+
+        .form-group input:focus {
+            border-color: #667eea;
+        }
+
+        .auth-btn {
+            width: 100%;
+            padding: 15px;
+            font-size: 1rem;
+            font-weight: 600;
+            border: none;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-bottom: 10px;
+        }
+
+        .auth-btn.primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .auth-btn.primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .auth-btn.google {
+            background: white;
+            border: 2px solid #e9ecef;
+            color: #333;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .auth-btn.google:hover {
+            background: #f8f9fa;
+        }
+
+        .google-icon {
+            width: 20px;
+            height: 20px;
+        }
+
+        .divider {
+            text-align: center;
+            margin: 20px 0;
+            color: #adb5bd;
+            position: relative;
+        }
+
+        .divider::before,
+        .divider::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            width: 40%;
+            height: 1px;
+            background: #e9ecef;
+        }
+
+        .divider::before { left: 0; }
+        .divider::after { right: 0; }
+
+        .error-message {
+            background: #fee;
+            color: #c00;
+            padding: 12px;
+            border-radius: 10px;
+            margin-bottom: 15px;
+            display: none;
+        }
+
+        .error-message.show {
+            display: block;
+        }
+
+        /* User Header */
+        .user-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 20px;
+            background: #f8f9fa;
+            border-bottom: 1px solid #e9ecef;
+        }
+
+        .user-email {
+            font-size: 0.9rem;
+            color: #666;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            max-width: 200px;
+        }
+
+        .logout-btn {
+            padding: 8px 16px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            background: #e9ecef;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background 0.3s ease;
+        }
+
+        .logout-btn:hover {
+            background: #dee2e6;
+        }
+
+        /* App Styles */
+        .app-container {
+            display: none;
+        }
+
+        .app-container.active {
+            display: block;
+        }
+
         .tab-buttons {
             display: flex;
             padding: 15px;
@@ -158,7 +342,7 @@
         }
 
         .list-item.done .checkbox::after {
-            content: '✓';
+            content: '\2713';
             color: white;
             font-weight: bold;
         }
@@ -168,6 +352,29 @@
             color: #adb5bd;
             padding: 40px;
             font-size: 1.1rem;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #666;
+        }
+
+        .loading::after {
+            content: '';
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid #e9ecef;
+            border-top-color: #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-left: 10px;
+            vertical-align: middle;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
         }
 
         @media (max-width: 400px) {
@@ -187,69 +394,273 @@
             .add-btn {
                 width: 100%;
             }
+
+            .user-header {
+                flex-direction: column;
+                gap: 10px;
+            }
+
+            .user-email {
+                max-width: 100%;
+            }
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1 id="listTitle">Shopping List</h1>
+        <h1 id="pageTitle">Shopping & Tasks</h1>
 
-        <div class="tab-buttons">
-            <button class="tab-btn active" data-list="shopping">Shopping List</button>
-            <button class="tab-btn" data-list="tasks">Home Tasks</button>
+        <!-- Auth Section -->
+        <div class="auth-container" id="authContainer">
+            <div class="auth-tabs">
+                <button class="auth-tab active" data-tab="login">Login</button>
+                <button class="auth-tab" data-tab="signup">Sign Up</button>
+            </div>
+
+            <div class="error-message" id="authError"></div>
+
+            <!-- Login Form -->
+            <div class="auth-form active" id="loginForm">
+                <div class="form-group">
+                    <label>Email</label>
+                    <input type="email" id="loginEmail" placeholder="Enter your email">
+                </div>
+                <div class="form-group">
+                    <label>Password</label>
+                    <input type="password" id="loginPassword" placeholder="Enter your password">
+                </div>
+                <button class="auth-btn primary" id="loginBtn">Login</button>
+            </div>
+
+            <!-- Signup Form -->
+            <div class="auth-form" id="signupForm">
+                <div class="form-group">
+                    <label>Email</label>
+                    <input type="email" id="signupEmail" placeholder="Enter your email">
+                </div>
+                <div class="form-group">
+                    <label>Password</label>
+                    <input type="password" id="signupPassword" placeholder="Create a password (6+ chars)">
+                </div>
+                <button class="auth-btn primary" id="signupBtn">Sign Up</button>
+            </div>
+
+            <div class="divider">or</div>
+
+            <button class="auth-btn google" id="googleBtn">
+                <svg class="google-icon" viewBox="0 0 24 24">
+                    <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+                    <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                    <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+                    <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+                </svg>
+                Continue with Google
+            </button>
         </div>
 
-        <div class="input-section">
-            <input type="text" id="itemInput" placeholder="Add new item...">
-            <button class="add-btn" id="addBtn">Add</button>
-        </div>
+        <!-- App Section -->
+        <div class="app-container" id="appContainer">
+            <div class="user-header">
+                <span class="user-email" id="userEmail"></span>
+                <button class="logout-btn" id="logoutBtn">Logout</button>
+            </div>
 
-        <div class="list-container">
-            <ul class="list" id="itemList"></ul>
+            <div class="tab-buttons">
+                <button class="tab-btn active" data-list="shopping">Shopping List</button>
+                <button class="tab-btn" data-list="tasks">Home Tasks</button>
+            </div>
+
+            <div class="input-section">
+                <input type="text" id="itemInput" placeholder="Add new item...">
+                <button class="add-btn" id="addBtn">Add</button>
+            </div>
+
+            <div class="list-container">
+                <ul class="list" id="itemList">
+                    <li class="loading">Loading</li>
+                </ul>
+            </div>
         </div>
     </div>
 
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+
     <script>
-        // Storage wrapper using window.storage API
-        window.storage = window.storage || {
-            data: JSON.parse(localStorage.getItem('appData') || '{}'),
-            set: function(key, value) {
-                this.data[key] = value;
-                localStorage.setItem('appData', JSON.stringify(this.data));
-            },
-            get: function(key) {
-                return this.data[key];
-            }
+        // Firebase Configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyBfpbbB-jBnPT--7GyR3KLCsbwPCMaj13E",
+            authDomain: "shoppingapp-f08f4.firebaseapp.com",
+            projectId: "shoppingapp-f08f4",
+            storageBucket: "shoppingapp-f08f4.firebasestorage.app",
+            messagingSenderId: "54382196312",
+            appId: "1:54382196312:web:b46aa2e5648a816783554d"
         };
 
-        let currentList = 'shopping';
+        // Initialize Firebase
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const db = firebase.firestore();
 
-        // Initialize data structure if not exists
-        function initializeStorage() {
-            if (!window.storage.get('shopping')) {
-                window.storage.set('shopping', []);
-            }
-            if (!window.storage.get('tasks')) {
-                window.storage.set('tasks', []);
-            }
+        // State
+        let currentUser = null;
+        let currentList = 'shopping';
+        let userLists = { shopping: null, tasks: null };
+        let unsubscribeItems = null;
+
+        // DOM Elements
+        const authContainer = document.getElementById('authContainer');
+        const appContainer = document.getElementById('appContainer');
+        const pageTitle = document.getElementById('pageTitle');
+        const authError = document.getElementById('authError');
+        const userEmailSpan = document.getElementById('userEmail');
+
+        // Show error message
+        function showError(message) {
+            authError.textContent = message;
+            authError.classList.add('show');
+            setTimeout(() => authError.classList.remove('show'), 5000);
         }
 
-        // Render the current list
-        function renderList() {
-            const listEl = document.getElementById('itemList');
-            const items = window.storage.get(currentList) || [];
+        // Auth tab switching
+        document.querySelectorAll('.auth-tab').forEach(tab => {
+            tab.addEventListener('click', () => {
+                document.querySelectorAll('.auth-tab').forEach(t => t.classList.remove('active'));
+                document.querySelectorAll('.auth-form').forEach(f => f.classList.remove('active'));
+                tab.classList.add('active');
+                document.getElementById(tab.dataset.tab + 'Form').classList.add('active');
+                authError.classList.remove('show');
+            });
+        });
 
-            if (items.length === 0) {
-                listEl.innerHTML = '<li class="empty-message">No items yet. Add one above!</li>';
+        // Email/Password Login
+        document.getElementById('loginBtn').addEventListener('click', async () => {
+            const email = document.getElementById('loginEmail').value.trim();
+            const password = document.getElementById('loginPassword').value;
+
+            if (!email || !password) {
+                showError('Please enter email and password');
                 return;
             }
 
-            listEl.innerHTML = items.map((item, index) => `
-                <li class="list-item ${item.done ? 'done' : ''}" data-index="${index}">
-                    <span class="checkbox"></span>
-                    <span class="text">${escapeHtml(item.text)}</span>
-                </li>
-            `).join('');
+            try {
+                await auth.signInWithEmailAndPassword(email, password);
+            } catch (error) {
+                showError(error.message);
+            }
+        });
+
+        // Email/Password Signup
+        document.getElementById('signupBtn').addEventListener('click', async () => {
+            const email = document.getElementById('signupEmail').value.trim();
+            const password = document.getElementById('signupPassword').value;
+
+            if (!email || !password) {
+                showError('Please enter email and password');
+                return;
+            }
+
+            if (password.length < 6) {
+                showError('Password must be at least 6 characters');
+                return;
+            }
+
+            try {
+                await auth.createUserWithEmailAndPassword(email, password);
+            } catch (error) {
+                showError(error.message);
+            }
+        });
+
+        // Google Sign-In
+        document.getElementById('googleBtn').addEventListener('click', async () => {
+            const provider = new firebase.auth.GoogleAuthProvider();
+            try {
+                await auth.signInWithPopup(provider);
+            } catch (error) {
+                showError(error.message);
+            }
+        });
+
+        // Logout
+        document.getElementById('logoutBtn').addEventListener('click', () => {
+            auth.signOut();
+        });
+
+        // Auth State Observer
+        auth.onAuthStateChanged(async (user) => {
+            currentUser = user;
+
+            if (user) {
+                // User is signed in
+                authContainer.style.display = 'none';
+                appContainer.classList.add('active');
+                userEmailSpan.textContent = user.email;
+                pageTitle.textContent = 'Shopping List';
+
+                // Initialize or get user's lists
+                await initializeUserLists();
+                switchList('shopping');
+            } else {
+                // User is signed out
+                authContainer.style.display = 'block';
+                appContainer.classList.remove('active');
+                pageTitle.textContent = 'Shopping & Tasks';
+                userLists = { shopping: null, tasks: null };
+
+                // Cleanup listener
+                if (unsubscribeItems) {
+                    unsubscribeItems();
+                    unsubscribeItems = null;
+                }
+            }
+        });
+
+        // Initialize user's lists in Firestore
+        async function initializeUserLists() {
+            const listsRef = db.collection('lists');
+
+            // Check for existing shopping list
+            let shoppingQuery = await listsRef
+                .where('ownerId', '==', currentUser.uid)
+                .where('name', '==', 'Shopping List')
+                .limit(1)
+                .get();
+
+            if (shoppingQuery.empty) {
+                // Create shopping list
+                const docRef = await listsRef.add({
+                    name: 'Shopping List',
+                    ownerId: currentUser.uid,
+                    sharedWith: [],
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                });
+                userLists.shopping = docRef.id;
+            } else {
+                userLists.shopping = shoppingQuery.docs[0].id;
+            }
+
+            // Check for existing tasks list
+            let tasksQuery = await listsRef
+                .where('ownerId', '==', currentUser.uid)
+                .where('name', '==', 'Home Tasks')
+                .limit(1)
+                .get();
+
+            if (tasksQuery.empty) {
+                // Create tasks list
+                const docRef = await listsRef.add({
+                    name: 'Home Tasks',
+                    ownerId: currentUser.uid,
+                    sharedWith: [],
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                });
+                userLists.tasks = docRef.id;
+            } else {
+                userLists.tasks = tasksQuery.docs[0].id;
+            }
         }
 
         // Escape HTML to prevent XSS
@@ -259,28 +670,95 @@
             return div.innerHTML;
         }
 
+        // Render items from snapshot
+        function renderItems(snapshot) {
+            const listEl = document.getElementById('itemList');
+
+            if (snapshot.empty) {
+                listEl.innerHTML = '<li class="empty-message">No items yet. Add one above!</li>';
+                return;
+            }
+
+            const items = [];
+            snapshot.forEach(doc => {
+                items.push({ id: doc.id, ...doc.data() });
+            });
+
+            // Sort by createdAt
+            items.sort((a, b) => {
+                const aTime = a.createdAt?.toMillis() || 0;
+                const bTime = b.createdAt?.toMillis() || 0;
+                return aTime - bTime;
+            });
+
+            listEl.innerHTML = items.map(item => `
+                <li class="list-item ${item.done ? 'done' : ''}" data-id="${item.id}">
+                    <span class="checkbox"></span>
+                    <span class="text">${escapeHtml(item.text)}</span>
+                </li>
+            `).join('');
+        }
+
+        // Subscribe to items for current list
+        function subscribeToItems() {
+            if (unsubscribeItems) {
+                unsubscribeItems();
+            }
+
+            const listId = currentList === 'shopping' ? userLists.shopping : userLists.tasks;
+            if (!listId) return;
+
+            const itemsRef = db.collection('lists').doc(listId).collection('items');
+
+            document.getElementById('itemList').innerHTML = '<li class="loading">Loading</li>';
+
+            unsubscribeItems = itemsRef.onSnapshot(snapshot => {
+                renderItems(snapshot);
+            }, error => {
+                console.error('Error listening to items:', error);
+                document.getElementById('itemList').innerHTML =
+                    '<li class="empty-message">Error loading items. Please refresh.</li>';
+            });
+        }
+
         // Add new item
-        function addItem() {
+        async function addItem() {
             const input = document.getElementById('itemInput');
             const text = input.value.trim();
 
-            if (!text) return;
+            if (!text || !currentUser) return;
 
-            const items = window.storage.get(currentList) || [];
-            items.push({ text: text, done: false });
-            window.storage.set(currentList, items);
+            const listId = currentList === 'shopping' ? userLists.shopping : userLists.tasks;
+            if (!listId) return;
 
-            input.value = '';
-            renderList();
+            try {
+                await db.collection('lists').doc(listId).collection('items').add({
+                    text: text,
+                    done: false,
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                });
+                input.value = '';
+            } catch (error) {
+                console.error('Error adding item:', error);
+            }
         }
 
         // Toggle item done state
-        function toggleItem(index) {
-            const items = window.storage.get(currentList) || [];
-            if (items[index]) {
-                items[index].done = !items[index].done;
-                window.storage.set(currentList, items);
-                renderList();
+        async function toggleItem(itemId) {
+            const listId = currentList === 'shopping' ? userLists.shopping : userLists.tasks;
+            if (!listId) return;
+
+            const itemRef = db.collection('lists').doc(listId).collection('items').doc(itemId);
+
+            try {
+                const doc = await itemRef.get();
+                if (doc.exists) {
+                    await itemRef.update({
+                        done: !doc.data().done
+                    });
+                }
+            } catch (error) {
+                console.error('Error toggling item:', error);
             }
         }
 
@@ -295,16 +773,17 @@
 
             // Update title
             const title = listName === 'shopping' ? 'Shopping List' : 'Home Tasks';
-            document.getElementById('listTitle').textContent = title;
+            pageTitle.textContent = title;
 
             // Update placeholder
             const placeholder = listName === 'shopping' ? 'Add new item...' : 'Add new task...';
             document.getElementById('itemInput').placeholder = placeholder;
 
-            renderList();
+            // Subscribe to new list
+            subscribeToItems();
         }
 
-        // Event listeners
+        // Event listeners for app
         document.querySelectorAll('.tab-btn').forEach(btn => {
             btn.addEventListener('click', () => switchList(btn.dataset.list));
         });
@@ -317,14 +796,19 @@
 
         document.getElementById('itemList').addEventListener('click', (e) => {
             const listItem = e.target.closest('.list-item');
-            if (listItem && listItem.dataset.index !== undefined) {
-                toggleItem(parseInt(listItem.dataset.index));
+            if (listItem && listItem.dataset.id) {
+                toggleItem(listItem.dataset.id);
             }
         });
 
-        // Initialize
-        initializeStorage();
-        renderList();
+        // Handle Enter key on auth forms
+        document.getElementById('loginPassword').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') document.getElementById('loginBtn').click();
+        });
+
+        document.getElementById('signupPassword').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') document.getElementById('signupBtn').click();
+        });
     </script>
 </body>
 </html>
