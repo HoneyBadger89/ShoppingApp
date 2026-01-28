@@ -1,7 +1,7 @@
 {
-  "name": "Our Lists",
-  "short_name": "Lists",
-  "description": "Shared shopping and task lists for families",
+  "name": "Mysa",
+  "short_name": "Mysa",
+  "description": "Your cozy corner for family lists - tasks, shopping, and good vibes",
   "start_url": "./index.html",
   "display": "standalone",
   "background_color": "#ffffff",

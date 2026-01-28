@@ -10,10 +10,10 @@
     <meta name="theme-color" content="#8b5cf6">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="apple-mobile-web-app-title" content="Our Lists">
+    <meta name="apple-mobile-web-app-title" content="Mysa">
     <link rel="manifest" href="manifest.json">
     <link rel="apple-touch-icon" href="icon-192.png">
-    <title>Our Lists</title>
+    <title>Mysa</title>
     <style>
         :root {
             /* Backgrounds */
@@ -432,24 +432,38 @@
             opacity: 1;
         }
 
-        /* Priority Dot */
-        .priority-dot {
-            width: 10px;
-            height: 10px;
-            border-radius: 50%;
+        /* Priority Border (left edge) */
+        .item-card {
+            border-left: 4px solid transparent;
+            transition: border-color 0.2s ease, transform 0.2s ease;
+        }
+
+        .item-card.priority-high {
+            border-left-color: #ef4444;
+        }
+
+        .item-card.priority-medium {
+            border-left-color: #f59e0b;
+        }
+
+        .item-card.priority-none {
+            border-left-color: transparent;
+        }
+
+        /* Priority tap zone (left edge) */
+        .priority-tap-zone {
+            position: absolute;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 40px;
             cursor: pointer;
-            transition: transform 0.2s ease;
-            flex-shrink: 0;
-            margin-top: 7px;
+            z-index: 1;
         }
 
-        .priority-dot:active {
-            transform: scale(1.4);
+        .priority-tap-zone:active {
+            background: rgba(0,0,0,0.05);
         }
-
-        .priority-high { background: #ef4444; }
-        .priority-medium { background: #f59e0b; }
-        .priority-none { background: #d1d5db; }
 
         .item-content {
             flex: 1;
@@ -1049,9 +1063,543 @@
                 width: 100%;
             }
         }
+
+        /* =====================================================
+           ONBOARDING STYLES
+           ===================================================== */
+        .onboarding-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: var(--bg-primary);
+            z-index: 10000;
+            display: none;
+            flex-direction: column;
+        }
+
+        .onboarding-overlay.active {
+            display: flex;
+        }
+
+        .onboarding-screen {
+            flex: 1;
+            display: none;
+            flex-direction: column;
+            padding: 40px 24px;
+            padding-top: calc(60px + env(safe-area-inset-top));
+            padding-bottom: calc(120px + env(safe-area-inset-bottom));
+            overflow-y: auto;
+        }
+
+        .onboarding-screen.active {
+            display: flex;
+        }
+
+        .onboarding-header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .onboarding-icon {
+            font-size: 64px;
+            margin-bottom: 24px;
+        }
+
+        .onboarding-title {
+            font-size: 28px;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 12px;
+        }
+
+        .onboarding-subtitle {
+            font-size: 16px;
+            color: var(--text-secondary);
+            line-height: 1.5;
+            max-width: 300px;
+            margin: 0 auto;
+        }
+
+        .onboarding-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .onboarding-input {
+            width: 100%;
+            max-width: 320px;
+            padding: 16px 20px;
+            font-size: 18px;
+            border: 2px solid #e5e7eb;
+            border-radius: 16px;
+            outline: none;
+            text-align: center;
+            transition: border-color 0.2s ease;
+        }
+
+        .onboarding-input:focus {
+            border-color: var(--accent-primary);
+        }
+
+        /* Avatar Picker */
+        .avatar-picker {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 16px;
+            max-width: 320px;
+            margin: 0 auto;
+        }
+
+        .avatar-option {
+            width: 64px;
+            height: 64px;
+            font-size: 36px;
+            border: 3px solid transparent;
+            border-radius: 50%;
+            background: var(--bg-secondary);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s ease;
+        }
+
+        .avatar-option:hover {
+            transform: scale(1.1);
+        }
+
+        .avatar-option.selected {
+            border-color: var(--accent-primary);
+            background: #f3e8ff;
+            transform: scale(1.1);
+        }
+
+        /* Personality Picker */
+        .personality-options {
+            width: 100%;
+            max-width: 320px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .personality-option {
+            padding: 16px 20px;
+            border: 2px solid #e5e7eb;
+            border-radius: 16px;
+            background: var(--bg-card);
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-align: left;
+        }
+
+        .personality-option:hover {
+            border-color: #d1d5db;
+        }
+
+        .personality-option.selected {
+            border-color: var(--accent-primary);
+            background: #f3e8ff;
+        }
+
+        .personality-option-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 4px;
+        }
+
+        .personality-option-desc {
+            font-size: 13px;
+            color: var(--text-secondary);
+        }
+
+        /* Onboarding Footer */
+        .onboarding-footer {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            padding: 20px 24px;
+            padding-bottom: calc(20px + env(safe-area-inset-bottom));
+            background: var(--bg-primary);
+        }
+
+        .onboarding-btn {
+            width: 100%;
+            padding: 16px;
+            font-size: 18px;
+            font-weight: 600;
+            border: none;
+            border-radius: 16px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .onboarding-btn.primary {
+            background: var(--gradient-header);
+            color: white;
+        }
+
+        .onboarding-btn.primary:hover {
+            opacity: 0.9;
+            transform: translateY(-1px);
+        }
+
+        .onboarding-btn.primary:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .onboarding-btn.secondary {
+            background: transparent;
+            color: var(--text-secondary);
+            margin-top: 8px;
+        }
+
+        .onboarding-progress {
+            display: flex;
+            justify-content: center;
+            gap: 8px;
+            margin-bottom: 16px;
+        }
+
+        .progress-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #e5e7eb;
+            transition: all 0.2s ease;
+        }
+
+        .progress-dot.active {
+            background: var(--accent-primary);
+            width: 24px;
+            border-radius: 4px;
+        }
+
+        .progress-dot.completed {
+            background: var(--accent-success);
+        }
+
+        /* =====================================================
+           PERSONALITY MESSAGES FOOTER
+           ===================================================== */
+        .personality-footer {
+            text-align: center;
+            padding: 16px 20px;
+            color: var(--text-muted);
+            font-size: 13px;
+            font-style: italic;
+            min-height: 50px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .personality-message {
+            animation: fadeIn 0.5s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* =====================================================
+           ENHANCED PROFILE PAGE
+           ===================================================== */
+        .profile-avatar-large {
+            width: 100px;
+            height: 100px;
+            background: var(--gradient-header);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 16px;
+            font-size: 48px;
+            cursor: pointer;
+            transition: transform 0.2s ease;
+            position: relative;
+        }
+
+        .profile-avatar-large:hover {
+            transform: scale(1.05);
+        }
+
+        .profile-avatar-edit {
+            position: absolute;
+            bottom: 0;
+            right: 0;
+            width: 32px;
+            height: 32px;
+            background: var(--accent-primary);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            color: white;
+            border: 3px solid var(--bg-primary);
+        }
+
+        .profile-display-name {
+            font-size: 20px;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 4px;
+        }
+
+        .profile-section-title {
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin: 24px 0 12px;
+            padding-left: 4px;
+        }
+
+        /* Avatar Edit Modal */
+        .avatar-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.5);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 2000;
+            padding: 20px;
+        }
+
+        .avatar-modal.active {
+            display: flex;
+        }
+
+        .avatar-modal-content {
+            background: var(--bg-card);
+            border-radius: 20px;
+            padding: 24px;
+            width: 100%;
+            max-width: 340px;
+        }
+
+        .avatar-modal-title {
+            font-size: 18px;
+            font-weight: 600;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .avatar-grid {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+
+        .avatar-grid-item {
+            width: 48px;
+            height: 48px;
+            font-size: 28px;
+            border: 2px solid transparent;
+            border-radius: 50%;
+            background: var(--bg-secondary);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s ease;
+        }
+
+        .avatar-grid-item:hover {
+            transform: scale(1.1);
+        }
+
+        .avatar-grid-item.selected {
+            border-color: var(--accent-primary);
+            background: #f3e8ff;
+        }
     </style>
 </head>
 <body>
+    <!-- Onboarding Overlay -->
+    <div class="onboarding-overlay" id="onboardingOverlay">
+        <!-- Screen 1: Welcome -->
+        <div class="onboarding-screen active" data-screen="1">
+            <div class="onboarding-header">
+                <div class="onboarding-icon">&#127968;</div>
+                <h1 class="onboarding-title">Welcome to Mysa</h1>
+                <p class="onboarding-subtitle">Your cozy corner for family lists. Tasks, shopping, and good vibes - all in one place.</p>
+            </div>
+            <div class="onboarding-content">
+                <!-- Empty - just intro screen -->
+            </div>
+            <div class="onboarding-footer">
+                <div class="onboarding-progress">
+                    <div class="progress-dot active"></div>
+                    <div class="progress-dot"></div>
+                    <div class="progress-dot"></div>
+                    <div class="progress-dot"></div>
+                    <div class="progress-dot"></div>
+                </div>
+                <button class="onboarding-btn primary" id="onboardingNext1">Let's get started</button>
+            </div>
+        </div>
+
+        <!-- Screen 2: Name -->
+        <div class="onboarding-screen" data-screen="2">
+            <div class="onboarding-header">
+                <div class="onboarding-icon">&#128075;</div>
+                <h1 class="onboarding-title">What's your name?</h1>
+                <p class="onboarding-subtitle">This is how you'll appear to your family members.</p>
+            </div>
+            <div class="onboarding-content">
+                <input type="text" class="onboarding-input" id="onboardingName" placeholder="Your name" maxlength="20" autocomplete="off">
+            </div>
+            <div class="onboarding-footer">
+                <div class="onboarding-progress">
+                    <div class="progress-dot completed"></div>
+                    <div class="progress-dot active"></div>
+                    <div class="progress-dot"></div>
+                    <div class="progress-dot"></div>
+                    <div class="progress-dot"></div>
+                </div>
+                <button class="onboarding-btn primary" id="onboardingNext2" disabled>Continue</button>
+                <button class="onboarding-btn secondary" id="onboardingSkip2">Skip for now</button>
+            </div>
+        </div>
+
+        <!-- Screen 3: Avatar -->
+        <div class="onboarding-screen" data-screen="3">
+            <div class="onboarding-header">
+                <div class="onboarding-icon">&#128513;</div>
+                <h1 class="onboarding-title">Pick your avatar</h1>
+                <p class="onboarding-subtitle">Choose an emoji that represents you!</p>
+            </div>
+            <div class="onboarding-content">
+                <div class="avatar-picker" id="avatarPicker">
+                    <div class="avatar-option" data-avatar="&#128512;">&#128512;</div>
+                    <div class="avatar-option" data-avatar="&#128522;">&#128522;</div>
+                    <div class="avatar-option" data-avatar="&#128526;">&#128526;</div>
+                    <div class="avatar-option" data-avatar="&#129299;">&#129299;</div>
+                    <div class="avatar-option" data-avatar="&#128536;">&#128536;</div>
+                    <div class="avatar-option" data-avatar="&#128525;">&#128525;</div>
+                    <div class="avatar-option" data-avatar="&#129303;">&#129303;</div>
+                    <div class="avatar-option" data-avatar="&#128571;">&#128571;</div>
+                    <div class="avatar-option" data-avatar="&#128055;">&#128055;</div>
+                    <div class="avatar-option" data-avatar="&#128049;">&#128049;</div>
+                    <div class="avatar-option" data-avatar="&#129412;">&#129412;</div>
+                    <div class="avatar-option" data-avatar="&#128038;">&#128038;</div>
+                </div>
+            </div>
+            <div class="onboarding-footer">
+                <div class="onboarding-progress">
+                    <div class="progress-dot completed"></div>
+                    <div class="progress-dot completed"></div>
+                    <div class="progress-dot active"></div>
+                    <div class="progress-dot"></div>
+                    <div class="progress-dot"></div>
+                </div>
+                <button class="onboarding-btn primary" id="onboardingNext3">Continue</button>
+                <button class="onboarding-btn secondary" id="onboardingSkip3">Skip for now</button>
+            </div>
+        </div>
+
+        <!-- Screen 4: Personality -->
+        <div class="onboarding-screen" data-screen="4">
+            <div class="onboarding-header">
+                <div class="onboarding-icon">&#127881;</div>
+                <h1 class="onboarding-title">Set the vibe</h1>
+                <p class="onboarding-subtitle">How playful should Mysa be?</p>
+            </div>
+            <div class="onboarding-content">
+                <div class="personality-options" id="personalityPicker">
+                    <div class="personality-option" data-personality="off">
+                        <div class="personality-option-title">&#128566; Zen Mode</div>
+                        <div class="personality-option-desc">Just the basics. No funny business.</div>
+                    </div>
+                    <div class="personality-option selected" data-personality="subtle">
+                        <div class="personality-option-title">&#128578; Subtle</div>
+                        <div class="personality-option-desc">Occasional encouragement and gentle humor.</div>
+                    </div>
+                    <div class="personality-option" data-personality="fun">
+                        <div class="personality-option-title">&#129395; Full Fun</div>
+                        <div class="personality-option-desc">Maximum silliness! Jokes, puns, and celebration.</div>
+                    </div>
+                </div>
+            </div>
+            <div class="onboarding-footer">
+                <div class="onboarding-progress">
+                    <div class="progress-dot completed"></div>
+                    <div class="progress-dot completed"></div>
+                    <div class="progress-dot completed"></div>
+                    <div class="progress-dot active"></div>
+                    <div class="progress-dot"></div>
+                </div>
+                <button class="onboarding-btn primary" id="onboardingNext4">Continue</button>
+            </div>
+        </div>
+
+        <!-- Screen 5: Ready -->
+        <div class="onboarding-screen" data-screen="5">
+            <div class="onboarding-header">
+                <div class="onboarding-icon">&#127881;</div>
+                <h1 class="onboarding-title">You're all set!</h1>
+                <p class="onboarding-subtitle">Time to get organized. Your family is going to love this.</p>
+            </div>
+            <div class="onboarding-content">
+                <div style="font-size: 80px; text-align: center;" id="finalAvatarPreview">&#128512;</div>
+                <div style="font-size: 24px; font-weight: 600; text-align: center; margin-top: 16px;" id="finalNamePreview">Friend</div>
+            </div>
+            <div class="onboarding-footer">
+                <div class="onboarding-progress">
+                    <div class="progress-dot completed"></div>
+                    <div class="progress-dot completed"></div>
+                    <div class="progress-dot completed"></div>
+                    <div class="progress-dot completed"></div>
+                    <div class="progress-dot active"></div>
+                </div>
+                <button class="onboarding-btn primary" id="onboardingFinish">Start using Mysa</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Avatar Edit Modal -->
+    <div class="avatar-modal" id="avatarModal">
+        <div class="avatar-modal-content">
+            <h3 class="avatar-modal-title">Choose your avatar</h3>
+            <div class="avatar-grid" id="avatarGrid">
+                <div class="avatar-grid-item" data-avatar="&#128512;">&#128512;</div>
+                <div class="avatar-grid-item" data-avatar="&#128522;">&#128522;</div>
+                <div class="avatar-grid-item" data-avatar="&#128526;">&#128526;</div>
+                <div class="avatar-grid-item" data-avatar="&#129299;">&#129299;</div>
+                <div class="avatar-grid-item" data-avatar="&#128536;">&#128536;</div>
+                <div class="avatar-grid-item" data-avatar="&#128525;">&#128525;</div>
+                <div class="avatar-grid-item" data-avatar="&#129303;">&#129303;</div>
+                <div class="avatar-grid-item" data-avatar="&#128571;">&#128571;</div>
+                <div class="avatar-grid-item" data-avatar="&#128055;">&#128055;</div>
+                <div class="avatar-grid-item" data-avatar="&#128049;">&#128049;</div>
+                <div class="avatar-grid-item" data-avatar="&#129412;">&#129412;</div>
+                <div class="avatar-grid-item" data-avatar="&#128038;">&#128038;</div>
+                <div class="avatar-grid-item" data-avatar="&#129409;">&#129409;</div>
+                <div class="avatar-grid-item" data-avatar="&#128029;">&#128029;</div>
+                <div class="avatar-grid-item" data-avatar="&#127803;">&#127803;</div>
+            </div>
+            <button class="onboarding-btn primary" id="avatarModalClose">Done</button>
+        </div>
+    </div>
+
     <!-- Offline Indicator -->
     <div class="offline-indicator" id="offlineIndicator">You are offline</div>
 
@@ -1063,7 +1611,7 @@
         <div class="header" id="mainHeader">
             <div class="header-content">
                 <div class="header-left">
-                    <h1 id="pageTitle">Our Lists</h1>
+                    <h1 id="pageTitle">Mysa</h1>
                     <div class="header-subtitle" id="headerSubtitle"></div>
                 </div>
                 <button class="share-btn hidden" id="shareBtn" title="Share">
@@ -1159,9 +1707,31 @@
             <!-- Profile Content -->
             <div class="profile-content" id="profileContent">
                 <div class="profile-header">
-                    <div class="profile-avatar" id="profileAvatar">?</div>
+                    <div class="profile-avatar-large" id="profileAvatarLarge" title="Tap to change avatar">
+                        <span id="profileAvatarEmoji">&#128512;</span>
+                        <div class="profile-avatar-edit">&#9998;</div>
+                    </div>
+                    <div class="profile-display-name" id="profileDisplayName">Friend</div>
                     <div class="profile-email" id="profileEmail"></div>
                 </div>
+
+                <div class="profile-section-title">Settings</div>
+                <ul class="profile-menu">
+                    <li class="profile-menu-item">
+                        <button class="profile-menu-btn" id="editNameBtn">
+                            <span class="profile-menu-icon">&#9998;</span>
+                            Edit Display Name
+                        </button>
+                    </li>
+                    <li class="profile-menu-item">
+                        <button class="profile-menu-btn" id="personalitySettingBtn">
+                            <span class="profile-menu-icon">&#127881;</span>
+                            <span id="personalitySettingLabel">Personality: Subtle</span>
+                        </button>
+                    </li>
+                </ul>
+
+                <div class="profile-section-title">Lists</div>
                 <ul class="profile-menu">
                     <li class="profile-menu-item">
                         <button class="profile-menu-btn" id="manageSharingBtn">
@@ -1175,6 +1745,10 @@
                             Clear All Completed
                         </button>
                     </li>
+                </ul>
+
+                <div class="profile-section-title">Account</div>
+                <ul class="profile-menu">
                     <li class="profile-menu-item">
                         <button class="profile-menu-btn danger" id="logoutBtn">
                             <span class="profile-menu-icon">&#128682;</span>
@@ -1182,8 +1756,13 @@
                         </button>
                     </li>
                 </ul>
-                <div class="profile-version" style="text-align: center; padding: 30px 20px; color: #9ca3af; font-size: 12px;">
-                    <div>Version 3.0.0</div>
+
+                <div class="personality-footer" id="personalityFooter">
+                    <!-- Rotating funny messages will appear here -->
+                </div>
+
+                <div class="profile-version" style="text-align: center; padding: 10px 20px; color: #9ca3af; font-size: 12px;">
+                    <div>Mysa v4.0.0</div>
                     <div style="margin-top: 4px;">Made with &#10084;&#65039;</div>
                 </div>
             </div>
@@ -1260,8 +1839,103 @@
         const db = firebase.firestore();
 
         // App Version
-        const APP_VERSION = '3.0.0';
-        console.log(`[App] Version ${APP_VERSION}`);
+        const APP_VERSION = '4.0.0';
+        console.log(`[App] Mysa Version ${APP_VERSION}`);
+
+        // =====================================================
+        // USER PROFILE STATE
+        // =====================================================
+        let userProfile = {
+            displayName: '',
+            avatar: '&#128512;',
+            personality: 'subtle' // 'off', 'subtle', 'fun'
+        };
+
+        // =====================================================
+        // PERSONALITY MESSAGES (50+ messages)
+        // =====================================================
+        const PERSONALITY_MESSAGES = {
+            subtle: [
+                "You're doing great today!",
+                "One task at a time...",
+                "Progress, not perfection",
+                "Small steps, big results",
+                "You've got this!",
+                "Keep up the momentum",
+                "Every checkmark counts",
+                "Steady wins the race",
+                "Making it happen!",
+                "Look at you go!",
+                "Crushing it quietly",
+                "Organized and thriving",
+                "Today is your day",
+                "Making progress!",
+                "Step by step..."
+            ],
+            fun: [
+                "Your list is judging you... kindly!",
+                "Plot twist: You're the main character!",
+                "This list won't complete itself... or will it?",
+                "Pro tip: Checking things off feels AMAZING",
+                "Your future self thanks you!",
+                "Is it a list? Is it a lifestyle? Yes!",
+                "Groceries fear you!",
+                "Tasks tremble at your approach!",
+                "Level up! Adulting unlocked!",
+                "Achievement: Actually using a list app",
+                "You're basically a productivity ninja",
+                "Legend has it, this list gets done",
+                "Breaking news: You're crushing it!",
+                "Studies show: You're awesome",
+                "This list is 100% organic, free-range tasks",
+                "Warning: Productivity levels off the charts!",
+                "Certified list-making professional",
+                "Plot armor: ACTIVATED",
+                "Mood: Unstoppable",
+                "Your shopping cart called. It believes in you.",
+                "Tasks? More like suggestions you'll destroy!",
+                "Running errands like a boss!",
+                "Somewhere, Marie Kondo is smiling",
+                "This list sparks joy!",
+                "Error 404: Laziness not found",
+                "Loading motivation... 100% complete!",
+                "Buffering... just kidding, let's GO!",
+                "Today's vibe: Getting stuff DONE",
+                "Spoiler: You finish everything",
+                "Queue dramatic productivity music",
+                "Permission granted to feel proud",
+                "Official excuse to buy snacks",
+                "Shopping: It's basically self-care",
+                "List status: Looking good!",
+                "Your dedication is showing!",
+                "The milk will remember this kindness"
+            ]
+        };
+
+        function getPersonalityMessage() {
+            if (userProfile.personality === 'off') return '';
+            const messages = PERSONALITY_MESSAGES[userProfile.personality] || PERSONALITY_MESSAGES.subtle;
+            return messages[Math.floor(Math.random() * messages.length)];
+        }
+
+        function updatePersonalityFooter() {
+            const footer = document.getElementById('personalityFooter');
+            if (!footer) return;
+
+            const message = getPersonalityMessage();
+            if (message) {
+                footer.innerHTML = `<span class="personality-message">"${message}"</span>`;
+            } else {
+                footer.innerHTML = '';
+            }
+        }
+
+        // Update message every 30 seconds if on profile tab
+        setInterval(() => {
+            if (currentTab === 'profile') {
+                updatePersonalityFooter();
+            }
+        }, 30000);
 
         // =====================================================
         // TOAST NOTIFICATIONS
@@ -1271,6 +1945,251 @@
             toast.textContent = message;
             toast.classList.add('visible');
             setTimeout(() => toast.classList.remove('visible'), duration);
+        }
+
+        // =====================================================
+        // ONBOARDING SYSTEM
+        // =====================================================
+        let onboardingData = {
+            name: '',
+            avatar: '&#128512;',
+            personality: 'subtle'
+        };
+
+        function showOnboarding() {
+            document.getElementById('onboardingOverlay').classList.add('active');
+            goToOnboardingScreen(1);
+        }
+
+        function hideOnboarding() {
+            document.getElementById('onboardingOverlay').classList.remove('active');
+        }
+
+        function goToOnboardingScreen(screenNum) {
+            document.querySelectorAll('.onboarding-screen').forEach(s => s.classList.remove('active'));
+            const screen = document.querySelector(`.onboarding-screen[data-screen="${screenNum}"]`);
+            if (screen) screen.classList.add('active');
+
+            // Update progress dots
+            document.querySelectorAll('.progress-dot').forEach((dot, idx) => {
+                dot.classList.remove('active', 'completed');
+                if (idx + 1 < screenNum) dot.classList.add('completed');
+                if (idx + 1 === screenNum) dot.classList.add('active');
+            });
+
+            // Focus name input on screen 2
+            if (screenNum === 2) {
+                setTimeout(() => document.getElementById('onboardingName')?.focus(), 300);
+            }
+
+            // Update final preview on screen 5
+            if (screenNum === 5) {
+                document.getElementById('finalAvatarPreview').innerHTML = onboardingData.avatar;
+                document.getElementById('finalNamePreview').textContent = onboardingData.name || 'Friend';
+            }
+        }
+
+        async function completeOnboarding() {
+            // Save profile to Firestore
+            try {
+                await db.collection('users').doc(currentUser.uid).set({
+                    displayName: onboardingData.name || '',
+                    avatar: onboardingData.avatar,
+                    personality: onboardingData.personality,
+                    onboardingComplete: true,
+                    onboardingDate: firebase.firestore.FieldValue.serverTimestamp()
+                }, { merge: true });
+
+                // Update local state
+                userProfile = {
+                    displayName: onboardingData.name,
+                    avatar: onboardingData.avatar,
+                    personality: onboardingData.personality
+                };
+
+                updateProfileUI();
+                hideOnboarding();
+                showToast('Welcome to Mysa!');
+            } catch (error) {
+                console.error('[Onboarding] Error saving:', error);
+                showToast('Error saving profile');
+            }
+        }
+
+        // Initialize onboarding event listeners
+        function initOnboarding() {
+            // Screen 1: Welcome -> Name
+            document.getElementById('onboardingNext1')?.addEventListener('click', () => {
+                goToOnboardingScreen(2);
+            });
+
+            // Screen 2: Name
+            const nameInput = document.getElementById('onboardingName');
+            const nameNextBtn = document.getElementById('onboardingNext2');
+
+            nameInput?.addEventListener('input', () => {
+                onboardingData.name = nameInput.value.trim();
+                nameNextBtn.disabled = onboardingData.name.length === 0;
+            });
+
+            nameNextBtn?.addEventListener('click', () => {
+                goToOnboardingScreen(3);
+            });
+
+            document.getElementById('onboardingSkip2')?.addEventListener('click', () => {
+                onboardingData.name = '';
+                goToOnboardingScreen(3);
+            });
+
+            // Screen 3: Avatar
+            document.getElementById('avatarPicker')?.addEventListener('click', (e) => {
+                const option = e.target.closest('.avatar-option');
+                if (!option) return;
+
+                document.querySelectorAll('#avatarPicker .avatar-option').forEach(o => o.classList.remove('selected'));
+                option.classList.add('selected');
+                onboardingData.avatar = option.dataset.avatar;
+            });
+
+            document.getElementById('onboardingNext3')?.addEventListener('click', () => {
+                goToOnboardingScreen(4);
+            });
+
+            document.getElementById('onboardingSkip3')?.addEventListener('click', () => {
+                goToOnboardingScreen(4);
+            });
+
+            // Screen 4: Personality
+            document.getElementById('personalityPicker')?.addEventListener('click', (e) => {
+                const option = e.target.closest('.personality-option');
+                if (!option) return;
+
+                document.querySelectorAll('.personality-option').forEach(o => o.classList.remove('selected'));
+                option.classList.add('selected');
+                onboardingData.personality = option.dataset.personality;
+            });
+
+            document.getElementById('onboardingNext4')?.addEventListener('click', () => {
+                goToOnboardingScreen(5);
+            });
+
+            // Screen 5: Finish
+            document.getElementById('onboardingFinish')?.addEventListener('click', () => {
+                completeOnboarding();
+            });
+        }
+
+        // =====================================================
+        // PROFILE MANAGEMENT
+        // =====================================================
+        function updateProfileUI() {
+            const avatarEl = document.getElementById('profileAvatarEmoji');
+            const nameEl = document.getElementById('profileDisplayName');
+            const emailEl = document.getElementById('profileEmail');
+            const personalityLabel = document.getElementById('personalitySettingLabel');
+
+            if (avatarEl) avatarEl.innerHTML = userProfile.avatar || '&#128512;';
+            if (nameEl) nameEl.textContent = userProfile.displayName || currentUser?.email?.split('@')[0] || 'Friend';
+            if (emailEl) emailEl.textContent = currentUser?.email || '';
+
+            const personalityLabels = {
+                'off': 'Personality: Zen Mode',
+                'subtle': 'Personality: Subtle',
+                'fun': 'Personality: Full Fun'
+            };
+            if (personalityLabel) {
+                personalityLabel.textContent = personalityLabels[userProfile.personality] || personalityLabels.subtle;
+            }
+
+            updatePersonalityFooter();
+        }
+
+        async function loadUserProfile() {
+            try {
+                const doc = await db.collection('users').doc(currentUser.uid).get();
+                if (doc.exists) {
+                    const data = doc.data();
+                    userProfile = {
+                        displayName: data.displayName || '',
+                        avatar: data.avatar || '&#128512;',
+                        personality: data.personality || 'subtle'
+                    };
+                    return data.onboardingComplete || false;
+                }
+            } catch (error) {
+                console.error('[Profile] Error loading:', error);
+            }
+            return false;
+        }
+
+        async function updateUserProfile(updates) {
+            try {
+                await db.collection('users').doc(currentUser.uid).set(updates, { merge: true });
+                Object.assign(userProfile, updates);
+                updateProfileUI();
+                showToast('Profile updated!');
+            } catch (error) {
+                console.error('[Profile] Error updating:', error);
+                showToast('Error updating profile');
+            }
+        }
+
+        function showEditNamePrompt() {
+            const currentName = userProfile.displayName || '';
+            const newName = prompt('Enter your display name:', currentName);
+            if (newName !== null && newName.trim() !== currentName) {
+                updateUserProfile({ displayName: newName.trim() });
+            }
+        }
+
+        function cyclePersonality() {
+            const order = ['off', 'subtle', 'fun'];
+            const currentIdx = order.indexOf(userProfile.personality);
+            const nextIdx = (currentIdx + 1) % order.length;
+            updateUserProfile({ personality: order[nextIdx] });
+        }
+
+        // Avatar modal
+        function showAvatarModal() {
+            const modal = document.getElementById('avatarModal');
+            modal?.classList.add('active');
+
+            // Mark current avatar as selected
+            const currentAvatar = userProfile.avatar;
+            document.querySelectorAll('#avatarGrid .avatar-grid-item').forEach(item => {
+                item.classList.toggle('selected', item.dataset.avatar === currentAvatar);
+            });
+        }
+
+        function hideAvatarModal() {
+            document.getElementById('avatarModal')?.classList.remove('active');
+        }
+
+        function initProfileHandlers() {
+            // Avatar click to open modal
+            document.getElementById('profileAvatarLarge')?.addEventListener('click', showAvatarModal);
+
+            // Avatar grid selection
+            document.getElementById('avatarGrid')?.addEventListener('click', (e) => {
+                const item = e.target.closest('.avatar-grid-item');
+                if (!item) return;
+
+                document.querySelectorAll('#avatarGrid .avatar-grid-item').forEach(i => i.classList.remove('selected'));
+                item.classList.add('selected');
+                updateUserProfile({ avatar: item.dataset.avatar });
+            });
+
+            // Close avatar modal
+            document.getElementById('avatarModalClose')?.addEventListener('click', hideAvatarModal);
+            document.getElementById('avatarModal')?.addEventListener('click', (e) => {
+                if (e.target.id === 'avatarModal') hideAvatarModal();
+            });
+
+            // Edit name button
+            document.getElementById('editNameBtn')?.addEventListener('click', showEditNamePrompt);
+
+            // Personality setting button
+            document.getElementById('personalitySettingBtn')?.addEventListener('click', cyclePersonality);
         }
 
         // =====================================================
@@ -1512,10 +2431,11 @@
                 headerSubtitle.textContent = '';
                 shareBtn.classList.add('hidden');
             } else {
-                const title = currentTab === 'tasks' ? 'Our Tasks' : 'Shopping';
+                const title = currentTab === 'tasks' ? 'Tasks' : 'Shopping';
                 pageTitle.textContent = title;
 
-                const email = truncateEmail(currentUser?.email);
+                // Use display name if available, otherwise email
+                const displayName = userProfile.displayName || truncateEmail(currentUser?.email);
                 const total = itemCounts[currentTab] || 0;
                 const completed = completedCounts[currentTab] || 0;
                 const remaining = total - completed;
@@ -1529,7 +2449,7 @@
                     countText = `${total} item${total !== 1 ? 's' : ''}`;
                 }
 
-                headerSubtitle.textContent = `${email} • ${countText}`;
+                headerSubtitle.textContent = `${displayName} • ${countText}`;
 
                 shareBtn.classList.remove('hidden');
 
@@ -1564,6 +2484,7 @@
                 listContent.classList.add('hidden');
                 profileContent.classList.add('active');
                 addInputContainer.classList.add('hidden');
+                updatePersonalityFooter(); // Refresh personality message
             } else {
                 listContent.classList.remove('hidden');
                 profileContent.classList.remove('active');
@@ -1806,8 +2727,8 @@
                 <li class="swipe-container" data-id="${item.id}">
                     <div class="swipe-reveal swipe-reveal-complete">&#10003;</div>
                     <div class="swipe-reveal swipe-reveal-delete">&#128465;</div>
-                    <div class="item-card ${item.done ? 'done' : ''}" data-id="${item.id}" data-priority="${item.priority || 'none'}">
-                        <div class="priority-dot ${getPriorityClass(item.priority)}" data-action="priority" title="Change priority"></div>
+                    <div class="item-card ${item.done ? 'done' : ''} ${getPriorityClass(item.priority)}" data-id="${item.id}" data-priority="${item.priority || 'none'}">
+                        <div class="priority-tap-zone" data-action="priority" title="Tap to change priority"></div>
                         <div class="item-checkbox" data-action="toggle">
                             <span class="item-checkbox-icon">&#10003;</span>
                         </div>
@@ -1827,6 +2748,16 @@
                         <button class="clear-completed-btn visible" id="clearCompletedBtn">
                             Clear completed (${completedCount})
                         </button>
+                    </li>
+                `;
+            }
+
+            // Add personality message footer to list view
+            const message = getPersonalityMessage();
+            if (message && items.length > 0) {
+                listEl.innerHTML += `
+                    <li class="personality-footer">
+                        <span class="personality-message">"${message}"</span>
                     </li>
                 `;
             }
@@ -2173,16 +3104,18 @@
                 if (!isPulling) return;
                 const deltaY = e.touches[0].clientY - pullStartY;
 
-                if (deltaY > 0 && deltaY < 150) {
-                    pullIndicator.style.height = Math.min(deltaY, 60) + 'px';
-                    pullIndicator.style.opacity = Math.min(deltaY / 60, 1);
+                if (deltaY > 0 && deltaY < 180) {
+                    pullIndicator.style.height = Math.min(deltaY * 0.5, 70) + 'px';
+                    pullIndicator.style.opacity = Math.min(deltaY / 120, 1);
                 }
             }, { passive: true });
 
             content.addEventListener('touchend', async () => {
                 if (!isPulling) return;
 
-                if (parseInt(pullIndicator.style.height) > 50) {
+                // Increased threshold to 120px to prevent accidental triggers
+                const pullDistance = parseInt(pullIndicator.style.height) || 0;
+                if (pullDistance > 60) { // 60px visible = 120px pull
                     // Show refreshing state
                     pullIndicator.classList.add('refreshing');
                     pullIndicator.style.height = '50px';
@@ -2353,11 +3286,17 @@
                 authContainer.style.display = 'none';
                 appContainer.classList.add('active');
 
-                // Update profile
-                document.getElementById('profileEmail').textContent = user.email;
-                document.getElementById('profileAvatar').textContent = user.email[0].toUpperCase();
-
                 await SharingModule.saveUserProfile(user);
+
+                // Load user profile and check onboarding status
+                const onboardingComplete = await loadUserProfile();
+                updateProfileUI();
+
+                // Show onboarding for new users
+                if (!onboardingComplete) {
+                    console.log('[Onboarding] New user detected, showing onboarding');
+                    showOnboarding();
+                }
 
                 // Run one-time migration to merge duplicate shopping lists
                 await migrateShoppingLists();
@@ -2366,14 +3305,24 @@
 
                 // Initialize delight features
                 initPullToRefresh();
+                initOnboarding();
+                initProfileHandlers();
 
                 switchTab('tasks');
             } else {
                 authContainer.style.display = 'block';
                 appContainer.classList.remove('active');
+                hideOnboarding();
                 lists = { tasks: null, shopping: null };
                 listData = { tasks: null, shopping: null };
                 currentTab = 'tasks';
+
+                // Reset profile
+                userProfile = {
+                    displayName: '',
+                    avatar: '&#128512;',
+                    personality: 'subtle'
+                };
 
                 if (unsubscribeItems) {
                     unsubscribeItems();
