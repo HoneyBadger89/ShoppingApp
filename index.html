@@ -3,6 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
     <title>Our Lists</title>
     <style>
         :root {
@@ -1055,6 +1058,9 @@
                         </button>
                     </li>
                 </ul>
+                <div class="profile-version" id="profileVersion" style="text-align: center; padding: 20px; color: #9ca3af; font-size: 12px;">
+                    Version 2.1.0
+                </div>
             </div>
 
             <!-- Add Input (floating) -->
@@ -1127,6 +1133,10 @@
         firebase.initializeApp(firebaseConfig);
         const auth = firebase.auth();
         const db = firebase.firestore();
+
+        // App Version
+        const APP_VERSION = '2.1.0';
+        console.log(`[App] Version ${APP_VERSION}`);
 
         // State
         let currentUser = null;
@@ -1324,12 +1334,20 @@
         }
 
         function getAddedByText(item) {
-            if (!item.createdByEmail) return '';
-            if (item.createdByEmail === currentUser.email) {
+            // Compare by UID (primary) or email (fallback for old items)
+            if (item.createdBy === currentUser.uid) {
                 return 'added by You';
             }
-            const name = item.createdByEmail.split('@')[0];
-            return `added by ${name}`;
+            // Fallback: compare emails (case-insensitive) for old items without UID
+            if (item.createdByEmail && item.createdByEmail.toLowerCase() === currentUser.email.toLowerCase()) {
+                return 'added by You';
+            }
+            // Show creator's name
+            if (item.createdByEmail) {
+                const name = item.createdByEmail.split('@')[0];
+                return `added by ${name}`;
+            }
+            return '';
         }
 
         // =====================================================
@@ -1391,6 +1409,117 @@
             updateHeader();
             updatePlaceholder();
         }
+
+        // =====================================================
+        // SHOPPING LIST MIGRATION (one-time merge of duplicates)
+        // =====================================================
+        async function migrateShoppingLists() {
+            console.log('[Migration] Checking for duplicate shopping lists...');
+
+            // Check if already migrated
+            const userDoc = await db.collection('users').doc(currentUser.uid).get();
+            if (userDoc.data()?.shoppingMigrated) {
+                console.log('[Migration] Already migrated, skipping');
+                return;
+            }
+
+            const listsRef = db.collection('lists');
+
+            // Get all shopping lists user can access
+            const ownedSnapshot = await listsRef
+                .where('type', '==', 'shopping')
+                .where('ownerId', '==', currentUser.uid)
+                .get();
+
+            const sharedSnapshot = await listsRef
+                .where('type', '==', 'shopping')
+                .where('sharedWith', 'array-contains', currentUser.uid)
+                .get();
+
+            const ownedLists = ownedSnapshot.docs;
+            const sharedLists = sharedSnapshot.docs;
+            const allLists = [...sharedLists, ...ownedLists];
+
+            // Remove duplicates by ID
+            const uniqueLists = allLists.filter((doc, index, self) =>
+                index === self.findIndex(d => d.id === doc.id)
+            );
+
+            console.log('[Migration] Found lists:', uniqueLists.length, 'owned:', ownedLists.length, 'shared:', sharedLists.length);
+
+            if (uniqueLists.length <= 1) {
+                await markMigrationComplete();
+                return;
+            }
+
+            // Use shared list as master (so both users see same list), or first owned
+            const masterList = sharedLists[0] || ownedLists[0];
+            console.log('[Migration] Master list:', masterList.id, 'owner:', masterList.data().ownerEmail);
+
+            // Merge all items into master list
+            for (const list of uniqueLists) {
+                if (list.id === masterList.id) continue;
+
+                console.log('[Migration] Merging list:', list.id, 'into master');
+
+                const items = await list.ref.collection('items').get();
+                console.log('[Migration] Moving', items.docs.length, 'items');
+
+                for (const item of items.docs) {
+                    // Add item to master list
+                    await masterList.ref.collection('items').add(item.data());
+                    // Delete from old list
+                    await item.ref.delete();
+                }
+
+                // Delete the duplicate list
+                await list.ref.delete();
+                console.log('[Migration] Deleted duplicate list:', list.id);
+            }
+
+            await markMigrationComplete();
+            console.log('[Migration] Complete!');
+        }
+
+        async function markMigrationComplete() {
+            await db.collection('users').doc(currentUser.uid).set({
+                shoppingMigrated: true,
+                migrationDate: firebase.firestore.FieldValue.serverTimestamp()
+            }, { merge: true });
+        }
+
+        // =====================================================
+        // PWA VISIBILITY REFRESH
+        // =====================================================
+        async function refreshCurrentList() {
+            if (!lists[currentTab] || currentTab === 'profile') return;
+            console.log('[PWA] Refreshing current list...');
+
+            const listId = lists[currentTab];
+            const itemsRef = db.collection('lists').doc(listId).collection('items');
+
+            try {
+                const snapshot = await itemsRef.get();
+                renderItems(snapshot);
+            } catch (error) {
+                console.error('[PWA] Refresh error:', error);
+            }
+        }
+
+        // Refresh when app becomes visible (PWA returning from background)
+        document.addEventListener('visibilitychange', () => {
+            if (document.visibilityState === 'visible' && currentUser) {
+                console.log('[PWA] App became visible, refreshing...');
+                refreshCurrentList();
+            }
+        });
+
+        window.addEventListener('focus', () => {
+            if (currentUser) {
+                console.log('[PWA] Window focused, refreshing...');
+                refreshCurrentList();
+            }
+        });
 
         // =====================================================
         // LIST INITIALIZATION
@@ -1955,6 +2084,10 @@
                 document.getElementById('profileAvatar').textContent = user.email[0].toUpperCase();
 
                 await SharingModule.saveUserProfile(user);
+
+                // Run one-time migration to merge duplicate shopping lists
+                await migrateShoppingLists();
+
                 await initializeLists();
 
                 // Initialize delight features
