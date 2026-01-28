@@ -1014,17 +1014,42 @@
                     throw new Error('Already shared with this user.');
                 }
 
+                const collaboratorData = {
+                    email: collaborator.email,
+                    displayName: collaborator.displayName || null,
+                    addedAt: firebase.firestore.FieldValue.serverTimestamp(),
+                    addedBy: currentUser.uid,
+                    role: 'collaborator'
+                };
+
+                // Share the current list
                 await listRef.update({
                     sharedWith: firebase.firestore.FieldValue.arrayUnion(collaborator.id),
-                    [`collaborators.${collaborator.id}`]: {
-                        email: collaborator.email,
-                        displayName: collaborator.displayName || null,
-                        addedAt: firebase.firestore.FieldValue.serverTimestamp(),
-                        addedBy: currentUser.uid,
-                        role: 'collaborator'
-                    }
+                    [`collaborators.${collaborator.id}`]: collaboratorData
                 });
 
+                // ALSO share the OTHER list (tasks <-> shopping are linked)
+                const otherType = data.type === 'tasks' ? 'shopping' : 'tasks';
+                const otherListId = lists[otherType];
+
+                if (otherListId) {
+                    const otherListRef = db.collection('lists').doc(otherListId);
+                    const otherListDoc = await otherListRef.get();
+
+                    if (otherListDoc.exists && otherListDoc.data().ownerId === currentUser.uid) {
+                        const otherData = otherListDoc.data();
+                        // Only add if not already shared
+                        if (!otherData.sharedWith || !otherData.sharedWith.includes(collaborator.id)) {
+                            await otherListRef.update({
+                                sharedWith: firebase.firestore.FieldValue.arrayUnion(collaborator.id),
+                                [`collaborators.${collaborator.id}`]: collaboratorData
+                            });
+                            console.log(`[Sharing] Also shared ${otherType} list with ${collaborator.email}`);
+                        }
+                    }
+                }
+
+                console.log(`[Sharing] Shared ${data.type} list with ${collaborator.email}`);
                 return collaborator;
             },
 
@@ -1036,14 +1061,34 @@
                     throw new Error('List not found.');
                 }
 
-                if (listDoc.data().ownerId !== currentUser.uid) {
+                const data = listDoc.data();
+
+                if (data.ownerId !== currentUser.uid) {
                     throw new Error('Only the owner can remove collaborators.');
                 }
 
+                // Remove from current list
                 await listRef.update({
                     sharedWith: firebase.firestore.FieldValue.arrayRemove(collaboratorId),
                     [`collaborators.${collaboratorId}`]: firebase.firestore.FieldValue.delete()
                 });
+
+                // ALSO remove from the OTHER list (tasks <-> shopping are linked)
+                const otherType = data.type === 'tasks' ? 'shopping' : 'tasks';
+                const otherListId = lists[otherType];
+
+                if (otherListId) {
+                    const otherListRef = db.collection('lists').doc(otherListId);
+                    const otherListDoc = await otherListRef.get();
+
+                    if (otherListDoc.exists && otherListDoc.data().ownerId === currentUser.uid) {
+                        await otherListRef.update({
+                            sharedWith: firebase.firestore.FieldValue.arrayRemove(collaboratorId),
+                            [`collaborators.${collaboratorId}`]: firebase.firestore.FieldValue.delete()
+                        });
+                        console.log(`[Sharing] Also removed from ${otherType} list`);
+                    }
+                }
             },
 
             isOwner(listDoc) {
@@ -1160,67 +1205,55 @@
         async function initializeLists() {
             const listsRef = db.collection('lists');
 
-            // Check/create tasks list
-            let tasksQuery = await listsRef
-                .where('ownerId', '==', currentUser.uid)
-                .where('type', '==', 'tasks')
-                .limit(1)
-                .get();
+            console.log('[Init] Initializing lists for user:', currentUser.email);
 
-            if (tasksQuery.empty) {
-                // Check if shared with user
-                tasksQuery = await listsRef
+            // Helper function to find or create a list
+            async function findOrCreateList(type) {
+                // FIRST: Check if user has a SHARED list (prioritize collaboration)
+                let sharedQuery = await listsRef
                     .where('sharedWith', 'array-contains', currentUser.uid)
-                    .where('type', '==', 'tasks')
+                    .where('type', '==', type)
                     .limit(1)
                     .get();
-            }
 
-            if (tasksQuery.empty) {
+                if (!sharedQuery.empty) {
+                    const doc = sharedQuery.docs[0];
+                    console.log(`[Init] Found SHARED ${type} list:`, doc.id, 'owner:', doc.data().ownerEmail);
+                    return doc.id;
+                }
+
+                // SECOND: Check if user OWNS a list
+                let ownedQuery = await listsRef
+                    .where('ownerId', '==', currentUser.uid)
+                    .where('type', '==', type)
+                    .limit(1)
+                    .get();
+
+                if (!ownedQuery.empty) {
+                    const doc = ownedQuery.docs[0];
+                    console.log(`[Init] Found OWNED ${type} list:`, doc.id, 'sharedWith:', doc.data().sharedWith);
+                    return doc.id;
+                }
+
+                // THIRD: Create new list
+                console.log(`[Init] Creating NEW ${type} list for:`, currentUser.email);
                 const docRef = await listsRef.add({
-                    type: 'tasks',
-                    name: 'Tasks',
+                    type: type,
+                    name: type === 'tasks' ? 'Tasks' : 'Shopping',
                     ownerId: currentUser.uid,
                     ownerEmail: currentUser.email,
                     sharedWith: [],
                     collaborators: {},
                     createdAt: firebase.firestore.FieldValue.serverTimestamp()
                 });
-                lists.tasks = docRef.id;
-            } else {
-                lists.tasks = tasksQuery.docs[0].id;
+                return docRef.id;
             }
 
-            // Check/create shopping list
-            let shoppingQuery = await listsRef
-                .where('ownerId', '==', currentUser.uid)
-                .where('type', '==', 'shopping')
-                .limit(1)
-                .get();
+            // Initialize both lists
+            lists.tasks = await findOrCreateList('tasks');
+            lists.shopping = await findOrCreateList('shopping');
 
-            if (shoppingQuery.empty) {
-                // Check if shared with user
-                shoppingQuery = await listsRef
-                    .where('sharedWith', 'array-contains', currentUser.uid)
-                    .where('type', '==', 'shopping')
-                    .limit(1)
-                    .get();
-            }
-
-            if (shoppingQuery.empty) {
-                const docRef = await listsRef.add({
-                    type: 'shopping',
-                    name: 'Shopping',
-                    ownerId: currentUser.uid,
-                    ownerEmail: currentUser.email,
-                    sharedWith: [],
-                    collaborators: {},
-                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
-                });
-                lists.shopping = docRef.id;
-            } else {
-                lists.shopping = shoppingQuery.docs[0].id;
-            }
+            console.log('[Init] Final lists:', { tasks: lists.tasks, shopping: lists.shopping });
         }
 
         // =====================================================
