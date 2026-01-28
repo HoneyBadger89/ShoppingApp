@@ -267,34 +267,112 @@
             overflow-y: auto;
         }
 
+        /* Pull to Refresh */
+        .pull-indicator {
+            height: 0;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-muted);
+            font-size: 14px;
+            transition: opacity 0.2s ease;
+            opacity: 0;
+        }
+
+        .pull-indicator.refreshing {
+            height: 50px;
+            opacity: 1;
+        }
+
+        .pull-spinner {
+            width: 24px;
+            height: 24px;
+            border: 3px solid var(--bg-secondary);
+            border-top-color: var(--accent-primary);
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
         /* Item Cards */
         .items-list {
             list-style: none;
+        }
+
+        /* Swipe Container */
+        .swipe-container {
+            position: relative;
+            margin-bottom: 12px;
+            border-radius: 12px;
+            overflow: hidden;
+        }
+
+        .swipe-reveal {
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            width: 100%;
+            display: flex;
+            align-items: center;
+            font-size: 24px;
+            color: white;
+            pointer-events: none;
+        }
+
+        .swipe-reveal-complete {
+            left: 0;
+            background: var(--accent-success);
+            padding-left: 20px;
+            justify-content: flex-start;
+        }
+
+        .swipe-reveal-delete {
+            right: 0;
+            background: var(--accent-danger);
+            padding-right: 20px;
+            justify-content: flex-end;
         }
 
         .item-card {
             background: var(--bg-card);
             border-radius: 12px;
             padding: 16px;
-            margin-bottom: 12px;
             display: flex;
             align-items: flex-start;
             gap: 12px;
             box-shadow: 0 1px 3px rgba(0,0,0,0.05);
-            transition: all 0.2s ease;
             position: relative;
+            touch-action: pan-y;
+            user-select: none;
+            will-change: transform;
         }
 
-        .item-card:active {
-            transform: scale(0.98);
+        .item-card.swiping {
+            transition: none !important;
         }
 
-        .item-card.completing {
-            animation: completeFlash 0.3s ease;
+        .item-card.snapping {
+            transition: transform 0.2s ease !important;
         }
 
-        @keyframes completeFlash {
-            50% { background-color: #d1fae5; }
+        .item-card.deleting {
+            transition: transform 0.3s ease, opacity 0.3s ease !important;
+            transform: translateX(-100%) !important;
+            opacity: 0 !important;
+        }
+
+        .item-card.completing-swipe {
+            animation: complete-flash-swipe 0.4s ease;
+        }
+
+        @keyframes complete-flash-swipe {
+            0% { background-color: var(--bg-card); }
+            50% { background-color: #d1fae5; transform: scale(1.02); }
+            100% { background-color: var(--bg-card); transform: scale(1); }
         }
 
         .item-checkbox {
@@ -373,10 +451,14 @@
             color: var(--accent-danger);
         }
 
+        /* Enhanced Empty State */
         .empty-state {
-            text-align: center;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
             padding: 60px 20px;
-            color: var(--text-muted);
+            text-align: center;
         }
 
         .empty-state-icon {
@@ -384,8 +466,91 @@
             margin-bottom: 16px;
         }
 
-        .empty-state-text {
-            font-size: 16px;
+        .empty-state h3 {
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 8px;
+        }
+
+        .empty-state p {
+            font-size: 14px;
+            color: var(--text-muted);
+            max-width: 250px;
+        }
+
+        /* Loading Skeletons */
+        .skeleton-container {
+            display: none;
+        }
+
+        .skeleton-card {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 16px;
+            background: var(--bg-card);
+            border-radius: 12px;
+            margin-bottom: 12px;
+        }
+
+        .skeleton-checkbox {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+            background-size: 200% 100%;
+            animation: skeleton-shimmer 1.5s infinite;
+        }
+
+        .skeleton-content {
+            flex: 1;
+        }
+
+        .skeleton-title {
+            height: 16px;
+            width: 65%;
+            border-radius: 4px;
+            background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+            background-size: 200% 100%;
+            animation: skeleton-shimmer 1.5s infinite;
+            margin-bottom: 8px;
+        }
+
+        .skeleton-subtitle {
+            height: 12px;
+            width: 35%;
+            border-radius: 4px;
+            background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+            background-size: 200% 100%;
+            animation: skeleton-shimmer 1.5s infinite;
+        }
+
+        @keyframes skeleton-shimmer {
+            0% { background-position: -200% 0; }
+            100% { background-position: 200% 0; }
+        }
+
+        /* Confetti */
+        .confetti-particle {
+            position: fixed;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 9999;
+            animation: confetti-fall 0.8s ease-out forwards;
+        }
+
+        @keyframes confetti-fall {
+            0% {
+                transform: translate(0, 0) rotate(0deg) scale(1);
+                opacity: 1;
+            }
+            100% {
+                transform: translate(var(--x), calc(var(--y) + 200px)) rotate(720deg) scale(0);
+                opacity: 0;
+            }
         }
 
         .loading-state {
@@ -837,9 +1002,37 @@
         <div class="app-container" id="appContainer">
             <!-- Tasks/Shopping Content -->
             <div class="content" id="listContent">
-                <ul class="items-list" id="itemList">
-                    <li class="loading-state">Loading...</li>
-                </ul>
+                <!-- Pull to Refresh Indicator -->
+                <div class="pull-indicator" id="pullIndicator">
+                    <div class="pull-spinner"></div>
+                </div>
+
+                <!-- Loading Skeletons -->
+                <div class="skeleton-container" id="skeletonContainer">
+                    <div class="skeleton-card">
+                        <div class="skeleton-checkbox"></div>
+                        <div class="skeleton-content">
+                            <div class="skeleton-title"></div>
+                            <div class="skeleton-subtitle"></div>
+                        </div>
+                    </div>
+                    <div class="skeleton-card">
+                        <div class="skeleton-checkbox"></div>
+                        <div class="skeleton-content">
+                            <div class="skeleton-title"></div>
+                            <div class="skeleton-subtitle"></div>
+                        </div>
+                    </div>
+                    <div class="skeleton-card">
+                        <div class="skeleton-checkbox"></div>
+                        <div class="skeleton-content">
+                            <div class="skeleton-title"></div>
+                            <div class="skeleton-subtitle"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <ul class="items-list" id="itemList"></ul>
             </div>
 
             <!-- Profile Content -->
@@ -1259,16 +1452,23 @@
         // =====================================================
         // ITEMS RENDERING
         // =====================================================
-        function renderItems(snapshot) {
+        function renderItems(snapshot, isUserAction = false) {
             const listEl = document.getElementById('itemList');
+            hideSkeletons();
 
             if (snapshot.empty) {
-                const icon = currentTab === 'tasks' ? '&#128203;' : '&#128722;';
-                const text = currentTab === 'tasks' ? 'No tasks yet' : 'No items yet';
+                const isTasksTab = currentTab === 'tasks';
+                const icon = isTasksTab ? '&#10024;' : '&#128722;';
+                const title = isTasksTab ? 'All done!' : 'Shopping list is empty';
+                const subtitle = isTasksTab
+                    ? 'No tasks right now. Enjoy your free time!'
+                    : 'Add items before your next trip!';
+
                 listEl.innerHTML = `
                     <li class="empty-state">
                         <div class="empty-state-icon">${icon}</div>
-                        <div class="empty-state-text">${text}</div>
+                        <h3>${title}</h3>
+                        <p>${subtitle}</p>
                     </li>
                 `;
                 itemCounts[currentTab] = 0;
@@ -1293,17 +1493,41 @@
             updateHeader();
 
             listEl.innerHTML = items.map(item => `
-                <li class="item-card ${item.done ? 'done' : ''}" data-id="${item.id}">
-                    <div class="item-checkbox" data-action="toggle">
-                        <span class="item-checkbox-icon">&#10003;</span>
+                <li class="swipe-container" data-id="${item.id}">
+                    <div class="swipe-reveal swipe-reveal-complete">&#10003;</div>
+                    <div class="swipe-reveal swipe-reveal-delete">&#128465;</div>
+                    <div class="item-card ${item.done ? 'done' : ''}" data-id="${item.id}">
+                        <div class="item-checkbox" data-action="toggle">
+                            <span class="item-checkbox-icon">&#10003;</span>
+                        </div>
+                        <div class="item-content">
+                            <div class="item-text">${escapeHtml(item.text)}</div>
+                            <div class="item-meta">${getAddedByText(item)}</div>
+                        </div>
+                        <button class="item-delete" data-action="delete" title="Delete">&#128465;</button>
                     </div>
-                    <div class="item-content">
-                        <div class="item-text">${escapeHtml(item.text)}</div>
-                        <div class="item-meta">${getAddedByText(item)}</div>
-                    </div>
-                    <button class="item-delete" data-action="delete" title="Delete">&#128465;</button>
                 </li>
             `).join('');
+
+            // Initialize swipe handlers for new items
+            initSwipeHandlers();
+        }
+
+        // =====================================================
+        // LOADING SKELETONS
+        // =====================================================
+        let loadingTimer = null;
+
+        function showSkeletons() {
+            document.getElementById('itemList').innerHTML = '';
+            loadingTimer = setTimeout(() => {
+                document.getElementById('skeletonContainer').style.display = 'block';
+            }, 200); // Only show if loading > 200ms
+        }
+
+        function hideSkeletons() {
+            clearTimeout(loadingTimer);
+            document.getElementById('skeletonContainer').style.display = 'none';
         }
 
         // =====================================================
@@ -1319,7 +1543,7 @@
             const listRef = db.collection('lists').doc(listId);
             const itemsRef = listRef.collection('items');
 
-            document.getElementById('itemList').innerHTML = '<li class="loading-state">Loading...</li>';
+            showSkeletons();
 
             // Subscribe to list document
             unsubscribeList = listRef.onSnapshot(doc => {
@@ -1334,8 +1558,9 @@
                 renderItems(snapshot);
             }, error => {
                 console.error('Error:', error);
+                hideSkeletons();
                 document.getElementById('itemList').innerHTML =
-                    '<li class="empty-state"><div class="empty-state-text">Error loading. Please refresh.</div></li>';
+                    '<li class="empty-state"><h3>Oops!</h3><p>Error loading. Please refresh.</p></li>';
             });
         }
 
@@ -1363,7 +1588,7 @@
             }
         }
 
-        async function toggleItem(itemId) {
+        async function toggleItem(itemId, triggerConfetti = true) {
             const listId = lists[currentTab];
             if (!listId) return;
 
@@ -1372,11 +1597,19 @@
             try {
                 const doc = await itemRef.get();
                 if (doc.exists) {
-                    // Add animation
-                    const card = document.querySelector(`[data-id="${itemId}"]`);
-                    if (card && !doc.data().done) {
-                        card.classList.add('completing');
-                        setTimeout(() => card.classList.remove('completing'), 300);
+                    const wasNotDone = !doc.data().done;
+                    const card = document.querySelector(`.item-card[data-id="${itemId}"]`);
+
+                    if (card && wasNotDone) {
+                        // Add completion animation
+                        card.classList.add('completing-swipe');
+                        setTimeout(() => card.classList.remove('completing-swipe'), 400);
+
+                        // Trigger confetti celebration
+                        if (triggerConfetti) {
+                            const rect = card.getBoundingClientRect();
+                            confetti(rect.left + rect.width / 2, rect.top + rect.height / 2);
+                        }
                     }
 
                     await itemRef.update({ done: !doc.data().done });
@@ -1386,15 +1619,189 @@
             }
         }
 
-        async function deleteItem(itemId) {
+        async function deleteItem(itemId, animate = false) {
             const listId = lists[currentTab];
             if (!listId) return;
+
+            if (animate) {
+                const card = document.querySelector(`.item-card[data-id="${itemId}"]`);
+                if (card) {
+                    card.classList.add('deleting');
+                    await new Promise(resolve => setTimeout(resolve, 300));
+                }
+            }
 
             try {
                 await db.collection('lists').doc(listId).collection('items').doc(itemId).delete();
             } catch (error) {
                 console.error('Error deleting item:', error);
             }
+        }
+
+        // =====================================================
+        // CONFETTI CELEBRATION
+        // =====================================================
+        function confetti(x, y) {
+            const colors = ['#8b5cf6', '#ec4899', '#f97316', '#14b8a6', '#eab308'];
+            const particleCount = 18;
+
+            for (let i = 0; i < particleCount; i++) {
+                const particle = document.createElement('div');
+                particle.className = 'confetti-particle';
+                particle.style.left = x + 'px';
+                particle.style.top = y + 'px';
+                particle.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+                particle.style.setProperty('--x', (Math.random() - 0.5) * 200 + 'px');
+                particle.style.setProperty('--y', (Math.random() * -100 - 50) + 'px');
+                document.body.appendChild(particle);
+                setTimeout(() => particle.remove(), 800);
+            }
+        }
+
+        // =====================================================
+        // SWIPE GESTURES
+        // =====================================================
+        function initSwipeHandlers() {
+            const itemList = document.getElementById('itemList');
+            const cards = itemList.querySelectorAll('.item-card');
+
+            cards.forEach(card => {
+                let startX = 0;
+                let currentX = 0;
+                let isDragging = false;
+                const threshold = 0.4; // 40% of card width
+
+                const handleStart = (clientX) => {
+                    startX = clientX;
+                    currentX = clientX;
+                    isDragging = true;
+                    card.classList.add('swiping');
+                    card.classList.remove('snapping');
+                };
+
+                const handleMove = (clientX) => {
+                    if (!isDragging) return;
+                    currentX = clientX;
+                    const deltaX = currentX - startX;
+                    card.style.transform = `translateX(${deltaX}px)`;
+                };
+
+                const handleEnd = async () => {
+                    if (!isDragging) return;
+                    isDragging = false;
+                    card.classList.remove('swiping');
+
+                    const deltaX = currentX - startX;
+                    const cardWidth = card.offsetWidth;
+                    const itemId = card.dataset.id;
+
+                    // Swipe right (complete)
+                    if (deltaX > cardWidth * threshold) {
+                        card.classList.add('snapping');
+                        card.style.transform = 'translateX(0)';
+                        await toggleItem(itemId, true);
+                    }
+                    // Swipe left (delete)
+                    else if (deltaX < -cardWidth * threshold) {
+                        await deleteItem(itemId, true);
+                    }
+                    // Snap back
+                    else {
+                        card.classList.add('snapping');
+                        card.style.transform = 'translateX(0)';
+                    }
+                };
+
+                // Touch events
+                card.addEventListener('touchstart', (e) => {
+                    handleStart(e.touches[0].clientX);
+                }, { passive: true });
+
+                card.addEventListener('touchmove', (e) => {
+                    handleMove(e.touches[0].clientX);
+                }, { passive: true });
+
+                card.addEventListener('touchend', handleEnd);
+
+                // Mouse events (desktop fallback)
+                card.addEventListener('mousedown', (e) => {
+                    if (e.target.closest('[data-action]')) return; // Ignore button clicks
+                    handleStart(e.clientX);
+                });
+
+                card.addEventListener('mousemove', (e) => {
+                    if (isDragging) {
+                        e.preventDefault();
+                        handleMove(e.clientX);
+                    }
+                });
+
+                card.addEventListener('mouseup', handleEnd);
+                card.addEventListener('mouseleave', () => {
+                    if (isDragging) {
+                        isDragging = false;
+                        card.classList.remove('swiping');
+                        card.classList.add('snapping');
+                        card.style.transform = 'translateX(0)';
+                    }
+                });
+            });
+        }
+
+        // =====================================================
+        // PULL TO REFRESH
+        // =====================================================
+        let pullStartY = 0;
+        let isPulling = false;
+        let pullIndicator;
+
+        function initPullToRefresh() {
+            const content = document.getElementById('listContent');
+            pullIndicator = document.getElementById('pullIndicator');
+
+            content.addEventListener('touchstart', (e) => {
+                if (content.scrollTop === 0) {
+                    pullStartY = e.touches[0].clientY;
+                    isPulling = true;
+                }
+            }, { passive: true });
+
+            content.addEventListener('touchmove', (e) => {
+                if (!isPulling) return;
+                const deltaY = e.touches[0].clientY - pullStartY;
+
+                if (deltaY > 0 && deltaY < 150) {
+                    pullIndicator.style.height = Math.min(deltaY, 60) + 'px';
+                    pullIndicator.style.opacity = Math.min(deltaY / 60, 1);
+                }
+            }, { passive: true });
+
+            content.addEventListener('touchend', async () => {
+                if (!isPulling) return;
+
+                if (parseInt(pullIndicator.style.height) > 50) {
+                    // Show refreshing state
+                    pullIndicator.classList.add('refreshing');
+                    pullIndicator.style.height = '50px';
+                    pullIndicator.style.opacity = '1';
+
+                    // Refresh data (re-subscribe to items)
+                    await new Promise(resolve => setTimeout(resolve, 300)); // Min feedback time
+                    subscribeToItems();
+
+                    // Hide after a moment
+                    setTimeout(() => {
+                        pullIndicator.classList.remove('refreshing');
+                        pullIndicator.style.height = '0';
+                        pullIndicator.style.opacity = '0';
+                    }, 500);
+                } else {
+                    pullIndicator.style.height = '0';
+                    pullIndicator.style.opacity = '0';
+                }
+
+                isPulling = false;
+            });
         }
 
         // =====================================================
@@ -1550,6 +1957,9 @@
                 await SharingModule.saveUserProfile(user);
                 await initializeLists();
 
+                // Initialize delight features
+                initPullToRefresh();
+
                 switchTab('tasks');
             } else {
                 authContainer.style.display = 'block';
@@ -1593,9 +2003,9 @@
             const action = e.target.closest('[data-action]')?.dataset.action;
 
             if (action === 'delete') {
-                deleteItem(itemId);
+                deleteItem(itemId, true); // Animate deletion
             } else if (action === 'toggle' || e.target.closest('.item-content')) {
-                toggleItem(itemId);
+                toggleItem(itemId, true); // Trigger confetti
             }
         });
 
