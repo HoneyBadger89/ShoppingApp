@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Shopping & Tasks v2.0</title>
+    <title>Shopping & Tasks v3.0</title>
     <style>
         * {
             box-sizing: border-box;
@@ -27,12 +27,54 @@
             overflow: hidden;
         }
 
-        h1 {
-            text-align: center;
+        .header-row {
+            display: flex;
+            align-items: center;
+            justify-content: center;
             padding: 25px;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            position: relative;
+        }
+
+        h1 {
+            text-align: center;
             color: white;
             font-size: 1.5rem;
+        }
+
+        .shared-badge {
+            background: rgba(255,255,255,0.25);
+            color: white;
+            font-size: 0.7rem;
+            padding: 3px 8px;
+            border-radius: 10px;
+            margin-left: 10px;
+        }
+
+        .share-btn {
+            position: absolute;
+            right: 20px;
+            background: rgba(255,255,255,0.2);
+            border: none;
+            color: white;
+            font-size: 1.3rem;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .share-btn:hover {
+            background: rgba(255,255,255,0.35);
+            transform: scale(1.1);
+        }
+
+        .share-btn.has-collaborators {
+            background: rgba(56, 239, 125, 0.4);
         }
 
         /* Auth Styles */
@@ -377,6 +419,232 @@
             to { transform: rotate(360deg); }
         }
 
+        /* Share Modal Styles */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .modal-overlay.active {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .share-modal {
+            background: white;
+            border-radius: 20px;
+            width: 90%;
+            max-width: 400px;
+            max-height: 80vh;
+            overflow: hidden;
+            transform: scale(0.9);
+            transition: transform 0.3s ease;
+        }
+
+        .modal-overlay.active .share-modal {
+            transform: scale(1);
+        }
+
+        .modal-header {
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .modal-header h2 {
+            font-size: 1.2rem;
+        }
+
+        .modal-close {
+            background: rgba(255,255,255,0.2);
+            border: none;
+            color: white;
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 1.2rem;
+            transition: background 0.3s ease;
+        }
+
+        .modal-close:hover {
+            background: rgba(255,255,255,0.35);
+        }
+
+        .modal-body {
+            padding: 20px;
+            max-height: 50vh;
+            overflow-y: auto;
+        }
+
+        .invite-section {
+            margin-bottom: 20px;
+        }
+
+        .invite-section label {
+            display: block;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 8px;
+        }
+
+        .invite-input-group {
+            display: flex;
+            gap: 10px;
+        }
+
+        .invite-input-group input {
+            flex: 1;
+            padding: 12px 15px;
+            border: 2px solid #e9ecef;
+            border-radius: 10px;
+            font-size: 1rem;
+            outline: none;
+            transition: border-color 0.3s ease;
+        }
+
+        .invite-input-group input:focus {
+            border-color: #667eea;
+        }
+
+        .invite-btn {
+            padding: 12px 20px;
+            background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .invite-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(17, 153, 142, 0.4);
+        }
+
+        .invite-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .share-message {
+            padding: 10px 15px;
+            border-radius: 8px;
+            margin-top: 10px;
+            font-size: 0.9rem;
+            display: none;
+        }
+
+        .share-message.success {
+            background: #d4edda;
+            color: #155724;
+            display: block;
+        }
+
+        .share-message.error {
+            background: #f8d7da;
+            color: #721c24;
+            display: block;
+        }
+
+        .collaborators-section h3 {
+            font-size: 1rem;
+            color: #333;
+            margin-bottom: 12px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid #e9ecef;
+        }
+
+        .collaborator-list {
+            list-style: none;
+        }
+
+        .collaborator-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            margin-bottom: 8px;
+        }
+
+        .collaborator-info {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .collaborator-avatar {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+
+        .collaborator-email {
+            font-size: 0.9rem;
+            color: #333;
+        }
+
+        .collaborator-role {
+            font-size: 0.75rem;
+            color: #888;
+        }
+
+        .remove-collaborator {
+            background: #fee;
+            color: #c00;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-size: 0.8rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .remove-collaborator:hover {
+            background: #fdd;
+        }
+
+        .no-collaborators {
+            text-align: center;
+            color: #adb5bd;
+            padding: 20px;
+            font-style: italic;
+        }
+
+        .owner-badge {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
         @media (max-width: 400px) {
             body {
                 padding: 10px;
@@ -403,12 +671,41 @@
             .user-email {
                 max-width: 100%;
             }
+
+            .header-row {
+                padding: 20px 15px;
+            }
+
+            .share-btn {
+                right: 15px;
+                width: 36px;
+                height: 36px;
+                font-size: 1.1rem;
+            }
+
+            .invite-input-group {
+                flex-direction: column;
+            }
+
+            .invite-btn {
+                width: 100%;
+            }
+
+            .share-modal {
+                width: 95%;
+            }
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1 id="pageTitle">Shopping & Tasks v2.0</h1>
+        <div class="header-row">
+            <h1 id="pageTitle">Shopping & Tasks v3.0</h1>
+            <span class="shared-badge" id="sharedBadge" style="display: none;">SHARED</span>
+            <button class="share-btn" id="shareBtn" title="Share this list" style="display: none;">
+                <span>&#128101;</span>
+            </button>
+        </div>
 
         <!-- Auth Section -->
         <div class="auth-container" id="authContainer">
@@ -483,6 +780,32 @@
         </div>
     </div>
 
+    <!-- Share Modal -->
+    <div class="modal-overlay" id="shareModal">
+        <div class="share-modal">
+            <div class="modal-header">
+                <h2>Share List</h2>
+                <button class="modal-close" id="modalClose">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="invite-section">
+                    <label>Invite by email</label>
+                    <div class="invite-input-group">
+                        <input type="email" id="inviteEmail" placeholder="Enter email address">
+                        <button class="invite-btn" id="inviteBtn">Invite</button>
+                    </div>
+                    <div class="share-message" id="shareMessage"></div>
+                </div>
+                <div class="collaborators-section">
+                    <h3>Collaborators</h3>
+                    <ul class="collaborator-list" id="collaboratorList">
+                        <li class="no-collaborators">No collaborators yet</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Firebase SDK -->
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
@@ -508,7 +831,155 @@
         let currentUser = null;
         let currentList = 'shopping';
         let userLists = { shopping: null, tasks: null };
+        let listData = { shopping: null, tasks: null }; // Full list documents
         let unsubscribeItems = null;
+        let unsubscribeList = null;
+
+        // =====================================================
+        // SHARING MODULE - Modular, Event-Driven Architecture
+        // Designed for future AI integration
+        // =====================================================
+        const SharingModule = {
+            // Event emitter for future AI hooks
+            events: {},
+
+            on(event, callback) {
+                if (!this.events[event]) this.events[event] = [];
+                this.events[event].push(callback);
+            },
+
+            emit(event, data) {
+                if (this.events[event]) {
+                    this.events[event].forEach(cb => cb(data));
+                }
+                // Log for future AI analysis
+                console.log(`[SharingEvent] ${event}:`, data);
+            },
+
+            // Find user by email using Firestore users collection
+            async findUserByEmail(email) {
+                // First check if user exists in our users collection
+                const usersRef = db.collection('users');
+                const snapshot = await usersRef.where('email', '==', email.toLowerCase()).limit(1).get();
+
+                if (!snapshot.empty) {
+                    const doc = snapshot.docs[0];
+                    return { id: doc.id, ...doc.data() };
+                }
+                return null;
+            },
+
+            // Save user profile on login (for email lookup)
+            async saveUserProfile(user) {
+                const userRef = db.collection('users').doc(user.uid);
+                await userRef.set({
+                    email: user.email.toLowerCase(),
+                    displayName: user.displayName || null,
+                    lastLogin: firebase.firestore.FieldValue.serverTimestamp(),
+                    metadata: {
+                        aiPreferences: {},
+                        sharingHistory: []
+                    }
+                }, { merge: true });
+            },
+
+            // Add collaborator to list
+            async addCollaborator(listId, collaboratorEmail) {
+                const collaborator = await this.findUserByEmail(collaboratorEmail);
+
+                if (!collaborator) {
+                    throw new Error('User not found. They need to sign up first.');
+                }
+
+                if (collaborator.id === currentUser.uid) {
+                    throw new Error('You cannot share a list with yourself.');
+                }
+
+                const listRef = db.collection('lists').doc(listId);
+                const listDoc = await listRef.get();
+
+                if (!listDoc.exists) {
+                    throw new Error('List not found.');
+                }
+
+                const listData = listDoc.data();
+
+                // Check if user is the owner
+                if (listData.ownerId !== currentUser.uid) {
+                    throw new Error('Only the owner can share this list.');
+                }
+
+                // Check if already shared
+                if (listData.sharedWith && listData.sharedWith.includes(collaborator.id)) {
+                    throw new Error('This list is already shared with this user.');
+                }
+
+                // Update list with new collaborator
+                await listRef.update({
+                    sharedWith: firebase.firestore.FieldValue.arrayUnion(collaborator.id),
+                    [`collaborators.${collaborator.id}`]: {
+                        email: collaborator.email,
+                        displayName: collaborator.displayName || null,
+                        addedAt: firebase.firestore.FieldValue.serverTimestamp(),
+                        addedBy: currentUser.uid,
+                        role: 'collaborator'
+                    },
+                    'metadata.lastShared': firebase.firestore.FieldValue.serverTimestamp(),
+                    'metadata.shareCount': firebase.firestore.FieldValue.increment(1)
+                });
+
+                this.emit('collaborator_added', {
+                    listId,
+                    collaboratorId: collaborator.id,
+                    collaboratorEmail: collaborator.email
+                });
+
+                return collaborator;
+            },
+
+            // Remove collaborator from list
+            async removeCollaborator(listId, collaboratorId) {
+                const listRef = db.collection('lists').doc(listId);
+                const listDoc = await listRef.get();
+
+                if (!listDoc.exists) {
+                    throw new Error('List not found.');
+                }
+
+                const listData = listDoc.data();
+
+                // Check if user is the owner
+                if (listData.ownerId !== currentUser.uid) {
+                    throw new Error('Only the owner can remove collaborators.');
+                }
+
+                await listRef.update({
+                    sharedWith: firebase.firestore.FieldValue.arrayRemove(collaboratorId),
+                    [`collaborators.${collaboratorId}`]: firebase.firestore.FieldValue.delete()
+                });
+
+                this.emit('collaborator_removed', { listId, collaboratorId });
+            },
+
+            // Check if current user is owner of the list
+            isOwner(listDoc) {
+                return listDoc && listDoc.ownerId === currentUser.uid;
+            },
+
+            // Check if list is shared
+            isShared(listDoc) {
+                return listDoc && listDoc.sharedWith && listDoc.sharedWith.length > 0;
+            },
+
+            // Get collaborators for display
+            getCollaborators(listDoc) {
+                if (!listDoc || !listDoc.collaborators) return [];
+                return Object.entries(listDoc.collaborators).map(([id, data]) => ({
+                    id,
+                    ...data
+                }));
+            }
+        };
 
         // DOM Elements
         const authContainer = document.getElementById('authContainer');
@@ -516,6 +987,14 @@
         const pageTitle = document.getElementById('pageTitle');
         const authError = document.getElementById('authError');
         const userEmailSpan = document.getElementById('userEmail');
+        const shareBtn = document.getElementById('shareBtn');
+        const shareModal = document.getElementById('shareModal');
+        const sharedBadge = document.getElementById('sharedBadge');
+        const modalClose = document.getElementById('modalClose');
+        const inviteEmail = document.getElementById('inviteEmail');
+        const inviteBtn = document.getElementById('inviteBtn');
+        const shareMessage = document.getElementById('shareMessage');
+        const collaboratorList = document.getElementById('collaboratorList');
 
         // Show error message
         function showError(message) {
@@ -599,6 +1078,10 @@
                 appContainer.classList.add('active');
                 userEmailSpan.textContent = user.email;
                 pageTitle.textContent = 'Shopping List';
+                shareBtn.style.display = 'flex';
+
+                // Save user profile for email lookup
+                await SharingModule.saveUserProfile(user);
 
                 // Initialize or get user's lists
                 await initializeUserLists();
@@ -607,13 +1090,20 @@
                 // User is signed out
                 authContainer.style.display = 'block';
                 appContainer.classList.remove('active');
-                pageTitle.textContent = 'Shopping & Tasks v2.0';
+                pageTitle.textContent = 'Shopping & Tasks v3.0';
                 userLists = { shopping: null, tasks: null };
+                listData = { shopping: null, tasks: null };
+                shareBtn.style.display = 'none';
+                sharedBadge.style.display = 'none';
 
-                // Cleanup listener
+                // Cleanup listeners
                 if (unsubscribeItems) {
                     unsubscribeItems();
                     unsubscribeItems = null;
+                }
+                if (unsubscribeList) {
+                    unsubscribeList();
+                    unsubscribeList = null;
                 }
             }
         });
@@ -622,7 +1112,7 @@
         async function initializeUserLists() {
             const listsRef = db.collection('lists');
 
-            // Check for existing shopping list
+            // Check for existing shopping list (owned or shared)
             let shoppingQuery = await listsRef
                 .where('ownerId', '==', currentUser.uid)
                 .where('name', '==', 'Shopping List')
@@ -630,11 +1120,20 @@
                 .get();
 
             if (shoppingQuery.empty) {
-                // Create shopping list
+                // Create shopping list with AI-ready metadata
                 const docRef = await listsRef.add({
                     name: 'Shopping List',
                     ownerId: currentUser.uid,
+                    ownerEmail: currentUser.email,
                     sharedWith: [],
+                    collaborators: {},
+                    metadata: {
+                        aiSuggestions: [],
+                        aiFlags: {},
+                        shareCount: 0,
+                        lastShared: null,
+                        createdSource: 'user'
+                    },
                     createdAt: firebase.firestore.FieldValue.serverTimestamp()
                 });
                 userLists.shopping = docRef.id;
@@ -642,7 +1141,7 @@
                 userLists.shopping = shoppingQuery.docs[0].id;
             }
 
-            // Check for existing tasks list
+            // Check for existing tasks list (owned or shared)
             let tasksQuery = await listsRef
                 .where('ownerId', '==', currentUser.uid)
                 .where('name', '==', 'Home Tasks')
@@ -650,11 +1149,20 @@
                 .get();
 
             if (tasksQuery.empty) {
-                // Create tasks list
+                // Create tasks list with AI-ready metadata
                 const docRef = await listsRef.add({
                     name: 'Home Tasks',
                     ownerId: currentUser.uid,
+                    ownerEmail: currentUser.email,
                     sharedWith: [],
+                    collaborators: {},
+                    metadata: {
+                        aiSuggestions: [],
+                        aiFlags: {},
+                        shareCount: 0,
+                        lastShared: null,
+                        createdSource: 'user'
+                    },
                     createdAt: firebase.firestore.FieldValue.serverTimestamp()
                 });
                 userLists.tasks = docRef.id;
@@ -704,14 +1212,30 @@
             if (unsubscribeItems) {
                 unsubscribeItems();
             }
+            if (unsubscribeList) {
+                unsubscribeList();
+            }
 
             const listId = currentList === 'shopping' ? userLists.shopping : userLists.tasks;
             if (!listId) return;
 
-            const itemsRef = db.collection('lists').doc(listId).collection('items');
+            const listRef = db.collection('lists').doc(listId);
+            const itemsRef = listRef.collection('items');
 
             document.getElementById('itemList').innerHTML = '<li class="loading">Loading</li>';
 
+            // Subscribe to list document for real-time sharing updates
+            unsubscribeList = listRef.onSnapshot(doc => {
+                if (doc.exists) {
+                    const data = { id: doc.id, ...doc.data() };
+                    listData[currentList] = data;
+                    updateSharingUI(data);
+                }
+            }, error => {
+                console.error('Error listening to list:', error);
+            });
+
+            // Subscribe to items
             unsubscribeItems = itemsRef.onSnapshot(snapshot => {
                 renderItems(snapshot);
             }, error => {
@@ -719,6 +1243,75 @@
                 document.getElementById('itemList').innerHTML =
                     '<li class="empty-message">Error loading items. Please refresh.</li>';
             });
+        }
+
+        // Update sharing UI based on list data
+        function updateSharingUI(data) {
+            const isShared = SharingModule.isShared(data);
+            const isOwner = SharingModule.isOwner(data);
+
+            // Update shared badge
+            sharedBadge.style.display = isShared ? 'inline' : 'none';
+
+            // Update share button appearance
+            if (isShared) {
+                shareBtn.classList.add('has-collaborators');
+            } else {
+                shareBtn.classList.remove('has-collaborators');
+            }
+
+            // Update collaborator list in modal if open
+            if (shareModal.classList.contains('active')) {
+                renderCollaborators(data);
+            }
+        }
+
+        // Render collaborators in modal
+        function renderCollaborators(data) {
+            const collaborators = SharingModule.getCollaborators(data);
+            const isOwner = SharingModule.isOwner(data);
+
+            if (collaborators.length === 0) {
+                collaboratorList.innerHTML = '<li class="no-collaborators">No collaborators yet</li>';
+                return;
+            }
+
+            collaboratorList.innerHTML = collaborators.map(collab => {
+                const initial = (collab.email || '?')[0].toUpperCase();
+                const removeBtn = isOwner
+                    ? `<button class="remove-collaborator" data-id="${collab.id}">Remove</button>`
+                    : '<span class="owner-badge">Collaborator</span>';
+
+                return `
+                    <li class="collaborator-item">
+                        <div class="collaborator-info">
+                            <div class="collaborator-avatar">${escapeHtml(initial)}</div>
+                            <div>
+                                <div class="collaborator-email">${escapeHtml(collab.email || 'Unknown')}</div>
+                                <div class="collaborator-role">${collab.role || 'collaborator'}</div>
+                            </div>
+                        </div>
+                        ${removeBtn}
+                    </li>
+                `;
+            }).join('');
+
+            // If user is not owner, show owner info at the top
+            if (!isOwner && data.ownerEmail) {
+                const ownerInitial = data.ownerEmail[0].toUpperCase();
+                collaboratorList.innerHTML = `
+                    <li class="collaborator-item">
+                        <div class="collaborator-info">
+                            <div class="collaborator-avatar">${escapeHtml(ownerInitial)}</div>
+                            <div>
+                                <div class="collaborator-email">${escapeHtml(data.ownerEmail)}</div>
+                                <div class="collaborator-role">Owner</div>
+                            </div>
+                        </div>
+                        <span class="owner-badge">Owner</span>
+                    </li>
+                ` + collaboratorList.innerHTML;
+            }
         }
 
         // Add new item
@@ -809,6 +1402,132 @@
         document.getElementById('signupPassword').addEventListener('keypress', (e) => {
             if (e.key === 'Enter') document.getElementById('signupBtn').click();
         });
+
+        // =====================================================
+        // SHARE MODAL EVENT HANDLERS
+        // =====================================================
+
+        // Open share modal
+        shareBtn.addEventListener('click', () => {
+            const data = listData[currentList];
+            if (data) {
+                renderCollaborators(data);
+            }
+            shareModal.classList.add('active');
+            inviteEmail.value = '';
+            shareMessage.className = 'share-message';
+            shareMessage.textContent = '';
+        });
+
+        // Close share modal
+        modalClose.addEventListener('click', () => {
+            shareModal.classList.remove('active');
+        });
+
+        // Close modal on overlay click
+        shareModal.addEventListener('click', (e) => {
+            if (e.target === shareModal) {
+                shareModal.classList.remove('active');
+            }
+        });
+
+        // Show message in share modal
+        function showShareMessage(message, type) {
+            shareMessage.textContent = message;
+            shareMessage.className = `share-message ${type}`;
+            setTimeout(() => {
+                shareMessage.className = 'share-message';
+                shareMessage.textContent = '';
+            }, 4000);
+        }
+
+        // Invite collaborator
+        inviteBtn.addEventListener('click', async () => {
+            const email = inviteEmail.value.trim().toLowerCase();
+
+            if (!email) {
+                showShareMessage('Please enter an email address.', 'error');
+                return;
+            }
+
+            // Basic email validation
+            if (!email.includes('@') || !email.includes('.')) {
+                showShareMessage('Please enter a valid email address.', 'error');
+                return;
+            }
+
+            const listId = currentList === 'shopping' ? userLists.shopping : userLists.tasks;
+            if (!listId) return;
+
+            inviteBtn.disabled = true;
+            inviteBtn.textContent = '...';
+
+            try {
+                const collaborator = await SharingModule.addCollaborator(listId, email);
+                showShareMessage(`Successfully shared with ${collaborator.email}!`, 'success');
+                inviteEmail.value = '';
+
+                // Re-render collaborators
+                const data = listData[currentList];
+                if (data) {
+                    renderCollaborators(data);
+                }
+            } catch (error) {
+                showShareMessage(error.message, 'error');
+            } finally {
+                inviteBtn.disabled = false;
+                inviteBtn.textContent = 'Invite';
+            }
+        });
+
+        // Handle Enter key on invite input
+        inviteEmail.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') inviteBtn.click();
+        });
+
+        // Remove collaborator
+        collaboratorList.addEventListener('click', async (e) => {
+            const removeBtn = e.target.closest('.remove-collaborator');
+            if (!removeBtn) return;
+
+            const collaboratorId = removeBtn.dataset.id;
+            const listId = currentList === 'shopping' ? userLists.shopping : userLists.tasks;
+
+            if (!listId || !collaboratorId) return;
+
+            removeBtn.disabled = true;
+            removeBtn.textContent = '...';
+
+            try {
+                await SharingModule.removeCollaborator(listId, collaboratorId);
+                showShareMessage('Collaborator removed.', 'success');
+            } catch (error) {
+                showShareMessage(error.message, 'error');
+                removeBtn.disabled = false;
+                removeBtn.textContent = 'Remove';
+            }
+        });
+
+        // =====================================================
+        // AI INTEGRATION HOOKS (Ready for future use)
+        // =====================================================
+        SharingModule.on('collaborator_added', (data) => {
+            // Future: AI could analyze sharing patterns
+            // Future: AI could suggest sharing with similar users
+            console.log('[AI Hook] Collaborator added:', data);
+        });
+
+        SharingModule.on('collaborator_removed', (data) => {
+            // Future: AI could track collaboration lifecycle
+            console.log('[AI Hook] Collaborator removed:', data);
+        });
+
+        // Future: AI could call this to suggest shares
+        window.AISuggestShare = async function(listId, email, reason) {
+            console.log('[AI] Suggesting share:', { listId, email, reason });
+            // Implementation would show a suggestion UI to the user
+            // User confirms before actual share happens
+        };
     </script>
 </body>
 </html>
