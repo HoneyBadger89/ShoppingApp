@@ -2,9 +2,30 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Shopping & Tasks v3.0</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Our Lists</title>
     <style>
+        :root {
+            /* Backgrounds */
+            --bg-primary: #fefefe;
+            --bg-secondary: #f8f9fa;
+            --bg-card: #ffffff;
+
+            /* Accent colors */
+            --accent-primary: #8b5cf6;
+            --accent-secondary: #f97316;
+            --accent-success: #10b981;
+            --accent-danger: #ef4444;
+
+            /* Text */
+            --text-primary: #1f2937;
+            --text-secondary: #6b7280;
+            --text-muted: #9ca3af;
+
+            /* Gradients */
+            --gradient-header: linear-gradient(135deg, #8b5cf6 0%, #ec4899 100%);
+        }
+
         * {
             box-sizing: border-box;
             margin: 0;
@@ -13,79 +34,84 @@
 
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            background: var(--bg-secondary);
             min-height: 100vh;
-            padding: 20px;
+            color: var(--text-primary);
         }
 
+        /* Container */
         .container {
-            max-width: 500px;
+            max-width: 480px;
             margin: 0 auto;
-            background: white;
-            border-radius: 20px;
-            box-shadow: 0 10px 40px rgba(0,0,0,0.1);
-            overflow: hidden;
-        }
-
-        .header-row {
+            min-height: 100vh;
+            background: var(--bg-primary);
             display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 25px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            flex-direction: column;
             position: relative;
         }
 
-        h1 {
-            text-align: center;
+        /* Header */
+        .header {
+            background: var(--gradient-header);
+            padding: 20px;
+            padding-top: 24px;
             color: white;
-            font-size: 1.5rem;
+            position: relative;
         }
 
-        .shared-badge {
-            background: rgba(255,255,255,0.25);
-            color: white;
-            font-size: 0.7rem;
-            padding: 3px 8px;
-            border-radius: 10px;
-            margin-left: 10px;
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+        }
+
+        .header-left h1 {
+            font-size: 24px;
+            font-weight: 700;
+            margin-bottom: 4px;
+        }
+
+        .header-subtitle {
+            font-size: 14px;
+            opacity: 0.9;
+            font-weight: 400;
         }
 
         .share-btn {
-            position: absolute;
-            right: 20px;
             background: rgba(255,255,255,0.2);
             border: none;
             color: white;
-            font-size: 1.3rem;
             width: 40px;
             height: 40px;
-            border-radius: 50%;
+            border-radius: 12px;
             cursor: pointer;
-            transition: all 0.3s ease;
             display: flex;
             align-items: center;
             justify-content: center;
+            font-size: 18px;
+            transition: all 0.2s ease;
         }
 
         .share-btn:hover {
-            background: rgba(255,255,255,0.35);
-            transform: scale(1.1);
+            background: rgba(255,255,255,0.3);
+            transform: scale(1.05);
         }
 
         .share-btn.has-collaborators {
-            background: rgba(56, 239, 125, 0.4);
+            background: rgba(16, 185, 129, 0.5);
         }
 
         /* Auth Styles */
         .auth-container {
-            padding: 30px;
+            padding: 30px 20px;
+            flex: 1;
         }
 
         .auth-container h2 {
             text-align: center;
             margin-bottom: 25px;
-            color: #333;
+            color: var(--text-primary);
+            font-size: 24px;
         }
 
         .auth-tabs {
@@ -98,16 +124,17 @@
             flex: 1;
             padding: 12px;
             border: none;
-            background: #e9ecef;
-            border-radius: 10px;
+            background: var(--bg-secondary);
+            border-radius: 12px;
             font-size: 1rem;
             font-weight: 600;
             cursor: pointer;
-            transition: all 0.3s ease;
+            transition: all 0.2s ease;
+            color: var(--text-secondary);
         }
 
         .auth-tab.active {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: var(--gradient-header);
             color: white;
         }
 
@@ -120,56 +147,58 @@
         }
 
         .form-group {
-            margin-bottom: 15px;
+            margin-bottom: 16px;
         }
 
         .form-group label {
             display: block;
-            margin-bottom: 5px;
+            margin-bottom: 6px;
             font-weight: 500;
-            color: #555;
+            color: var(--text-secondary);
+            font-size: 14px;
         }
 
         .form-group input {
             width: 100%;
-            padding: 15px;
-            font-size: 1rem;
-            border: 2px solid #e9ecef;
+            padding: 14px 16px;
+            font-size: 16px;
+            border: 2px solid #e5e7eb;
             border-radius: 12px;
             outline: none;
-            transition: border-color 0.3s ease;
+            transition: border-color 0.2s ease;
+            background: var(--bg-card);
         }
 
         .form-group input:focus {
-            border-color: #667eea;
+            border-color: var(--accent-primary);
         }
 
         .auth-btn {
             width: 100%;
-            padding: 15px;
-            font-size: 1rem;
+            padding: 14px;
+            font-size: 16px;
             font-weight: 600;
             border: none;
             border-radius: 12px;
             cursor: pointer;
-            transition: all 0.3s ease;
-            margin-bottom: 10px;
+            transition: all 0.2s ease;
+            margin-top: 8px;
         }
 
         .auth-btn.primary {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: var(--gradient-header);
             color: white;
         }
 
         .auth-btn.primary:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+            opacity: 0.9;
+            transform: translateY(-1px);
         }
 
         .auth-btn.google {
-            background: white;
-            border: 2px solid #e9ecef;
-            color: #333;
+            background: var(--bg-card);
+            color: var(--text-primary);
+            border: 2px solid #e5e7eb;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -177,7 +206,7 @@
         }
 
         .auth-btn.google:hover {
-            background: #f8f9fa;
+            background: var(--bg-secondary);
         }
 
         .google-icon {
@@ -187,8 +216,8 @@
 
         .divider {
             text-align: center;
+            color: var(--text-muted);
             margin: 20px 0;
-            color: #adb5bd;
             position: relative;
         }
 
@@ -199,18 +228,19 @@
             top: 50%;
             width: 40%;
             height: 1px;
-            background: #e9ecef;
+            background: #e5e7eb;
         }
 
         .divider::before { left: 0; }
         .divider::after { right: 0; }
 
         .error-message {
-            background: #fee;
-            color: #c00;
-            padding: 12px;
-            border-radius: 10px;
-            margin-bottom: 15px;
+            background: #fef2f2;
+            color: var(--accent-danger);
+            padding: 12px 16px;
+            border-radius: 12px;
+            margin-bottom: 16px;
+            font-size: 14px;
             display: none;
         }
 
@@ -218,237 +248,315 @@
             display: block;
         }
 
-        /* User Header */
-        .user-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 15px 20px;
-            background: #f8f9fa;
-            border-bottom: 1px solid #e9ecef;
-        }
-
-        .user-email {
-            font-size: 0.9rem;
-            color: #666;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: nowrap;
-            max-width: 200px;
-        }
-
-        .logout-btn {
-            padding: 8px 16px;
-            font-size: 0.85rem;
-            font-weight: 600;
-            background: #e9ecef;
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-            transition: background 0.3s ease;
-        }
-
-        .logout-btn:hover {
-            background: #dee2e6;
-        }
-
-        /* App Styles */
+        /* App Container */
         .app-container {
             display: none;
+            flex: 1;
+            flex-direction: column;
         }
 
         .app-container.active {
-            display: block;
-        }
-
-        .tab-buttons {
             display: flex;
-            padding: 15px;
-            gap: 10px;
-            background: #f8f9fa;
         }
 
-        .tab-btn {
+        /* Content Area */
+        .content {
             flex: 1;
-            padding: 15px 20px;
-            font-size: 1rem;
-            font-weight: 600;
-            border: none;
-            border-radius: 12px;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            background: #e9ecef;
-            color: #495057;
+            padding: 16px;
+            padding-bottom: 160px;
+            overflow-y: auto;
         }
 
-        .tab-btn.active {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
-        }
-
-        .tab-btn:hover:not(.active) {
-            background: #dee2e6;
-        }
-
-        .tab-btn .shared-indicator {
-            font-size: 0.65rem;
-            background: rgba(102, 126, 234, 0.2);
-            color: #667eea;
-            padding: 2px 6px;
-            border-radius: 8px;
-            margin-left: 6px;
-            font-weight: 500;
-        }
-
-        .tab-btn.active .shared-indicator {
-            background: rgba(255, 255, 255, 0.3);
-            color: white;
-        }
-
-        .tab-buttons {
-            flex-wrap: wrap;
-        }
-
-        .shared-section-label {
-            width: 100%;
-            font-size: 0.75rem;
-            color: #6c757d;
-            padding: 8px 0 4px 5px;
-            font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-
-        .input-section {
-            display: flex;
-            padding: 15px;
-            gap: 10px;
-            background: #f8f9fa;
-            border-top: 1px solid #e9ecef;
-        }
-
-        .input-section input {
-            flex: 1;
-            padding: 15px 20px;
-            font-size: 1rem;
-            border: 2px solid #e9ecef;
-            border-radius: 12px;
-            outline: none;
-            transition: border-color 0.3s ease;
-        }
-
-        .input-section input:focus {
-            border-color: #667eea;
-        }
-
-        .add-btn {
-            padding: 15px 25px;
-            font-size: 1rem;
-            font-weight: 600;
-            background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
-            color: white;
-            border: none;
-            border-radius: 12px;
-            cursor: pointer;
-            transition: transform 0.2s ease, box-shadow 0.2s ease;
-        }
-
-        .add-btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 15px rgba(17, 153, 142, 0.4);
-        }
-
-        .add-btn:active {
-            transform: translateY(0);
-        }
-
-        .list-container {
-            padding: 15px;
-            min-height: 300px;
-        }
-
-        .list {
+        /* Item Cards */
+        .items-list {
             list-style: none;
         }
 
-        .list-item {
-            display: flex;
-            align-items: center;
-            padding: 18px 20px;
-            margin-bottom: 10px;
-            background: #f8f9fa;
+        .item-card {
+            background: var(--bg-card);
             border-radius: 12px;
-            cursor: pointer;
+            padding: 16px;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
             transition: all 0.2s ease;
-            font-size: 1.1rem;
+            position: relative;
         }
 
-        .list-item:hover {
-            background: #e9ecef;
+        .item-card:active {
+            transform: scale(0.98);
         }
 
-        .list-item.done {
-            text-decoration: line-through;
-            color: #adb5bd;
-            background: #e9ecef;
+        .item-card.completing {
+            animation: completeFlash 0.3s ease;
         }
 
-        .list-item .checkbox {
+        @keyframes completeFlash {
+            50% { background-color: #d1fae5; }
+        }
+
+        .item-checkbox {
             width: 24px;
             height: 24px;
-            border: 2px solid #adb5bd;
-            border-radius: 6px;
-            margin-right: 15px;
+            border: 2px solid #d1d5db;
+            border-radius: 50%;
+            cursor: pointer;
             display: flex;
             align-items: center;
             justify-content: center;
+            transition: all 0.2s ease;
             flex-shrink: 0;
+            margin-top: 2px;
+        }
+
+        .item-checkbox:hover {
+            border-color: var(--accent-success);
+        }
+
+        .item-card.done .item-checkbox {
+            background: var(--accent-success);
+            border-color: var(--accent-success);
+            transform: scale(1.05);
+        }
+
+        .item-checkbox-icon {
+            color: white;
+            font-size: 14px;
+            opacity: 0;
+            transition: opacity 0.2s ease;
+        }
+
+        .item-card.done .item-checkbox-icon {
+            opacity: 1;
+        }
+
+        .item-content {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .item-text {
+            font-size: 16px;
+            font-weight: 500;
+            color: var(--text-primary);
+            word-break: break-word;
             transition: all 0.2s ease;
         }
 
-        .list-item.done .checkbox {
-            background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
-            border-color: transparent;
+        .item-card.done .item-text {
+            text-decoration: line-through;
+            opacity: 0.5;
         }
 
-        .list-item.done .checkbox::after {
-            content: '\2713';
+        .item-meta {
+            font-size: 12px;
+            color: var(--text-muted);
+            margin-top: 4px;
+        }
+
+        .item-delete {
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            cursor: pointer;
+            padding: 8px;
+            margin: -8px;
+            font-size: 16px;
+            opacity: 0.5;
+            transition: all 0.2s ease;
+        }
+
+        .item-delete:hover {
+            opacity: 1;
+            color: var(--accent-danger);
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: var(--text-muted);
+        }
+
+        .empty-state-icon {
+            font-size: 48px;
+            margin-bottom: 16px;
+        }
+
+        .empty-state-text {
+            font-size: 16px;
+        }
+
+        .loading-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: var(--text-muted);
+        }
+
+        /* Add Input */
+        .add-input-container {
+            position: fixed;
+            bottom: 76px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: calc(100% - 32px);
+            max-width: 448px;
+            background: var(--bg-card);
+            border-radius: 16px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+            display: flex;
+            padding: 8px;
+            gap: 8px;
+            z-index: 100;
+        }
+
+        .add-input {
+            flex: 1;
+            border: none;
+            outline: none;
+            padding: 12px 16px;
+            font-size: 16px;
+            background: var(--bg-secondary);
+            border-radius: 12px;
+        }
+
+        .add-input::placeholder {
+            color: var(--text-muted);
+        }
+
+        .add-btn {
+            background: var(--accent-secondary);
             color: white;
-            font-weight: bold;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
         }
 
-        .empty-message {
+        .add-btn:hover {
+            opacity: 0.9;
+            transform: scale(1.02);
+        }
+
+        /* Bottom Navigation */
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 100%;
+            max-width: 480px;
+            height: 64px;
+            background: var(--bg-card);
+            box-shadow: 0 -2px 20px rgba(0,0,0,0.08);
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            z-index: 200;
+        }
+
+        .nav-item {
+            background: none;
+            border: none;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+            padding: 8px 20px;
+            cursor: pointer;
+            color: var(--text-muted);
+            transition: all 0.2s ease;
+        }
+
+        .nav-item.active {
+            color: var(--accent-primary);
+        }
+
+        .nav-icon {
+            font-size: 24px;
+        }
+
+        .nav-label {
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        /* Profile Tab */
+        .profile-content {
+            padding: 20px 16px;
+            display: none;
+        }
+
+        .profile-content.active {
+            display: block;
+        }
+
+        .profile-header {
             text-align: center;
-            color: #adb5bd;
-            padding: 40px;
-            font-size: 1.1rem;
+            padding: 20px 0 30px;
         }
 
-        .loading {
-            text-align: center;
-            padding: 40px;
-            color: #666;
-        }
-
-        .loading::after {
-            content: '';
-            display: inline-block;
-            width: 20px;
-            height: 20px;
-            border: 3px solid #e9ecef;
-            border-top-color: #667eea;
+        .profile-avatar {
+            width: 80px;
+            height: 80px;
+            background: var(--gradient-header);
             border-radius: 50%;
-            animation: spin 1s linear infinite;
-            margin-left: 10px;
-            vertical-align: middle;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 16px;
+            font-size: 32px;
+            color: white;
         }
 
-        @keyframes spin {
-            to { transform: rotate(360deg); }
+        .profile-email {
+            font-size: 16px;
+            color: var(--text-primary);
+            font-weight: 500;
         }
 
-        /* Share Modal Styles */
+        .profile-menu {
+            list-style: none;
+        }
+
+        .profile-menu-item {
+            background: var(--bg-card);
+            border-radius: 12px;
+            margin-bottom: 12px;
+            overflow: hidden;
+        }
+
+        .profile-menu-btn {
+            width: 100%;
+            padding: 16px 20px;
+            background: none;
+            border: none;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            cursor: pointer;
+            font-size: 16px;
+            color: var(--text-primary);
+            transition: background 0.2s ease;
+        }
+
+        .profile-menu-btn:hover {
+            background: var(--bg-secondary);
+        }
+
+        .profile-menu-btn.danger {
+            color: var(--accent-danger);
+        }
+
+        .profile-menu-icon {
+            font-size: 20px;
+        }
+
+        /* Share Modal */
         .modal-overlay {
             position: fixed;
             top: 0;
@@ -456,148 +564,126 @@
             right: 0;
             bottom: 0;
             background: rgba(0,0,0,0.5);
-            display: flex;
+            display: none;
             align-items: center;
             justify-content: center;
             z-index: 1000;
-            opacity: 0;
-            visibility: hidden;
-            transition: all 0.3s ease;
+            padding: 20px;
         }
 
         .modal-overlay.active {
-            opacity: 1;
-            visibility: visible;
+            display: flex;
         }
 
         .share-modal {
-            background: white;
+            background: var(--bg-card);
             border-radius: 20px;
-            width: 90%;
+            width: 100%;
             max-width: 400px;
             max-height: 80vh;
             overflow: hidden;
-            transform: scale(0.9);
-            transition: transform 0.3s ease;
-        }
-
-        .modal-overlay.active .share-modal {
-            transform: scale(1);
+            display: flex;
+            flex-direction: column;
         }
 
         .modal-header {
             padding: 20px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
+            border-bottom: 1px solid #e5e7eb;
             display: flex;
             justify-content: space-between;
             align-items: center;
         }
 
         .modal-header h2 {
-            font-size: 1.2rem;
+            font-size: 18px;
+            font-weight: 600;
         }
 
         .modal-close {
-            background: rgba(255,255,255,0.2);
+            background: none;
             border: none;
-            color: white;
-            width: 32px;
-            height: 32px;
-            border-radius: 50%;
+            font-size: 24px;
+            color: var(--text-muted);
             cursor: pointer;
-            font-size: 1.2rem;
-            transition: background 0.3s ease;
-        }
-
-        .modal-close:hover {
-            background: rgba(255,255,255,0.35);
+            padding: 4px;
         }
 
         .modal-body {
             padding: 20px;
-            max-height: 50vh;
             overflow-y: auto;
         }
 
         .invite-section {
-            margin-bottom: 20px;
+            margin-bottom: 24px;
         }
 
         .invite-section label {
             display: block;
-            font-weight: 600;
-            color: #333;
+            font-size: 14px;
+            font-weight: 500;
+            color: var(--text-secondary);
             margin-bottom: 8px;
         }
 
         .invite-input-group {
             display: flex;
-            gap: 10px;
+            gap: 8px;
         }
 
         .invite-input-group input {
             flex: 1;
-            padding: 12px 15px;
-            border: 2px solid #e9ecef;
-            border-radius: 10px;
-            font-size: 1rem;
+            padding: 12px 16px;
+            border: 2px solid #e5e7eb;
+            border-radius: 12px;
+            font-size: 16px;
             outline: none;
-            transition: border-color 0.3s ease;
         }
 
         .invite-input-group input:focus {
-            border-color: #667eea;
+            border-color: var(--accent-primary);
         }
 
         .invite-btn {
-            padding: 12px 20px;
-            background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+            background: var(--accent-primary);
             color: white;
             border: none;
-            border-radius: 10px;
+            padding: 12px 20px;
+            border-radius: 12px;
+            font-size: 14px;
             font-weight: 600;
             cursor: pointer;
-            transition: all 0.3s ease;
-        }
-
-        .invite-btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 15px rgba(17, 153, 142, 0.4);
+            white-space: nowrap;
         }
 
         .invite-btn:disabled {
-            opacity: 0.6;
-            cursor: not-allowed;
-            transform: none;
+            opacity: 0.5;
         }
 
         .share-message {
-            padding: 10px 15px;
+            margin-top: 12px;
+            padding: 10px 14px;
             border-radius: 8px;
-            margin-top: 10px;
-            font-size: 0.9rem;
+            font-size: 14px;
             display: none;
         }
 
         .share-message.success {
-            background: #d4edda;
-            color: #155724;
             display: block;
+            background: #d1fae5;
+            color: #065f46;
         }
 
         .share-message.error {
-            background: #f8d7da;
-            color: #721c24;
             display: block;
+            background: #fef2f2;
+            color: var(--accent-danger);
         }
 
         .collaborators-section h3 {
-            font-size: 1rem;
-            color: #333;
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text-secondary);
             margin-bottom: 12px;
-            padding-bottom: 8px;
-            border-bottom: 1px solid #e9ecef;
         }
 
         .collaborator-list {
@@ -608,110 +694,73 @@
             display: flex;
             align-items: center;
             justify-content: space-between;
-            padding: 12px;
-            background: #f8f9fa;
-            border-radius: 10px;
-            margin-bottom: 8px;
+            padding: 12px 0;
+            border-bottom: 1px solid #f3f4f6;
+        }
+
+        .collaborator-item:last-child {
+            border-bottom: none;
         }
 
         .collaborator-info {
             display: flex;
             align-items: center;
-            gap: 10px;
+            gap: 12px;
         }
 
         .collaborator-avatar {
-            width: 36px;
-            height: 36px;
+            width: 40px;
+            height: 40px;
+            background: var(--bg-secondary);
             border-radius: 50%;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
             display: flex;
             align-items: center;
             justify-content: center;
             font-weight: 600;
-            font-size: 0.9rem;
+            color: var(--text-secondary);
         }
 
         .collaborator-email {
-            font-size: 0.9rem;
-            color: #333;
+            font-size: 14px;
+            font-weight: 500;
         }
 
         .collaborator-role {
-            font-size: 0.75rem;
-            color: #888;
+            font-size: 12px;
+            color: var(--text-muted);
         }
 
         .remove-collaborator {
-            background: #fee;
-            color: #c00;
+            background: none;
             border: none;
-            padding: 6px 12px;
-            border-radius: 6px;
-            font-size: 0.8rem;
+            color: var(--accent-danger);
+            font-size: 13px;
             cursor: pointer;
-            transition: all 0.3s ease;
-        }
-
-        .remove-collaborator:hover {
-            background: #fdd;
-        }
-
-        .no-collaborators {
-            text-align: center;
-            color: #adb5bd;
-            padding: 20px;
-            font-style: italic;
+            padding: 6px 12px;
         }
 
         .owner-badge {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
+            background: var(--bg-secondary);
+            color: var(--text-muted);
+            font-size: 12px;
             padding: 4px 10px;
-            border-radius: 12px;
-            font-size: 0.75rem;
-            font-weight: 600;
+            border-radius: 20px;
         }
 
-        @media (max-width: 400px) {
-            body {
-                padding: 10px;
-            }
+        .no-collaborators {
+            color: var(--text-muted);
+            font-size: 14px;
+            text-align: center;
+            padding: 20px;
+        }
 
-            .tab-btn {
-                padding: 12px 15px;
-                font-size: 0.9rem;
-            }
+        /* Hide elements based on state */
+        .hidden {
+            display: none !important;
+        }
 
-            .input-section {
-                flex-direction: column;
-            }
-
-            .add-btn {
-                width: 100%;
-            }
-
-            .user-header {
-                flex-direction: column;
-                gap: 10px;
-            }
-
-            .user-email {
-                max-width: 100%;
-            }
-
-            .header-row {
-                padding: 20px 15px;
-            }
-
-            .share-btn {
-                right: 15px;
-                width: 36px;
-                height: 36px;
-                font-size: 1.1rem;
-            }
-
+        /* Responsive */
+        @media (max-width: 480px) {
             .invite-input-group {
                 flex-direction: column;
             }
@@ -719,25 +768,27 @@
             .invite-btn {
                 width: 100%;
             }
-
-            .share-modal {
-                width: 95%;
-            }
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <div class="header-row">
-            <h1 id="pageTitle">Shopping & Tasks v3.0</h1>
-            <span class="shared-badge" id="sharedBadge" style="display: none;">SHARED</span>
-            <button class="share-btn" id="shareBtn" title="Share this list" style="display: none;">
-                <span>&#128101;</span>
-            </button>
+        <!-- Header -->
+        <div class="header" id="mainHeader">
+            <div class="header-content">
+                <div class="header-left">
+                    <h1 id="pageTitle">Our Lists</h1>
+                    <div class="header-subtitle" id="headerSubtitle"></div>
+                </div>
+                <button class="share-btn hidden" id="shareBtn" title="Share">
+                    <span>&#128101;</span>
+                </button>
+            </div>
         </div>
 
         <!-- Auth Section -->
         <div class="auth-container" id="authContainer">
+            <h2>Welcome</h2>
             <div class="auth-tabs">
                 <button class="auth-tab active" data-tab="login">Login</button>
                 <button class="auth-tab" data-tab="signup">Sign Up</button>
@@ -745,7 +796,6 @@
 
             <div class="error-message" id="authError"></div>
 
-            <!-- Login Form -->
             <div class="auth-form active" id="loginForm">
                 <div class="form-group">
                     <label>Email</label>
@@ -758,7 +808,6 @@
                 <button class="auth-btn primary" id="loginBtn">Login</button>
             </div>
 
-            <!-- Signup Form -->
             <div class="auth-form" id="signupForm">
                 <div class="form-group">
                     <label>Email</label>
@@ -786,25 +835,56 @@
 
         <!-- App Section -->
         <div class="app-container" id="appContainer">
-            <div class="user-header">
-                <span class="user-email" id="userEmail"></span>
-                <button class="logout-btn" id="logoutBtn">Logout</button>
+            <!-- Tasks/Shopping Content -->
+            <div class="content" id="listContent">
+                <ul class="items-list" id="itemList">
+                    <li class="loading-state">Loading...</li>
+                </ul>
             </div>
 
-            <div class="tab-buttons">
-                <!-- Tabs rendered dynamically by renderListTabs() -->
+            <!-- Profile Content -->
+            <div class="profile-content" id="profileContent">
+                <div class="profile-header">
+                    <div class="profile-avatar" id="profileAvatar">?</div>
+                    <div class="profile-email" id="profileEmail"></div>
+                </div>
+                <ul class="profile-menu">
+                    <li class="profile-menu-item">
+                        <button class="profile-menu-btn" id="manageSharingBtn">
+                            <span class="profile-menu-icon">&#128101;</span>
+                            Manage Sharing
+                        </button>
+                    </li>
+                    <li class="profile-menu-item">
+                        <button class="profile-menu-btn danger" id="logoutBtn">
+                            <span class="profile-menu-icon">&#128682;</span>
+                            Logout
+                        </button>
+                    </li>
+                </ul>
             </div>
 
-            <div class="input-section">
-                <input type="text" id="itemInput" placeholder="Add new item...">
+            <!-- Add Input (floating) -->
+            <div class="add-input-container" id="addInputContainer">
+                <input type="text" class="add-input" id="itemInput" placeholder="Add a task...">
                 <button class="add-btn" id="addBtn">Add</button>
             </div>
 
-            <div class="list-container">
-                <ul class="list" id="itemList">
-                    <li class="loading">Loading</li>
-                </ul>
-            </div>
+            <!-- Bottom Navigation -->
+            <nav class="bottom-nav">
+                <button data-tab="tasks" class="nav-item active">
+                    <span class="nav-icon">&#128203;</span>
+                    <span class="nav-label">Tasks</span>
+                </button>
+                <button data-tab="shopping" class="nav-item">
+                    <span class="nav-icon">&#128722;</span>
+                    <span class="nav-label">Shopping</span>
+                </button>
+                <button data-tab="profile" class="nav-item">
+                    <span class="nav-icon">&#128100;</span>
+                    <span class="nav-label">Profile</span>
+                </button>
+            </nav>
         </div>
     </div>
 
@@ -816,7 +896,7 @@
                 <button class="modal-close" id="modalClose">&times;</button>
             </div>
             <div class="modal-body">
-                <div class="invite-section">
+                <div class="invite-section" id="inviteSection">
                     <label>Invite by email</label>
                     <div class="invite-input-group">
                         <input type="email" id="inviteEmail" placeholder="Enter email address">
@@ -857,39 +937,39 @@
 
         // State
         let currentUser = null;
-        let currentList = null; // Will be set to first list ID
-        let allLists = []; // Array of { id, name, isOwner, ownerEmail } for all accessible lists
-        let listData = {}; // Full list documents keyed by list ID
+        let currentTab = 'tasks'; // 'tasks', 'shopping', or 'profile'
+        let lists = { tasks: null, shopping: null }; // List IDs
+        let listData = { tasks: null, shopping: null }; // Full list documents
+        let itemCounts = { tasks: 0, shopping: 0 };
         let unsubscribeItems = null;
         let unsubscribeList = null;
 
+        // DOM Elements
+        const authContainer = document.getElementById('authContainer');
+        const appContainer = document.getElementById('appContainer');
+        const pageTitle = document.getElementById('pageTitle');
+        const headerSubtitle = document.getElementById('headerSubtitle');
+        const authError = document.getElementById('authError');
+        const shareBtn = document.getElementById('shareBtn');
+        const shareModal = document.getElementById('shareModal');
+        const modalClose = document.getElementById('modalClose');
+        const inviteEmail = document.getElementById('inviteEmail');
+        const inviteBtn = document.getElementById('inviteBtn');
+        const inviteSection = document.getElementById('inviteSection');
+        const shareMessage = document.getElementById('shareMessage');
+        const collaboratorList = document.getElementById('collaboratorList');
+        const listContent = document.getElementById('listContent');
+        const profileContent = document.getElementById('profileContent');
+        const addInputContainer = document.getElementById('addInputContainer');
+        const itemInput = document.getElementById('itemInput');
+
         // =====================================================
-        // SHARING MODULE - Modular, Event-Driven Architecture
-        // Designed for future AI integration
+        // SHARING MODULE
         // =====================================================
         const SharingModule = {
-            // Event emitter for future AI hooks
-            events: {},
-
-            on(event, callback) {
-                if (!this.events[event]) this.events[event] = [];
-                this.events[event].push(callback);
-            },
-
-            emit(event, data) {
-                if (this.events[event]) {
-                    this.events[event].forEach(cb => cb(data));
-                }
-                // Log for future AI analysis
-                console.log(`[SharingEvent] ${event}:`, data);
-            },
-
-            // Find user by email using Firestore users collection
             async findUserByEmail(email) {
-                // First check if user exists in our users collection
                 const usersRef = db.collection('users');
                 const snapshot = await usersRef.where('email', '==', email.toLowerCase()).limit(1).get();
-
                 if (!snapshot.empty) {
                     const doc = snapshot.docs[0];
                     return { id: doc.id, ...doc.data() };
@@ -897,21 +977,15 @@
                 return null;
             },
 
-            // Save user profile on login (for email lookup)
             async saveUserProfile(user) {
                 const userRef = db.collection('users').doc(user.uid);
                 await userRef.set({
                     email: user.email.toLowerCase(),
                     displayName: user.displayName || null,
-                    lastLogin: firebase.firestore.FieldValue.serverTimestamp(),
-                    metadata: {
-                        aiPreferences: {},
-                        sharingHistory: []
-                    }
+                    lastLogin: firebase.firestore.FieldValue.serverTimestamp()
                 }, { merge: true });
             },
 
-            // Add collaborator to list
             async addCollaborator(listId, collaboratorEmail) {
                 const collaborator = await this.findUserByEmail(collaboratorEmail);
 
@@ -930,19 +1004,16 @@
                     throw new Error('List not found.');
                 }
 
-                const listData = listDoc.data();
+                const data = listDoc.data();
 
-                // Check if user is the owner
-                if (listData.ownerId !== currentUser.uid) {
+                if (data.ownerId !== currentUser.uid) {
                     throw new Error('Only the owner can share this list.');
                 }
 
-                // Check if already shared
-                if (listData.sharedWith && listData.sharedWith.includes(collaborator.id)) {
-                    throw new Error('This list is already shared with this user.');
+                if (data.sharedWith && data.sharedWith.includes(collaborator.id)) {
+                    throw new Error('Already shared with this user.');
                 }
 
-                // Update list with new collaborator
                 await listRef.update({
                     sharedWith: firebase.firestore.FieldValue.arrayUnion(collaborator.id),
                     [`collaborators.${collaborator.id}`]: {
@@ -951,21 +1022,12 @@
                         addedAt: firebase.firestore.FieldValue.serverTimestamp(),
                         addedBy: currentUser.uid,
                         role: 'collaborator'
-                    },
-                    'metadata.lastShared': firebase.firestore.FieldValue.serverTimestamp(),
-                    'metadata.shareCount': firebase.firestore.FieldValue.increment(1)
-                });
-
-                this.emit('collaborator_added', {
-                    listId,
-                    collaboratorId: collaborator.id,
-                    collaboratorEmail: collaborator.email
+                    }
                 });
 
                 return collaborator;
             },
 
-            // Remove collaborator from list
             async removeCollaborator(listId, collaboratorId) {
                 const listRef = db.collection('lists').doc(listId);
                 const listDoc = await listRef.get();
@@ -974,10 +1036,7 @@
                     throw new Error('List not found.');
                 }
 
-                const listData = listDoc.data();
-
-                // Check if user is the owner
-                if (listData.ownerId !== currentUser.uid) {
+                if (listDoc.data().ownerId !== currentUser.uid) {
                     throw new Error('Only the owner can remove collaborators.');
                 }
 
@@ -985,21 +1044,16 @@
                     sharedWith: firebase.firestore.FieldValue.arrayRemove(collaboratorId),
                     [`collaborators.${collaboratorId}`]: firebase.firestore.FieldValue.delete()
                 });
-
-                this.emit('collaborator_removed', { listId, collaboratorId });
             },
 
-            // Check if current user is owner of the list
             isOwner(listDoc) {
                 return listDoc && listDoc.ownerId === currentUser.uid;
             },
 
-            // Check if list is shared
             isShared(listDoc) {
                 return listDoc && listDoc.sharedWith && listDoc.sharedWith.length > 0;
             },
 
-            // Get collaborators for display
             getCollaborators(listDoc) {
                 if (!listDoc || !listDoc.collaborators) return [];
                 return Object.entries(listDoc.collaborators).map(([id, data]) => ({
@@ -1009,29 +1063,375 @@
             }
         };
 
-        // DOM Elements
-        const authContainer = document.getElementById('authContainer');
-        const appContainer = document.getElementById('appContainer');
-        const pageTitle = document.getElementById('pageTitle');
-        const authError = document.getElementById('authError');
-        const userEmailSpan = document.getElementById('userEmail');
-        const shareBtn = document.getElementById('shareBtn');
-        const shareModal = document.getElementById('shareModal');
-        const sharedBadge = document.getElementById('sharedBadge');
-        const modalClose = document.getElementById('modalClose');
-        const inviteEmail = document.getElementById('inviteEmail');
-        const inviteBtn = document.getElementById('inviteBtn');
-        const shareMessage = document.getElementById('shareMessage');
-        const collaboratorList = document.getElementById('collaboratorList');
+        // =====================================================
+        // UTILITY FUNCTIONS
+        // =====================================================
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
 
-        // Show error message
         function showError(message) {
             authError.textContent = message;
             authError.classList.add('show');
             setTimeout(() => authError.classList.remove('show'), 5000);
         }
 
-        // Auth tab switching
+        function truncateEmail(email) {
+            if (!email) return '';
+            const parts = email.split('@');
+            const name = parts[0];
+            return name.length > 12 ? name.substring(0, 12) + '...' : name;
+        }
+
+        function getAddedByText(item) {
+            if (!item.createdByEmail) return '';
+            if (item.createdByEmail === currentUser.email) {
+                return 'added by You';
+            }
+            const name = item.createdByEmail.split('@')[0];
+            return `added by ${name}`;
+        }
+
+        // =====================================================
+        // UI UPDATE FUNCTIONS
+        // =====================================================
+        function updateHeader() {
+            if (currentTab === 'profile') {
+                pageTitle.textContent = 'Profile';
+                headerSubtitle.textContent = '';
+                shareBtn.classList.add('hidden');
+            } else {
+                const title = currentTab === 'tasks' ? 'Our Tasks' : 'Shopping';
+                pageTitle.textContent = title;
+
+                const email = truncateEmail(currentUser?.email);
+                const count = itemCounts[currentTab] || 0;
+                headerSubtitle.textContent = `${email} • ${count} item${count !== 1 ? 's' : ''}`;
+
+                shareBtn.classList.remove('hidden');
+
+                // Update share button state
+                const data = listData[currentTab];
+                if (data && (SharingModule.isShared(data) || !SharingModule.isOwner(data))) {
+                    shareBtn.classList.add('has-collaborators');
+                } else {
+                    shareBtn.classList.remove('has-collaborators');
+                }
+            }
+        }
+
+        function updatePlaceholder() {
+            const placeholder = currentTab === 'tasks' ? 'Add a task...' : 'Add an item...';
+            itemInput.placeholder = placeholder;
+        }
+
+        // =====================================================
+        // NAVIGATION
+        // =====================================================
+        function switchTab(tab) {
+            currentTab = tab;
+
+            // Update nav buttons
+            document.querySelectorAll('.nav-item').forEach(btn => {
+                btn.classList.toggle('active', btn.dataset.tab === tab);
+            });
+
+            // Show/hide content
+            if (tab === 'profile') {
+                listContent.classList.add('hidden');
+                profileContent.classList.add('active');
+                addInputContainer.classList.add('hidden');
+            } else {
+                listContent.classList.remove('hidden');
+                profileContent.classList.remove('active');
+                addInputContainer.classList.remove('hidden');
+                subscribeToItems();
+            }
+
+            updateHeader();
+            updatePlaceholder();
+        }
+
+        // =====================================================
+        // LIST INITIALIZATION
+        // =====================================================
+        async function initializeLists() {
+            const listsRef = db.collection('lists');
+
+            // Check/create tasks list
+            let tasksQuery = await listsRef
+                .where('ownerId', '==', currentUser.uid)
+                .where('type', '==', 'tasks')
+                .limit(1)
+                .get();
+
+            if (tasksQuery.empty) {
+                // Check if shared with user
+                tasksQuery = await listsRef
+                    .where('sharedWith', 'array-contains', currentUser.uid)
+                    .where('type', '==', 'tasks')
+                    .limit(1)
+                    .get();
+            }
+
+            if (tasksQuery.empty) {
+                const docRef = await listsRef.add({
+                    type: 'tasks',
+                    name: 'Tasks',
+                    ownerId: currentUser.uid,
+                    ownerEmail: currentUser.email,
+                    sharedWith: [],
+                    collaborators: {},
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                });
+                lists.tasks = docRef.id;
+            } else {
+                lists.tasks = tasksQuery.docs[0].id;
+            }
+
+            // Check/create shopping list
+            let shoppingQuery = await listsRef
+                .where('ownerId', '==', currentUser.uid)
+                .where('type', '==', 'shopping')
+                .limit(1)
+                .get();
+
+            if (shoppingQuery.empty) {
+                // Check if shared with user
+                shoppingQuery = await listsRef
+                    .where('sharedWith', 'array-contains', currentUser.uid)
+                    .where('type', '==', 'shopping')
+                    .limit(1)
+                    .get();
+            }
+
+            if (shoppingQuery.empty) {
+                const docRef = await listsRef.add({
+                    type: 'shopping',
+                    name: 'Shopping',
+                    ownerId: currentUser.uid,
+                    ownerEmail: currentUser.email,
+                    sharedWith: [],
+                    collaborators: {},
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                });
+                lists.shopping = docRef.id;
+            } else {
+                lists.shopping = shoppingQuery.docs[0].id;
+            }
+        }
+
+        // =====================================================
+        // ITEMS RENDERING
+        // =====================================================
+        function renderItems(snapshot) {
+            const listEl = document.getElementById('itemList');
+
+            if (snapshot.empty) {
+                const icon = currentTab === 'tasks' ? '&#128203;' : '&#128722;';
+                const text = currentTab === 'tasks' ? 'No tasks yet' : 'No items yet';
+                listEl.innerHTML = `
+                    <li class="empty-state">
+                        <div class="empty-state-icon">${icon}</div>
+                        <div class="empty-state-text">${text}</div>
+                    </li>
+                `;
+                itemCounts[currentTab] = 0;
+                updateHeader();
+                return;
+            }
+
+            const items = [];
+            snapshot.forEach(doc => {
+                items.push({ id: doc.id, ...doc.data() });
+            });
+
+            // Sort: incomplete first, then by date
+            items.sort((a, b) => {
+                if (a.done !== b.done) return a.done ? 1 : -1;
+                const aTime = a.createdAt?.toMillis() || 0;
+                const bTime = b.createdAt?.toMillis() || 0;
+                return aTime - bTime;
+            });
+
+            itemCounts[currentTab] = items.length;
+            updateHeader();
+
+            listEl.innerHTML = items.map(item => `
+                <li class="item-card ${item.done ? 'done' : ''}" data-id="${item.id}">
+                    <div class="item-checkbox" data-action="toggle">
+                        <span class="item-checkbox-icon">&#10003;</span>
+                    </div>
+                    <div class="item-content">
+                        <div class="item-text">${escapeHtml(item.text)}</div>
+                        <div class="item-meta">${getAddedByText(item)}</div>
+                    </div>
+                    <button class="item-delete" data-action="delete" title="Delete">&#128465;</button>
+                </li>
+            `).join('');
+        }
+
+        // =====================================================
+        // SUBSCRIBE TO ITEMS
+        // =====================================================
+        function subscribeToItems() {
+            if (unsubscribeItems) unsubscribeItems();
+            if (unsubscribeList) unsubscribeList();
+
+            const listId = lists[currentTab];
+            if (!listId) return;
+
+            const listRef = db.collection('lists').doc(listId);
+            const itemsRef = listRef.collection('items');
+
+            document.getElementById('itemList').innerHTML = '<li class="loading-state">Loading...</li>';
+
+            // Subscribe to list document
+            unsubscribeList = listRef.onSnapshot(doc => {
+                if (doc.exists) {
+                    listData[currentTab] = { id: doc.id, ...doc.data() };
+                    updateHeader();
+                }
+            });
+
+            // Subscribe to items
+            unsubscribeItems = itemsRef.onSnapshot(snapshot => {
+                renderItems(snapshot);
+            }, error => {
+                console.error('Error:', error);
+                document.getElementById('itemList').innerHTML =
+                    '<li class="empty-state"><div class="empty-state-text">Error loading. Please refresh.</div></li>';
+            });
+        }
+
+        // =====================================================
+        // ITEM ACTIONS
+        // =====================================================
+        async function addItem() {
+            const text = itemInput.value.trim();
+            if (!text || !currentUser) return;
+
+            const listId = lists[currentTab];
+            if (!listId) return;
+
+            try {
+                await db.collection('lists').doc(listId).collection('items').add({
+                    text: text,
+                    done: false,
+                    createdBy: currentUser.uid,
+                    createdByEmail: currentUser.email,
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                });
+                itemInput.value = '';
+            } catch (error) {
+                console.error('Error adding item:', error);
+            }
+        }
+
+        async function toggleItem(itemId) {
+            const listId = lists[currentTab];
+            if (!listId) return;
+
+            const itemRef = db.collection('lists').doc(listId).collection('items').doc(itemId);
+
+            try {
+                const doc = await itemRef.get();
+                if (doc.exists) {
+                    // Add animation
+                    const card = document.querySelector(`[data-id="${itemId}"]`);
+                    if (card && !doc.data().done) {
+                        card.classList.add('completing');
+                        setTimeout(() => card.classList.remove('completing'), 300);
+                    }
+
+                    await itemRef.update({ done: !doc.data().done });
+                }
+            } catch (error) {
+                console.error('Error toggling item:', error);
+            }
+        }
+
+        async function deleteItem(itemId) {
+            const listId = lists[currentTab];
+            if (!listId) return;
+
+            try {
+                await db.collection('lists').doc(listId).collection('items').doc(itemId).delete();
+            } catch (error) {
+                console.error('Error deleting item:', error);
+            }
+        }
+
+        // =====================================================
+        // COLLABORATORS
+        // =====================================================
+        function renderCollaborators(data) {
+            const collaborators = SharingModule.getCollaborators(data);
+            const isOwner = SharingModule.isOwner(data);
+
+            // Show/hide invite section
+            inviteSection.style.display = isOwner ? 'block' : 'none';
+
+            let html = '';
+
+            // Show owner if not the owner
+            if (!isOwner && data.ownerEmail) {
+                const initial = data.ownerEmail[0].toUpperCase();
+                html += `
+                    <li class="collaborator-item">
+                        <div class="collaborator-info">
+                            <div class="collaborator-avatar">${escapeHtml(initial)}</div>
+                            <div>
+                                <div class="collaborator-email">${escapeHtml(data.ownerEmail)}</div>
+                                <div class="collaborator-role">Owner</div>
+                            </div>
+                        </div>
+                        <span class="owner-badge">Owner</span>
+                    </li>
+                `;
+            }
+
+            if (collaborators.length === 0 && isOwner) {
+                collaboratorList.innerHTML = '<li class="no-collaborators">No collaborators yet</li>';
+                return;
+            }
+
+            html += collaborators.map(collab => {
+                const initial = (collab.email || '?')[0].toUpperCase();
+                const removeBtn = isOwner
+                    ? `<button class="remove-collaborator" data-id="${collab.id}">Remove</button>`
+                    : '';
+
+                return `
+                    <li class="collaborator-item">
+                        <div class="collaborator-info">
+                            <div class="collaborator-avatar">${escapeHtml(initial)}</div>
+                            <div>
+                                <div class="collaborator-email">${escapeHtml(collab.email || 'Unknown')}</div>
+                                <div class="collaborator-role">Collaborator</div>
+                            </div>
+                        </div>
+                        ${removeBtn}
+                    </li>
+                `;
+            }).join('');
+
+            collaboratorList.innerHTML = html || '<li class="no-collaborators">No collaborators</li>';
+        }
+
+        function showShareMessage(message, type) {
+            shareMessage.textContent = message;
+            shareMessage.className = `share-message ${type}`;
+            setTimeout(() => {
+                shareMessage.className = 'share-message';
+            }, 4000);
+        }
+
+        // =====================================================
+        // AUTH EVENT LISTENERS
+        // =====================================================
         document.querySelectorAll('.auth-tab').forEach(tab => {
             tab.addEventListener('click', () => {
                 document.querySelectorAll('.auth-tab').forEach(t => t.classList.remove('active'));
@@ -1042,7 +1442,6 @@
             });
         });
 
-        // Email/Password Login
         document.getElementById('loginBtn').addEventListener('click', async () => {
             const email = document.getElementById('loginEmail').value.trim();
             const password = document.getElementById('loginPassword').value;
@@ -1059,7 +1458,6 @@
             }
         });
 
-        // Email/Password Signup
         document.getElementById('signupBtn').addEventListener('click', async () => {
             const email = document.getElementById('signupEmail').value.trim();
             const password = document.getElementById('signupPassword').value;
@@ -1081,7 +1479,6 @@
             }
         });
 
-        // Google Sign-In
         document.getElementById('googleBtn').addEventListener('click', async () => {
             const provider = new firebase.auth.GoogleAuthProvider();
             try {
@@ -1091,45 +1488,43 @@
             }
         });
 
-        // Logout
         document.getElementById('logoutBtn').addEventListener('click', () => {
             auth.signOut();
         });
 
-        // Auth State Observer
+        document.getElementById('loginPassword').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') document.getElementById('loginBtn').click();
+        });
+
+        document.getElementById('signupPassword').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') document.getElementById('signupBtn').click();
+        });
+
+        // =====================================================
+        // AUTH STATE OBSERVER
+        // =====================================================
         auth.onAuthStateChanged(async (user) => {
             currentUser = user;
 
             if (user) {
-                // User is signed in
                 authContainer.style.display = 'none';
                 appContainer.classList.add('active');
-                userEmailSpan.textContent = user.email;
-                pageTitle.textContent = 'Shopping List';
-                shareBtn.style.display = 'flex';
 
-                // Save user profile for email lookup
+                // Update profile
+                document.getElementById('profileEmail').textContent = user.email;
+                document.getElementById('profileAvatar').textContent = user.email[0].toUpperCase();
+
                 await SharingModule.saveUserProfile(user);
+                await initializeLists();
 
-                // Initialize or get user's lists (includes both owned and shared)
-                await initializeUserLists();
-
-                // Switch to first list
-                if (allLists.length > 0) {
-                    switchList(allLists[0].id);
-                }
+                switchTab('tasks');
             } else {
-                // User is signed out
                 authContainer.style.display = 'block';
                 appContainer.classList.remove('active');
-                pageTitle.textContent = 'Shopping & Tasks v3.0';
-                allLists = [];
-                listData = {};
-                currentList = null;
-                shareBtn.style.display = 'none';
-                sharedBadge.style.display = 'none';
+                lists = { tasks: null, shopping: null };
+                listData = { tasks: null, shopping: null };
+                currentTab = 'tasks';
 
-                // Cleanup listeners
                 if (unsubscribeItems) {
                     unsubscribeItems();
                     unsubscribeItems = null;
@@ -1141,447 +1536,71 @@
             }
         });
 
-        // Initialize user's lists in Firestore
-        async function initializeUserLists() {
-            const listsRef = db.collection('lists');
+        // =====================================================
+        // NAV EVENT LISTENERS
+        // =====================================================
+        document.querySelectorAll('.nav-item').forEach(btn => {
+            btn.addEventListener('click', () => switchTab(btn.dataset.tab));
+        });
 
-            // First, ensure user has their own default lists
-            // Check for existing shopping list
-            let shoppingQuery = await listsRef
-                .where('ownerId', '==', currentUser.uid)
-                .where('name', '==', 'Shopping List')
-                .limit(1)
-                .get();
-
-            if (shoppingQuery.empty) {
-                // Create shopping list with AI-ready metadata
-                await listsRef.add({
-                    name: 'Shopping List',
-                    ownerId: currentUser.uid,
-                    ownerEmail: currentUser.email,
-                    sharedWith: [],
-                    collaborators: {},
-                    metadata: {
-                        aiSuggestions: [],
-                        aiFlags: {},
-                        shareCount: 0,
-                        lastShared: null,
-                        createdSource: 'user'
-                    },
-                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
-                });
-            }
-
-            // Check for existing tasks list
-            let tasksQuery = await listsRef
-                .where('ownerId', '==', currentUser.uid)
-                .where('name', '==', 'Home Tasks')
-                .limit(1)
-                .get();
-
-            if (tasksQuery.empty) {
-                // Create tasks list with AI-ready metadata
-                await listsRef.add({
-                    name: 'Home Tasks',
-                    ownerId: currentUser.uid,
-                    ownerEmail: currentUser.email,
-                    sharedWith: [],
-                    collaborators: {},
-                    metadata: {
-                        aiSuggestions: [],
-                        aiFlags: {},
-                        shareCount: 0,
-                        lastShared: null,
-                        createdSource: 'user'
-                    },
-                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
-                });
-            }
-
-            // Now load ALL accessible lists (owned + shared)
-            await loadAllLists();
-        }
-
-        // Load all lists the user has access to (owned + shared with them)
-        async function loadAllLists() {
-            const listsRef = db.collection('lists');
-            allLists = [];
-
-            // Query 1: Lists owned by user
-            const ownedQuery = await listsRef
-                .where('ownerId', '==', currentUser.uid)
-                .get();
-
-            ownedQuery.forEach(doc => {
-                const data = doc.data();
-                allLists.push({
-                    id: doc.id,
-                    name: data.name,
-                    isOwner: true,
-                    ownerEmail: data.ownerEmail
-                });
-            });
-
-            // Query 2: Lists shared with user
-            const sharedQuery = await listsRef
-                .where('sharedWith', 'array-contains', currentUser.uid)
-                .get();
-
-            sharedQuery.forEach(doc => {
-                const data = doc.data();
-                // Avoid duplicates (shouldn't happen, but be safe)
-                if (!allLists.find(l => l.id === doc.id)) {
-                    allLists.push({
-                        id: doc.id,
-                        name: data.name,
-                        isOwner: false,
-                        ownerEmail: data.ownerEmail
-                    });
-                }
-            });
-
-            // Sort: owned lists first, then shared lists
-            allLists.sort((a, b) => {
-                if (a.isOwner && !b.isOwner) return -1;
-                if (!a.isOwner && b.isOwner) return 1;
-                return a.name.localeCompare(b.name);
-            });
-
-            // Render dynamic tabs
-            renderListTabs();
-
-            // Select first list if none selected
-            if (allLists.length > 0 && !currentList) {
-                currentList = allLists[0].id;
-            }
-        }
-
-        // Render dynamic list tabs
-        function renderListTabs() {
-            const tabContainer = document.querySelector('.tab-buttons');
-            if (!tabContainer || allLists.length === 0) return;
-
-            const ownedLists = allLists.filter(l => l.isOwner);
-            const sharedLists = allLists.filter(l => !l.isOwner);
-
-            let html = '';
-
-            // Owned lists
-            ownedLists.forEach(list => {
-                const isActive = currentList === list.id ? 'active' : '';
-                html += `<button class="tab-btn ${isActive}" data-list-id="${list.id}">${escapeHtml(list.name)}</button>`;
-            });
-
-            // Shared lists section
-            if (sharedLists.length > 0) {
-                html += `<div class="shared-section-label">Shared with me</div>`;
-                sharedLists.forEach(list => {
-                    const isActive = currentList === list.id ? 'active' : '';
-                    const ownerName = list.ownerEmail?.split('@')[0] || 'Unknown';
-                    html += `<button class="tab-btn ${isActive}" data-list-id="${list.id}">
-                        ${escapeHtml(list.name)}
-                        <span class="shared-indicator">from ${escapeHtml(ownerName)}</span>
-                    </button>`;
-                });
-            }
-
-            tabContainer.innerHTML = html;
-
-            // Re-attach event listeners
-            tabContainer.querySelectorAll('.tab-btn').forEach(btn => {
-                btn.addEventListener('click', () => switchList(btn.dataset.listId));
-            });
-        }
-
-        // Escape HTML to prevent XSS
-        function escapeHtml(text) {
-            const div = document.createElement('div');
-            div.textContent = text;
-            return div.innerHTML;
-        }
-
-        // Render items from snapshot
-        function renderItems(snapshot) {
-            const listEl = document.getElementById('itemList');
-
-            if (snapshot.empty) {
-                listEl.innerHTML = '<li class="empty-message">No items yet. Add one above!</li>';
-                return;
-            }
-
-            const items = [];
-            snapshot.forEach(doc => {
-                items.push({ id: doc.id, ...doc.data() });
-            });
-
-            // Sort by createdAt
-            items.sort((a, b) => {
-                const aTime = a.createdAt?.toMillis() || 0;
-                const bTime = b.createdAt?.toMillis() || 0;
-                return aTime - bTime;
-            });
-
-            listEl.innerHTML = items.map(item => `
-                <li class="list-item ${item.done ? 'done' : ''}" data-id="${item.id}">
-                    <span class="checkbox"></span>
-                    <span class="text">${escapeHtml(item.text)}</span>
-                </li>
-            `).join('');
-        }
-
-        // Subscribe to items for current list
-        function subscribeToItems() {
-            if (unsubscribeItems) {
-                unsubscribeItems();
-            }
-            if (unsubscribeList) {
-                unsubscribeList();
-            }
-
-            const listId = currentList;
-            if (!listId) return;
-
-            const listRef = db.collection('lists').doc(listId);
-            const itemsRef = listRef.collection('items');
-
-            document.getElementById('itemList').innerHTML = '<li class="loading">Loading</li>';
-
-            // Subscribe to list document for real-time sharing updates
-            unsubscribeList = listRef.onSnapshot(doc => {
-                if (doc.exists) {
-                    const data = { id: doc.id, ...doc.data() };
-                    listData[listId] = data;
-                    updateSharingUI(data);
-                }
-            }, error => {
-                console.error('Error listening to list:', error);
-            });
-
-            // Subscribe to items
-            unsubscribeItems = itemsRef.onSnapshot(snapshot => {
-                renderItems(snapshot);
-            }, error => {
-                console.error('Error listening to items:', error);
-                document.getElementById('itemList').innerHTML =
-                    '<li class="empty-message">Error loading items. Please refresh.</li>';
-            });
-        }
-
-        // Update sharing UI based on list data
-        function updateSharingUI(data) {
-            const isShared = SharingModule.isShared(data);
-            const isOwner = SharingModule.isOwner(data);
-
-            // Update shared badge - show different text for owned vs shared lists
-            if (!isOwner) {
-                sharedBadge.textContent = 'SHARED WITH ME';
-                sharedBadge.style.display = 'inline';
-            } else if (isShared) {
-                sharedBadge.textContent = 'SHARED';
-                sharedBadge.style.display = 'inline';
-            } else {
-                sharedBadge.style.display = 'none';
-            }
-
-            // Update share button appearance
-            if (isShared || !isOwner) {
-                shareBtn.classList.add('has-collaborators');
-            } else {
-                shareBtn.classList.remove('has-collaborators');
-            }
-
-            // Hide invite section for non-owners
-            const inviteSection = document.querySelector('.invite-section');
-            if (inviteSection) {
-                inviteSection.style.display = isOwner ? 'block' : 'none';
-            }
-
-            // Update collaborator list in modal if open
-            if (shareModal.classList.contains('active')) {
-                renderCollaborators(data);
-            }
-        }
-
-        // Render collaborators in modal
-        function renderCollaborators(data) {
-            const collaborators = SharingModule.getCollaborators(data);
-            const isOwner = SharingModule.isOwner(data);
-
-            if (collaborators.length === 0) {
-                collaboratorList.innerHTML = '<li class="no-collaborators">No collaborators yet</li>';
-                return;
-            }
-
-            collaboratorList.innerHTML = collaborators.map(collab => {
-                const initial = (collab.email || '?')[0].toUpperCase();
-                const removeBtn = isOwner
-                    ? `<button class="remove-collaborator" data-id="${collab.id}">Remove</button>`
-                    : '<span class="owner-badge">Collaborator</span>';
-
-                return `
-                    <li class="collaborator-item">
-                        <div class="collaborator-info">
-                            <div class="collaborator-avatar">${escapeHtml(initial)}</div>
-                            <div>
-                                <div class="collaborator-email">${escapeHtml(collab.email || 'Unknown')}</div>
-                                <div class="collaborator-role">${collab.role || 'collaborator'}</div>
-                            </div>
-                        </div>
-                        ${removeBtn}
-                    </li>
-                `;
-            }).join('');
-
-            // If user is not owner, show owner info at the top
-            if (!isOwner && data.ownerEmail) {
-                const ownerInitial = data.ownerEmail[0].toUpperCase();
-                collaboratorList.innerHTML = `
-                    <li class="collaborator-item">
-                        <div class="collaborator-info">
-                            <div class="collaborator-avatar">${escapeHtml(ownerInitial)}</div>
-                            <div>
-                                <div class="collaborator-email">${escapeHtml(data.ownerEmail)}</div>
-                                <div class="collaborator-role">Owner</div>
-                            </div>
-                        </div>
-                        <span class="owner-badge">Owner</span>
-                    </li>
-                ` + collaboratorList.innerHTML;
-            }
-        }
-
-        // Add new item
-        async function addItem() {
-            const input = document.getElementById('itemInput');
-            const text = input.value.trim();
-
-            if (!text || !currentUser) return;
-
-            const listId = currentList;
-            if (!listId) return;
-
-            try {
-                await db.collection('lists').doc(listId).collection('items').add({
-                    text: text,
-                    done: false,
-                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
-                });
-                input.value = '';
-            } catch (error) {
-                console.error('Error adding item:', error);
-            }
-        }
-
-        // Toggle item done state
-        async function toggleItem(itemId) {
-            const listId = currentList;
-            if (!listId) return;
-
-            const itemRef = db.collection('lists').doc(listId).collection('items').doc(itemId);
-
-            try {
-                const doc = await itemRef.get();
-                if (doc.exists) {
-                    await itemRef.update({
-                        done: !doc.data().done
-                    });
-                }
-            } catch (error) {
-                console.error('Error toggling item:', error);
-            }
-        }
-
-        // Switch between lists
-        function switchList(listId) {
-            currentList = listId;
-
-            // Find list info
-            const listInfo = allLists.find(l => l.id === listId);
-
-            // Update tab buttons
-            document.querySelectorAll('.tab-btn').forEach(btn => {
-                btn.classList.toggle('active', btn.dataset.listId === listId);
-            });
-
-            // Update title
-            const title = listInfo ? listInfo.name : 'List';
-            const isSharedList = listInfo && !listInfo.isOwner;
-            pageTitle.textContent = title;
-
-            // Update placeholder based on list name
-            const placeholder = (listInfo && listInfo.name.toLowerCase().includes('task'))
-                ? 'Add new task...'
-                : 'Add new item...';
-            document.getElementById('itemInput').placeholder = placeholder;
-
-            // Subscribe to new list
-            subscribeToItems();
-        }
-
-        // Event listeners for app
-        // Note: Tab button listeners are attached dynamically in renderListTabs()
-
+        // =====================================================
+        // ITEM EVENT LISTENERS
+        // =====================================================
         document.getElementById('addBtn').addEventListener('click', addItem);
 
-        document.getElementById('itemInput').addEventListener('keypress', (e) => {
+        itemInput.addEventListener('keypress', (e) => {
             if (e.key === 'Enter') addItem();
         });
 
         document.getElementById('itemList').addEventListener('click', (e) => {
-            const listItem = e.target.closest('.list-item');
-            if (listItem && listItem.dataset.id) {
-                toggleItem(listItem.dataset.id);
+            const card = e.target.closest('.item-card');
+            if (!card) return;
+
+            const itemId = card.dataset.id;
+            const action = e.target.closest('[data-action]')?.dataset.action;
+
+            if (action === 'delete') {
+                deleteItem(itemId);
+            } else if (action === 'toggle' || e.target.closest('.item-content')) {
+                toggleItem(itemId);
             }
         });
 
-        // Handle Enter key on auth forms
-        document.getElementById('loginPassword').addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') document.getElementById('loginBtn').click();
-        });
-
-        document.getElementById('signupPassword').addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') document.getElementById('signupBtn').click();
-        });
-
         // =====================================================
-        // SHARE MODAL EVENT HANDLERS
+        // SHARE MODAL EVENT LISTENERS
         // =====================================================
-
-        // Open share modal
         shareBtn.addEventListener('click', () => {
-            const data = listData[currentList];
+            const data = listData[currentTab];
             if (data) {
                 renderCollaborators(data);
             }
             shareModal.classList.add('active');
             inviteEmail.value = '';
             shareMessage.className = 'share-message';
-            shareMessage.textContent = '';
         });
 
-        // Close share modal
+        document.getElementById('manageSharingBtn').addEventListener('click', () => {
+            // Switch to tasks tab and open share modal
+            switchTab('tasks');
+            setTimeout(() => {
+                const data = listData[currentTab];
+                if (data) {
+                    renderCollaborators(data);
+                }
+                shareModal.classList.add('active');
+            }, 100);
+        });
+
         modalClose.addEventListener('click', () => {
             shareModal.classList.remove('active');
         });
 
-        // Close modal on overlay click
         shareModal.addEventListener('click', (e) => {
             if (e.target === shareModal) {
                 shareModal.classList.remove('active');
             }
         });
 
-        // Show message in share modal
-        function showShareMessage(message, type) {
-            shareMessage.textContent = message;
-            shareMessage.className = `share-message ${type}`;
-            setTimeout(() => {
-                shareMessage.className = 'share-message';
-                shareMessage.textContent = '';
-            }, 4000);
-        }
-
-        // Invite collaborator
         inviteBtn.addEventListener('click', async () => {
             const email = inviteEmail.value.trim().toLowerCase();
 
@@ -1590,13 +1609,12 @@
                 return;
             }
 
-            // Basic email validation
             if (!email.includes('@') || !email.includes('.')) {
-                showShareMessage('Please enter a valid email address.', 'error');
+                showShareMessage('Please enter a valid email.', 'error');
                 return;
             }
 
-            const listId = currentList;
+            const listId = lists[currentTab];
             if (!listId) return;
 
             inviteBtn.disabled = true;
@@ -1604,14 +1622,11 @@
 
             try {
                 const collaborator = await SharingModule.addCollaborator(listId, email);
-                showShareMessage(`Successfully shared with ${collaborator.email}!`, 'success');
+                showShareMessage(`Shared with ${collaborator.email}!`, 'success');
                 inviteEmail.value = '';
 
-                // Re-render collaborators
-                const data = listData[currentList];
-                if (data) {
-                    renderCollaborators(data);
-                }
+                const data = listData[currentTab];
+                if (data) renderCollaborators(data);
             } catch (error) {
                 showShareMessage(error.message, 'error');
             } finally {
@@ -1620,18 +1635,16 @@
             }
         });
 
-        // Handle Enter key on invite input
         inviteEmail.addEventListener('keypress', (e) => {
             if (e.key === 'Enter') inviteBtn.click();
         });
 
-        // Remove collaborator
         collaboratorList.addEventListener('click', async (e) => {
             const removeBtn = e.target.closest('.remove-collaborator');
             if (!removeBtn) return;
 
             const collaboratorId = removeBtn.dataset.id;
-            const listId = currentList;
+            const listId = lists[currentTab];
 
             if (!listId || !collaboratorId) return;
 
@@ -1647,27 +1660,6 @@
                 removeBtn.textContent = 'Remove';
             }
         });
-
-        // =====================================================
-        // AI INTEGRATION HOOKS (Ready for future use)
-        // =====================================================
-        SharingModule.on('collaborator_added', (data) => {
-            // Future: AI could analyze sharing patterns
-            // Future: AI could suggest sharing with similar users
-            console.log('[AI Hook] Collaborator added:', data);
-        });
-
-        SharingModule.on('collaborator_removed', (data) => {
-            // Future: AI could track collaboration lifecycle
-            console.log('[AI Hook] Collaborator removed:', data);
-        });
-
-        // Future: AI could call this to suggest shares
-        window.AISuggestShare = async function(listId, email, reason) {
-            console.log('[AI] Suggesting share:', { listId, email, reason });
-            // Implementation would show a suggestion UI to the user
-            // User confirms before actual share happens
-        };
     </script>
 </body>
 </html>
