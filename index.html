@@ -291,6 +291,35 @@
             background: #dee2e6;
         }
 
+        .tab-btn .shared-indicator {
+            font-size: 0.65rem;
+            background: rgba(102, 126, 234, 0.2);
+            color: #667eea;
+            padding: 2px 6px;
+            border-radius: 8px;
+            margin-left: 6px;
+            font-weight: 500;
+        }
+
+        .tab-btn.active .shared-indicator {
+            background: rgba(255, 255, 255, 0.3);
+            color: white;
+        }
+
+        .tab-buttons {
+            flex-wrap: wrap;
+        }
+
+        .shared-section-label {
+            width: 100%;
+            font-size: 0.75rem;
+            color: #6c757d;
+            padding: 8px 0 4px 5px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
         .input-section {
             display: flex;
             padding: 15px;
@@ -763,8 +792,7 @@
             </div>
 
             <div class="tab-buttons">
-                <button class="tab-btn active" data-list="shopping">Shopping List</button>
-                <button class="tab-btn" data-list="tasks">Home Tasks</button>
+                <!-- Tabs rendered dynamically by renderListTabs() -->
             </div>
 
             <div class="input-section">
@@ -829,9 +857,9 @@
 
         // State
         let currentUser = null;
-        let currentList = 'shopping';
-        let userLists = { shopping: null, tasks: null };
-        let listData = { shopping: null, tasks: null }; // Full list documents
+        let currentList = null; // Will be set to first list ID
+        let allLists = []; // Array of { id, name, isOwner, ownerEmail } for all accessible lists
+        let listData = {}; // Full list documents keyed by list ID
         let unsubscribeItems = null;
         let unsubscribeList = null;
 
@@ -1083,16 +1111,21 @@
                 // Save user profile for email lookup
                 await SharingModule.saveUserProfile(user);
 
-                // Initialize or get user's lists
+                // Initialize or get user's lists (includes both owned and shared)
                 await initializeUserLists();
-                switchList('shopping');
+
+                // Switch to first list
+                if (allLists.length > 0) {
+                    switchList(allLists[0].id);
+                }
             } else {
                 // User is signed out
                 authContainer.style.display = 'block';
                 appContainer.classList.remove('active');
                 pageTitle.textContent = 'Shopping & Tasks v3.0';
-                userLists = { shopping: null, tasks: null };
-                listData = { shopping: null, tasks: null };
+                allLists = [];
+                listData = {};
+                currentList = null;
                 shareBtn.style.display = 'none';
                 sharedBadge.style.display = 'none';
 
@@ -1112,7 +1145,8 @@
         async function initializeUserLists() {
             const listsRef = db.collection('lists');
 
-            // Check for existing shopping list (owned or shared)
+            // First, ensure user has their own default lists
+            // Check for existing shopping list
             let shoppingQuery = await listsRef
                 .where('ownerId', '==', currentUser.uid)
                 .where('name', '==', 'Shopping List')
@@ -1121,7 +1155,7 @@
 
             if (shoppingQuery.empty) {
                 // Create shopping list with AI-ready metadata
-                const docRef = await listsRef.add({
+                await listsRef.add({
                     name: 'Shopping List',
                     ownerId: currentUser.uid,
                     ownerEmail: currentUser.email,
@@ -1136,12 +1170,9 @@
                     },
                     createdAt: firebase.firestore.FieldValue.serverTimestamp()
                 });
-                userLists.shopping = docRef.id;
-            } else {
-                userLists.shopping = shoppingQuery.docs[0].id;
             }
 
-            // Check for existing tasks list (owned or shared)
+            // Check for existing tasks list
             let tasksQuery = await listsRef
                 .where('ownerId', '==', currentUser.uid)
                 .where('name', '==', 'Home Tasks')
@@ -1150,7 +1181,7 @@
 
             if (tasksQuery.empty) {
                 // Create tasks list with AI-ready metadata
-                const docRef = await listsRef.add({
+                await listsRef.add({
                     name: 'Home Tasks',
                     ownerId: currentUser.uid,
                     ownerEmail: currentUser.email,
@@ -1165,10 +1196,100 @@
                     },
                     createdAt: firebase.firestore.FieldValue.serverTimestamp()
                 });
-                userLists.tasks = docRef.id;
-            } else {
-                userLists.tasks = tasksQuery.docs[0].id;
             }
+
+            // Now load ALL accessible lists (owned + shared)
+            await loadAllLists();
+        }
+
+        // Load all lists the user has access to (owned + shared with them)
+        async function loadAllLists() {
+            const listsRef = db.collection('lists');
+            allLists = [];
+
+            // Query 1: Lists owned by user
+            const ownedQuery = await listsRef
+                .where('ownerId', '==', currentUser.uid)
+                .get();
+
+            ownedQuery.forEach(doc => {
+                const data = doc.data();
+                allLists.push({
+                    id: doc.id,
+                    name: data.name,
+                    isOwner: true,
+                    ownerEmail: data.ownerEmail
+                });
+            });
+
+            // Query 2: Lists shared with user
+            const sharedQuery = await listsRef
+                .where('sharedWith', 'array-contains', currentUser.uid)
+                .get();
+
+            sharedQuery.forEach(doc => {
+                const data = doc.data();
+                // Avoid duplicates (shouldn't happen, but be safe)
+                if (!allLists.find(l => l.id === doc.id)) {
+                    allLists.push({
+                        id: doc.id,
+                        name: data.name,
+                        isOwner: false,
+                        ownerEmail: data.ownerEmail
+                    });
+                }
+            });
+
+            // Sort: owned lists first, then shared lists
+            allLists.sort((a, b) => {
+                if (a.isOwner && !b.isOwner) return -1;
+                if (!a.isOwner && b.isOwner) return 1;
+                return a.name.localeCompare(b.name);
+            });
+
+            // Render dynamic tabs
+            renderListTabs();
+
+            // Select first list if none selected
+            if (allLists.length > 0 && !currentList) {
+                currentList = allLists[0].id;
+            }
+        }
+
+        // Render dynamic list tabs
+        function renderListTabs() {
+            const tabContainer = document.querySelector('.tab-buttons');
+            if (!tabContainer || allLists.length === 0) return;
+
+            const ownedLists = allLists.filter(l => l.isOwner);
+            const sharedLists = allLists.filter(l => !l.isOwner);
+
+            let html = '';
+
+            // Owned lists
+            ownedLists.forEach(list => {
+                const isActive = currentList === list.id ? 'active' : '';
+                html += `<button class="tab-btn ${isActive}" data-list-id="${list.id}">${escapeHtml(list.name)}</button>`;
+            });
+
+            // Shared lists section
+            if (sharedLists.length > 0) {
+                html += `<div class="shared-section-label">Shared with me</div>`;
+                sharedLists.forEach(list => {
+                    const isActive = currentList === list.id ? 'active' : '';
+                    html += `<button class="tab-btn ${isActive}" data-list-id="${list.id}">
+                        ${escapeHtml(list.name)}
+                        <span class="shared-indicator">from ${escapeHtml(list.ownerEmail.split('@')[0])}</span>
+                    </button>`;
+                });
+            }
+
+            tabContainer.innerHTML = html;
+
+            // Re-attach event listeners
+            tabContainer.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.addEventListener('click', () => switchList(btn.dataset.listId));
+            });
         }
 
         // Escape HTML to prevent XSS
@@ -1216,7 +1337,7 @@
                 unsubscribeList();
             }
 
-            const listId = currentList === 'shopping' ? userLists.shopping : userLists.tasks;
+            const listId = currentList;
             if (!listId) return;
 
             const listRef = db.collection('lists').doc(listId);
@@ -1228,7 +1349,7 @@
             unsubscribeList = listRef.onSnapshot(doc => {
                 if (doc.exists) {
                     const data = { id: doc.id, ...doc.data() };
-                    listData[currentList] = data;
+                    listData[listId] = data;
                     updateSharingUI(data);
                 }
             }, error => {
@@ -1250,14 +1371,28 @@
             const isShared = SharingModule.isShared(data);
             const isOwner = SharingModule.isOwner(data);
 
-            // Update shared badge
-            sharedBadge.style.display = isShared ? 'inline' : 'none';
+            // Update shared badge - show different text for owned vs shared lists
+            if (!isOwner) {
+                sharedBadge.textContent = 'SHARED WITH ME';
+                sharedBadge.style.display = 'inline';
+            } else if (isShared) {
+                sharedBadge.textContent = 'SHARED';
+                sharedBadge.style.display = 'inline';
+            } else {
+                sharedBadge.style.display = 'none';
+            }
 
             // Update share button appearance
-            if (isShared) {
+            if (isShared || !isOwner) {
                 shareBtn.classList.add('has-collaborators');
             } else {
                 shareBtn.classList.remove('has-collaborators');
+            }
+
+            // Hide invite section for non-owners
+            const inviteSection = document.querySelector('.invite-section');
+            if (inviteSection) {
+                inviteSection.style.display = isOwner ? 'block' : 'none';
             }
 
             // Update collaborator list in modal if open
@@ -1321,7 +1456,7 @@
 
             if (!text || !currentUser) return;
 
-            const listId = currentList === 'shopping' ? userLists.shopping : userLists.tasks;
+            const listId = currentList;
             if (!listId) return;
 
             try {
@@ -1338,7 +1473,7 @@
 
         // Toggle item done state
         async function toggleItem(itemId) {
-            const listId = currentList === 'shopping' ? userLists.shopping : userLists.tasks;
+            const listId = currentList;
             if (!listId) return;
 
             const itemRef = db.collection('lists').doc(listId).collection('items').doc(itemId);
@@ -1356,20 +1491,26 @@
         }
 
         // Switch between lists
-        function switchList(listName) {
-            currentList = listName;
+        function switchList(listId) {
+            currentList = listId;
+
+            // Find list info
+            const listInfo = allLists.find(l => l.id === listId);
 
             // Update tab buttons
             document.querySelectorAll('.tab-btn').forEach(btn => {
-                btn.classList.toggle('active', btn.dataset.list === listName);
+                btn.classList.toggle('active', btn.dataset.listId === listId);
             });
 
             // Update title
-            const title = listName === 'shopping' ? 'Shopping List' : 'Home Tasks';
+            const title = listInfo ? listInfo.name : 'List';
+            const isSharedList = listInfo && !listInfo.isOwner;
             pageTitle.textContent = title;
 
-            // Update placeholder
-            const placeholder = listName === 'shopping' ? 'Add new item...' : 'Add new task...';
+            // Update placeholder based on list name
+            const placeholder = (listInfo && listInfo.name.toLowerCase().includes('task'))
+                ? 'Add new task...'
+                : 'Add new item...';
             document.getElementById('itemInput').placeholder = placeholder;
 
             // Subscribe to new list
@@ -1377,9 +1518,7 @@
         }
 
         // Event listeners for app
-        document.querySelectorAll('.tab-btn').forEach(btn => {
-            btn.addEventListener('click', () => switchList(btn.dataset.list));
-        });
+        // Note: Tab button listeners are attached dynamically in renderListTabs()
 
         document.getElementById('addBtn').addEventListener('click', addItem);
 
@@ -1456,7 +1595,7 @@
                 return;
             }
 
-            const listId = currentList === 'shopping' ? userLists.shopping : userLists.tasks;
+            const listId = currentList;
             if (!listId) return;
 
             inviteBtn.disabled = true;
@@ -1491,7 +1630,7 @@
             if (!removeBtn) return;
 
             const collaboratorId = removeBtn.dataset.id;
-            const listId = currentList === 'shopping' ? userLists.shopping : userLists.tasks;
+            const listId = currentList;
 
             if (!listId || !collaboratorId) return;
 
