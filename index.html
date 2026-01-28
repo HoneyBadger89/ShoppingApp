@@ -1277,9 +1277,10 @@
                 html += `<div class="shared-section-label">Shared with me</div>`;
                 sharedLists.forEach(list => {
                     const isActive = currentList === list.id ? 'active' : '';
+                    const ownerName = list.ownerEmail?.split('@')[0] || 'Unknown';
                     html += `<button class="tab-btn ${isActive}" data-list-id="${list.id}">
                         ${escapeHtml(list.name)}
-                        <span class="shared-indicator">from ${escapeHtml(list.ownerEmail.split('@')[0])}</span>
+                        <span class="shared-indicator">from ${escapeHtml(ownerName)}</span>
                     </button>`;
                 });
             }
