@@ -400,8 +400,9 @@
         }
 
         .item-checkbox {
-            width: 24px;
-            height: 24px;
+            width: 22px;
+            height: 22px;
+            min-width: 22px;
             border: 2px solid #d1d5db;
             border-radius: 50%;
             cursor: pointer;
@@ -410,22 +411,25 @@
             justify-content: center;
             transition: all 0.2s ease;
             flex-shrink: 0;
-            margin-top: 2px;
+            font-size: 12px;
+            color: transparent;
+            margin-right: 10px;
         }
 
         .item-checkbox:hover {
-            border-color: var(--accent-success);
+            border-color: #10b981;
         }
 
+        .item-checkbox.checked,
         .item-card.done .item-checkbox {
-            background: var(--accent-success);
-            border-color: var(--accent-success);
-            transform: scale(1.05);
+            background: #10b981;
+            border-color: #10b981;
+            color: white;
         }
 
         .item-checkbox-icon {
             color: white;
-            font-size: 14px;
+            font-size: 12px;
             opacity: 0;
             transition: opacity 0.2s ease;
         }
@@ -454,18 +458,19 @@
         }
 
         .priority-dot {
-            width: 16px;
-            height: 16px;
+            width: 12px;
+            height: 12px;
             border-radius: 50%;
             transition: transform 0.15s ease, background-color 0.2s ease;
+            display: inline-block;
         }
 
         .priority-dot.priority-high {
-            background: #fca5a5;
+            background: #ef4444;
         }
 
         .priority-dot.priority-medium {
-            background: #fcd34d;
+            background: #f97316;
         }
 
         .priority-dot.priority-none {
@@ -589,22 +594,21 @@
         }
 
         .item-text {
-            font-size: 16px;
+            font-size: 14px;
             font-weight: 500;
             color: var(--text-primary);
             word-break: break-word;
             transition: all 0.2s ease;
+            line-height: 1.3;
         }
 
         .item-card.done .item-text {
             text-decoration: line-through;
-            opacity: 0.5;
+            color: #9ca3af;
         }
 
         .item-meta {
-            font-size: 12px;
-            color: var(--text-muted);
-            margin-top: 4px;
+            display: none; /* Hidden - using color border instead */
         }
 
 
@@ -1935,15 +1939,7 @@
            PERSONALITY MESSAGES FOOTER
            ===================================================== */
         .personality-footer {
-            text-align: center;
-            padding: 16px 20px;
-            color: var(--text-muted);
-            font-size: 13px;
-            font-style: italic;
-            min-height: 50px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
+            display: none !important; /* Hidden - cleaner UI */
         }
 
         .personality-message {
@@ -2093,8 +2089,8 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 14px 16px;
-            background: linear-gradient(135deg, #f8f9fa 0%, #f3f4f6 100%);
+            padding: 12px 14px;
+            background: #f9fafb;
             cursor: pointer;
             user-select: none;
             -webkit-user-select: none;
@@ -2107,21 +2103,21 @@
         .category-info {
             display: flex;
             align-items: center;
-            gap: 10px;
+            gap: 8px;
         }
 
         .category-emoji {
-            font-size: 20px;
+            font-size: 18px;
         }
 
         .category-name {
             font-weight: 600;
-            font-size: 15px;
+            font-size: 14px;
             color: var(--text-primary);
         }
 
         .category-count {
-            font-size: 13px;
+            font-size: 12px;
             color: var(--text-secondary);
             font-weight: 500;
         }
@@ -2143,61 +2139,72 @@
             opacity: 0;
         }
 
-        .shopping-item {
+        .shopping-item,
+        .task-item {
             display: flex;
             align-items: center;
-            padding: 12px 16px;
+            padding: 10px 12px;
             border-top: 1px solid #f3f4f6;
-            gap: 12px;
+            gap: 10px;
+            background: white;
         }
 
-        .shopping-item:active {
+        .shopping-item:active,
+        .task-item:active {
             background: #f9fafb;
         }
 
-        .shopping-item.done {
-            background: #fafafa;
+        .shopping-item.done,
+        .task-item.done {
+            opacity: 0.7;
         }
 
-        .shopping-item.done .item-text {
+        .shopping-item.done .item-text,
+        .task-item.done .item-text {
             text-decoration: line-through;
-            color: var(--text-muted);
+            color: #9ca3af;
         }
 
-        .shopping-item .item-checkbox {
-            width: 24px;
-            height: 24px;
+        .shopping-item .item-checkbox,
+        .task-item .item-checkbox {
+            width: 22px;
+            height: 22px;
+            min-width: 22px;
             border: 2px solid #d1d5db;
             border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 14px;
-            color: white;
+            font-size: 12px;
+            color: transparent;
             cursor: pointer;
             transition: all 0.2s;
             flex-shrink: 0;
         }
 
-        .shopping-item .item-checkbox.checked {
-            background: var(--accent-success);
-            border-color: var(--accent-success);
+        .shopping-item .item-checkbox.checked,
+        .task-item .item-checkbox.checked {
+            background: #10b981;
+            border-color: #10b981;
+            color: white;
         }
 
-        .shopping-item .item-content {
+        .shopping-item .item-content,
+        .task-item .item-content {
             flex: 1;
             min-width: 0;
         }
 
-        .shopping-item .item-text {
-            font-size: 15px;
-            color: var(--text-primary);
+        .shopping-item .item-text,
+        .task-item .item-text {
+            font-size: 14px;
+            color: #1f2937;
+            line-height: 1.3;
         }
 
-        .shopping-item .item-meta {
-            font-size: 12px;
-            color: var(--text-muted);
-            margin-top: 2px;
+        .shopping-item .item-meta,
+        .task-item .item-meta {
+            display: none;
         }
 
         /* =====================================================
@@ -2735,6 +2742,12 @@
                             <span id="apiKeySettingLabel">Claude API Key</span>
                         </button>
                     </li>
+                    <li class="profile-menu-item">
+                        <button class="profile-menu-btn" id="completedBehaviorBtn">
+                            <span class="profile-menu-icon">&#10003;</span>
+                            <span id="completedBehaviorLabel">Completed: Strikethrough</span>
+                        </button>
+                    </li>
                 </ul>
 
                 <div class="profile-section-title">Lists</div>
@@ -2768,7 +2781,7 @@
                 </div>
 
                 <div class="profile-version" style="text-align: center; padding: 10px 20px; color: #9ca3af; font-size: 12px;">
-                    <div>Mysa v4.7.0</div>
+                    <div>Mysa v4.8.0</div>
                     <div style="margin-top: 4px;">Made with &#10084;&#65039;</div>
                 </div>
             </div>
@@ -3566,6 +3579,17 @@ Respond ONLY with valid JSON:
                 personalityLabel.textContent = personalityLabels[userProfile.personality] || personalityLabels.subtle;
             }
 
+            // Update completed behavior label
+            const completedLabel = document.getElementById('completedBehaviorLabel');
+            const completedLabels = {
+                'strikethrough': 'Completed: Strikethrough',
+                'hide-3s': 'Completed: Hide after 3s',
+                'hide-instant': 'Completed: Hide instantly'
+            };
+            if (completedLabel) {
+                completedLabel.textContent = completedLabels[userProfile.completedBehavior] || completedLabels.strikethrough;
+            }
+
             updatePersonalityFooter();
         }
 
@@ -3579,7 +3603,8 @@ Respond ONLY with valid JSON:
                     userProfile = {
                         displayName: data.displayName || '',
                         avatar: data.avatar || '&#128512;',
-                        personality: data.personality || 'subtle'
+                        personality: data.personality || 'subtle',
+                        completedBehavior: data.completedBehavior || 'strikethrough'
                     };
                     console.log('[Profile] userProfile set to:', userProfile);
                     return data.onboardingComplete || false;
@@ -3663,6 +3688,13 @@ Respond ONLY with valid JSON:
             const currentIdx = order.indexOf(userProfile.personality);
             const nextIdx = (currentIdx + 1) % order.length;
             updateUserProfile({ personality: order[nextIdx] });
+        }
+
+        function cycleCompletedBehavior() {
+            const order = ['strikethrough', 'hide-3s', 'hide-instant'];
+            const currentIdx = order.indexOf(userProfile.completedBehavior || 'strikethrough');
+            const nextIdx = (currentIdx + 1) % order.length;
+            updateUserProfile({ completedBehavior: order[nextIdx] });
         }
 
         // API Key prompt
@@ -3811,6 +3843,9 @@ Respond ONLY with valid JSON:
 
             // API key setting button
             document.getElementById('apiKeySettingBtn')?.addEventListener('click', showApiKeyPrompt);
+
+            // Completed behavior setting button
+            document.getElementById('completedBehaviorBtn')?.addEventListener('click', cycleCompletedBehavior);
         }
 
         // =====================================================
@@ -4034,6 +4069,34 @@ Respond ONLY with valid JSON:
         function escapeForAttr(text) {
             if (!text) return '';
             return text.replace(/\\/g, '\\\\').replace(/'/g, "\\'").replace(/"/g, '&quot;').replace(/\n/g, ' ');
+        }
+
+        // Generate consistent color for a user based on their ID
+        function getUserColor(userId) {
+            const colors = [
+                '#8b5cf6', // Purple (current user)
+                '#14b8a6', // Teal
+                '#f97316', // Orange
+                '#ec4899', // Pink
+                '#3b82f6', // Blue
+                '#10b981', // Green
+            ];
+
+            // If it's current user, always purple
+            if (userId === currentUser?.uid) {
+                return colors[0];
+            }
+
+            // For others, hash their ID to get consistent color
+            if (!userId) return colors[1];
+            let hash = 0;
+            for (let i = 0; i < userId.length; i++) {
+                hash = ((hash << 5) - hash) + userId.charCodeAt(i);
+                hash = hash & hash;
+            }
+
+            // Start from index 1 (skip purple, that's for current user)
+            return colors[1 + (Math.abs(hash) % (colors.length - 1))];
         }
 
         function showError(message) {
@@ -4503,6 +4566,7 @@ Respond ONLY with valid JSON:
                         <div class="category-items ${isCollapsed ? 'collapsed' : ''}">
                             ${categoryItems.map(item => `
                                 <div class="task-item ${item.done ? 'done' : ''}" data-id="${item.id}"
+                                     style="border-left: 3px solid ${getUserColor(item.createdBy)};"
                                      ontouchstart="startTaskLongPress(event, '${item.id}', '${escapeForAttr(item.text)}', '${item.category || 'other'}')"
                                      ontouchend="cancelTaskLongPress()" ontouchmove="cancelTaskLongPress()">
                                     <div class="item-checkbox ${item.done ? 'checked' : ''}" data-action="toggle">
@@ -4510,7 +4574,6 @@ Respond ONLY with valid JSON:
                                     </div>
                                     <div class="item-content">
                                         <span class="item-text">${escapeHtml(item.text)}</span>
-                                        <div class="item-meta" data-creator-id="${item.createdBy || ''}" data-creator-email="${item.createdByEmail || ''}">${getAddedByText(item)}</div>
                                     </div>
                                     <button class="priority-btn" data-action="priority" title="Change priority">
                                         <span class="priority-dot ${getPriorityClass(item.priority)}"></span>
@@ -4665,6 +4728,7 @@ Respond ONLY with valid JSON:
                         <div class="category-items ${isCollapsed ? 'collapsed' : ''}">
                             ${categoryItems.map(item => `
                                 <div class="shopping-item ${item.done ? 'done' : ''}" data-id="${item.id}"
+                                     style="border-left: 3px solid ${getUserColor(item.createdBy)};"
                                      ontouchstart="startLongPress(event, '${item.id}', '${escapeForAttr(item.text)}', '${item.category || 'other'}')"
                                      ontouchend="cancelLongPress()" ontouchmove="cancelLongPress()">
                                     <div class="item-checkbox ${item.done ? 'checked' : ''}" data-action="toggle">
@@ -4672,7 +4736,6 @@ Respond ONLY with valid JSON:
                                     </div>
                                     <div class="item-content">
                                         <span class="item-text">${escapeHtml(item.text)}</span>
-                                        <div class="item-meta" data-creator-id="${item.createdBy || ''}" data-creator-email="${item.createdByEmail || ''}">${getAddedByText(item)}</div>
                                     </div>
                                     <button class="priority-btn" data-action="priority" title="Change priority">
                                         <span class="priority-dot ${getPriorityClass(item.priority)}"></span>
@@ -5432,6 +5495,15 @@ Respond ONLY with valid JSON:
                             const rect = card.getBoundingClientRect();
                             confetti(rect.left + rect.width / 2, rect.top + rect.height / 2);
                         }
+
+                        // Handle completed item based on user setting
+                        const behavior = userProfile.completedBehavior || 'strikethrough';
+                        if (behavior === 'hide-instant') {
+                            hideCompletedItem(card, 0);
+                        } else if (behavior === 'hide-3s') {
+                            hideCompletedItem(card, 3000);
+                        }
+                        // 'strikethrough' just stays visible with strikethrough styling
                     }
 
                     await itemRef.update({ done: !doc.data().done });
@@ -5439,6 +5511,21 @@ Respond ONLY with valid JSON:
             } catch (error) {
                 console.error('Error toggling item:', error);
             }
+        }
+
+        function hideCompletedItem(card, delay) {
+            setTimeout(() => {
+                card.style.transition = 'all 0.3s ease';
+                card.style.opacity = '0';
+                card.style.transform = 'translateX(100%)';
+                card.style.maxHeight = card.offsetHeight + 'px';
+                setTimeout(() => {
+                    card.style.maxHeight = '0';
+                    card.style.padding = '0';
+                    card.style.margin = '0';
+                    card.style.overflow = 'hidden';
+                }, 300);
+            }, delay);
         }
 
         async function deleteItem(itemId, animate = false) {
