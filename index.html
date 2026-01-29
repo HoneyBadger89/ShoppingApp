@@ -472,27 +472,6 @@
             background: #e5e7eb;
         }
 
-        /* Edit Item Button */
-        .edit-item-btn {
-            background: none;
-            border: none;
-            font-size: 16px;
-            padding: 8px;
-            cursor: pointer;
-            opacity: 0.5;
-            transition: opacity 0.2s;
-            flex-shrink: 0;
-        }
-
-        .edit-item-btn:hover,
-        .edit-item-btn:active {
-            opacity: 1;
-        }
-
-        .shopping-item .edit-item-btn {
-            margin-right: 4px;
-        }
-
         /* Edit Item Modal */
         .edit-item-modal-overlay {
             position: fixed;
@@ -783,6 +762,136 @@
         .add-btn:hover {
             opacity: 0.9;
             transform: scale(1.02);
+        }
+
+        /* Category Picker in Add Bar */
+        .add-input-wrapper {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            background: var(--bg-secondary);
+            border-radius: 12px;
+            padding: 0 4px 0 0;
+        }
+
+        .add-input-wrapper .add-input {
+            background: none;
+            border-radius: 0;
+        }
+
+        .category-picker-btn {
+            width: 40px;
+            height: 40px;
+            border: none;
+            background: white;
+            border-radius: 10px;
+            font-size: 20px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            transition: transform 0.2s;
+            flex-shrink: 0;
+        }
+
+        .category-picker-btn:active {
+            transform: scale(0.95);
+        }
+
+        /* Category Picker Modal */
+        .add-category-picker-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            display: flex;
+            align-items: flex-end;
+            justify-content: center;
+            z-index: 9999;
+        }
+
+        .add-category-picker-modal {
+            background: white;
+            border-radius: 20px 20px 0 0;
+            padding: 20px;
+            width: 100%;
+            max-width: 500px;
+            max-height: 70vh;
+            overflow-y: auto;
+        }
+
+        .add-category-picker-modal h3 {
+            text-align: center;
+            margin: 0 0 16px 0;
+            font-size: 18px;
+            color: #1f2937;
+        }
+
+        .add-category-options {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .add-category-option {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 14px 16px;
+            border: 2px solid #e5e7eb;
+            border-radius: 12px;
+            background: white;
+            cursor: pointer;
+            text-align: left;
+            transition: all 0.2s;
+        }
+
+        .add-category-option:active {
+            background: #f3f4f6;
+        }
+
+        .add-category-option.selected {
+            border-color: #8b5cf6;
+            background: #f3e8ff;
+        }
+
+        .add-category-option .cat-emoji {
+            font-size: 24px;
+            width: 32px;
+            text-align: center;
+        }
+
+        .add-category-option .cat-name {
+            flex: 1;
+            font-weight: 600;
+            font-size: 15px;
+            color: #1f2937;
+        }
+
+        .add-category-option .cat-desc {
+            font-size: 12px;
+            color: #6b7280;
+        }
+
+        .add-category-option .check {
+            color: #8b5cf6;
+            font-weight: bold;
+            font-size: 18px;
+        }
+
+        .add-category-picker-modal .cancel-btn {
+            width: 100%;
+            margin-top: 16px;
+            padding: 16px;
+            border: none;
+            border-radius: 12px;
+            background: #f3f4f6;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
         }
 
         /* Bottom Navigation */
@@ -2251,14 +2360,19 @@
                 </div>
 
                 <div class="profile-version" style="text-align: center; padding: 10px 20px; color: #9ca3af; font-size: 12px;">
-                    <div>Mysa v4.4.0</div>
+                    <div>Mysa v4.5.0</div>
                     <div style="margin-top: 4px;">Made with &#10084;&#65039;</div>
                 </div>
             </div>
 
             <!-- Add Input (floating) -->
             <div class="add-input-container" id="addInputContainer">
-                <input type="text" class="add-input" id="itemInput" placeholder="Add a task...">
+                <div class="add-input-wrapper" id="addInputWrapper">
+                    <input type="text" class="add-input" id="itemInput" placeholder="Add a task...">
+                    <button class="category-picker-btn" id="categoryPickerBtn" onclick="showAddCategoryPicker()" style="display: none;">
+                        <span id="selectedCategoryEmoji">🤖</span>
+                    </button>
+                </div>
                 <button class="add-btn" id="addBtn">Add</button>
             </div>
 
@@ -2367,7 +2481,7 @@
         const db = firebase.firestore();
 
         // App Version
-        const APP_VERSION = '4.4.0';
+        const APP_VERSION = '4.5.0';
         console.log(`[App] Mysa Version ${APP_VERSION}`);
 
         // =====================================================
@@ -3496,7 +3610,7 @@ Respond ONLY with valid JSON:
         // Escape text for use in onclick attributes
         function escapeForAttr(text) {
             if (!text) return '';
-            return text.replace(/\\/g, '\\\\').replace(/'/g, "\\'").replace(/"/g, '&quot;');
+            return text.replace(/\\/g, '\\\\').replace(/'/g, "\\'").replace(/"/g, '&quot;').replace(/\n/g, ' ');
         }
 
         function showError(message) {
@@ -3635,6 +3749,12 @@ Respond ONLY with valid JSON:
         function updatePlaceholder() {
             const placeholder = currentTab === 'tasks' ? 'Add a task...' : 'Add an item...';
             itemInput.placeholder = placeholder;
+
+            // Show/hide category picker button for shopping tab
+            const categoryBtn = document.getElementById('categoryPickerBtn');
+            if (categoryBtn) {
+                categoryBtn.style.display = currentTab === 'shopping' ? 'flex' : 'none';
+            }
         }
 
         // =====================================================
@@ -4010,7 +4130,7 @@ Respond ONLY with valid JSON:
                         <div class="category-items ${isCollapsed ? 'collapsed' : ''}">
                             ${categoryItems.map(item => `
                                 <div class="shopping-item ${item.done ? 'done' : ''}" data-id="${item.id}"
-                                     ontouchstart="startLongPress(event, '${item.id}', '${item.category || 'other'}')"
+                                     ontouchstart="startLongPress(event, '${item.id}', '${escapeForAttr(item.text)}', '${item.category || 'other'}')"
                                      ontouchend="cancelLongPress()" ontouchmove="cancelLongPress()">
                                     <div class="item-checkbox ${item.done ? 'checked' : ''}" data-action="toggle">
                                         ${item.done ? '✓' : ''}
@@ -4019,9 +4139,6 @@ Respond ONLY with valid JSON:
                                         <span class="item-text">${escapeHtml(item.text)}</span>
                                         <div class="item-meta" data-creator-id="${item.createdBy || ''}" data-creator-email="${item.createdByEmail || ''}">${getAddedByText(item)}</div>
                                     </div>
-                                    <button class="edit-item-btn" onclick="event.stopPropagation(); showEditItemModal('${item.id}', '${escapeForAttr(item.text)}', '${item.category || 'other'}')" title="Edit item">
-                                        ✏️
-                                    </button>
                                     <button class="priority-btn" data-action="priority" title="Change priority">
                                         <span class="priority-dot ${getPriorityClass(item.priority)}"></span>
                                     </button>
@@ -4143,34 +4260,53 @@ Respond ONLY with valid JSON:
             addBtn.disabled = true;
 
             try {
-                const result = await smartCategorize(text);
-                console.log('[Add] Smart categorize result:', result);
-
-                const needsCorrection = result.corrected.toLowerCase() !== result.original.toLowerCase();
-                const shouldAskUser = needsCorrection && result.confidence !== 'high';
-
-                if (shouldAskUser) {
-                    // Show autocorrect modal for user confirmation
-                    showAutocorrectModal(result, async (accepted, finalText, finalCategory) => {
-                        await saveShoppingItem(finalText, finalCategory);
-                        if (accepted && finalText !== text) {
-                            // Save user's preference for future
-                            userCategoryPrefs[text.toLowerCase()] = {
-                                corrected: finalText,
-                                category: finalCategory
-                            };
-                            saveUserCategoryPrefs();
-                        }
-                    });
+                // Check if user manually selected a category
+                if (selectedAddCategory !== 'auto') {
+                    // User manually selected category - skip AI
+                    await saveShoppingItem(text, selectedAddCategory);
                     itemInput.value = '';
+
+                    // Save user preference for future items
+                    userCategoryPrefs[text.toLowerCase().trim()] = {
+                        corrected: text,
+                        category: selectedAddCategory
+                    };
+                    saveUserCategoryPrefs();
+
+                    // Reset to auto-detect for next item
+                    selectedAddCategory = 'auto';
+                    document.getElementById('selectedCategoryEmoji').textContent = '🤖';
                 } else {
-                    // Auto-add (high confidence or no correction needed)
-                    const finalText = needsCorrection ? result.corrected : text;
-                    await saveShoppingItem(finalText, result.category);
-                    itemInput.value = '';
+                    // Use AI categorization
+                    const result = await smartCategorize(text);
+                    console.log('[Add] Smart categorize result:', result);
 
-                    if (needsCorrection) {
-                        showToast(`Auto-corrected to "${finalText}"`, 2000);
+                    const needsCorrection = result.corrected.toLowerCase() !== result.original.toLowerCase();
+                    const shouldAskUser = needsCorrection && result.confidence !== 'high';
+
+                    if (shouldAskUser) {
+                        // Show autocorrect modal for user confirmation
+                        showAutocorrectModal(result, async (accepted, finalText, finalCategory) => {
+                            await saveShoppingItem(finalText, finalCategory);
+                            if (accepted && finalText !== text) {
+                                // Save user's preference for future
+                                userCategoryPrefs[text.toLowerCase()] = {
+                                    corrected: finalText,
+                                    category: finalCategory
+                                };
+                                saveUserCategoryPrefs();
+                            }
+                        });
+                        itemInput.value = '';
+                    } else {
+                        // Auto-add (high confidence or no correction needed)
+                        const finalText = needsCorrection ? result.corrected : text;
+                        await saveShoppingItem(finalText, result.category);
+                        itemInput.value = '';
+
+                        if (needsCorrection) {
+                            showToast(`Auto-corrected to "${finalText}"`, 2000);
+                        }
                     }
                 }
 
@@ -4276,10 +4412,10 @@ Respond ONLY with valid JSON:
         // =====================================================
         let longPressTimer = null;
 
-        function startLongPress(event, itemId, category) {
+        function startLongPress(event, itemId, itemText, category) {
             longPressTimer = setTimeout(() => {
                 if (navigator.vibrate) navigator.vibrate(30);
-                showCategoryPicker(itemId, category);
+                showEditItemModal(itemId, itemText, category);
             }, 500);
         }
 
@@ -4288,6 +4424,54 @@ Respond ONLY with valid JSON:
                 clearTimeout(longPressTimer);
                 longPressTimer = null;
             }
+        }
+
+        // =====================================================
+        // ADD BAR CATEGORY PICKER
+        // =====================================================
+        let selectedAddCategory = 'auto'; // 'auto' means AI will detect
+
+        function showAddCategoryPicker() {
+            const modal = document.createElement('div');
+            modal.className = 'add-category-picker-overlay';
+            modal.id = 'addCategoryPickerModal';
+            modal.onclick = (e) => {
+                if (e.target === modal) closeAddCategoryPicker();
+            };
+
+            modal.innerHTML = `
+                <div class="add-category-picker-modal">
+                    <h3>Select Category</h3>
+                    <div class="add-category-options">
+                        <button class="add-category-option ${selectedAddCategory === 'auto' ? 'selected' : ''}" onclick="selectAddCategory('auto', '🤖')">
+                            <span class="cat-emoji">🤖</span>
+                            <span class="cat-name">Auto-detect</span>
+                            <span class="cat-desc">AI will categorize</span>
+                            ${selectedAddCategory === 'auto' ? '<span class="check">✓</span>' : ''}
+                        </button>
+                        ${SHOPPING_CATEGORIES.map(cat => `
+                            <button class="add-category-option ${selectedAddCategory === cat.id ? 'selected' : ''}" onclick="selectAddCategory('${cat.id}', '${cat.emoji}')">
+                                <span class="cat-emoji">${cat.emoji}</span>
+                                <span class="cat-name">${cat.name}</span>
+                                ${selectedAddCategory === cat.id ? '<span class="check">✓</span>' : ''}
+                            </button>
+                        `).join('')}
+                    </div>
+                    <button class="cancel-btn" onclick="closeAddCategoryPicker()">Cancel</button>
+                </div>
+            `;
+
+            document.body.appendChild(modal);
+        }
+
+        function closeAddCategoryPicker() {
+            document.getElementById('addCategoryPickerModal')?.remove();
+        }
+
+        function selectAddCategory(categoryId, emoji) {
+            selectedAddCategory = categoryId;
+            document.getElementById('selectedCategoryEmoji').textContent = emoji;
+            closeAddCategoryPicker();
         }
 
         function showCategoryPicker(itemId, currentCat) {
