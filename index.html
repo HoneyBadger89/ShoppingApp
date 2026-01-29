@@ -2781,7 +2781,7 @@
                 </div>
 
                 <div class="profile-version" style="text-align: center; padding: 10px 20px; color: #9ca3af; font-size: 12px;">
-                    <div>Mysa v4.8.1</div>
+                    <div>Mysa v4.8.2</div>
                     <div style="margin-top: 4px;">Made with &#10084;&#65039;</div>
                 </div>
             </div>
@@ -4423,9 +4423,10 @@ Respond ONLY with valid JSON:
         // =====================================================
         async function initializeLists() {
             const listsRef = db.collection('lists');
+            const userEmail = currentUser.email.toLowerCase();
 
             console.log('[Init] ========================================');
-            console.log('[Init] Initializing lists for user:', currentUser.email);
+            console.log('[Init] Initializing lists for user:', userEmail);
             console.log('[Init] User UID:', currentUser.uid);
 
             // Helper function to find or create a list
@@ -4433,56 +4434,57 @@ Respond ONLY with valid JSON:
                 console.log(`[Init] Looking for ${type} list...`);
 
                 try {
-                    // FIRST: Check if user has a SHARED list (prioritize collaboration)
-                    console.log(`[Init] Query 1: sharedWith contains "${currentUser.email.toLowerCase()}"`);
-                    let sharedQuery = await listsRef
-                        .where('sharedWith', 'array-contains', currentUser.email.toLowerCase())
-                        .where('type', '==', type)
-                        .limit(1)
+                    // Query 1: Find lists where user's email is in sharedWith
+                    // Using single-field query to avoid composite index requirement
+                    console.log(`[Init] Query: sharedWith contains "${userEmail}"`);
+                    let query = await listsRef
+                        .where('sharedWith', 'array-contains', userEmail)
                         .get();
 
-                    console.log(`[Init] Query 1 results: ${sharedQuery.size} docs`);
+                    console.log(`[Init] Found ${query.size} lists with user in sharedWith`);
 
-                    if (!sharedQuery.empty) {
-                        const doc = sharedQuery.docs[0];
-                        console.log(`[Init] ✓ Found SHARED ${type} list:`, doc.id, 'owner:', doc.data().ownerEmail);
-                        return doc.id;
+                    // Filter by type client-side
+                    let matchingDoc = query.docs.find(doc => doc.data().type === type);
+
+                    if (matchingDoc) {
+                        console.log(`[Init] ✓ Found ${type} list:`, matchingDoc.id);
+                        return matchingDoc.id;
                     }
 
-                    // SECOND: Check if user OWNS a list
+                    // Query 2: Find lists owned by user (fallback)
                     console.log(`[Init] Query 2: ownerId == "${currentUser.uid}"`);
                     let ownedQuery = await listsRef
                         .where('ownerId', '==', currentUser.uid)
-                        .where('type', '==', type)
-                        .limit(1)
                         .get();
 
-                    console.log(`[Init] Query 2 results: ${ownedQuery.size} docs`);
+                    console.log(`[Init] Found ${ownedQuery.size} lists owned by user`);
 
-                    if (!ownedQuery.empty) {
-                        const doc = ownedQuery.docs[0];
-                        console.log(`[Init] ✓ Found OWNED ${type} list:`, doc.id, 'sharedWith:', doc.data().sharedWith);
+                    // Filter by type client-side
+                    let ownedDoc = ownedQuery.docs.find(doc => doc.data().type === type);
 
-                        // Make sure owner's email is in sharedWith for consistency
-                        const data = doc.data();
-                        if (!data.sharedWith || !data.sharedWith.includes(currentUser.email.toLowerCase())) {
+                    if (ownedDoc) {
+                        console.log(`[Init] ✓ Found OWNED ${type} list:`, ownedDoc.id);
+
+                        // Make sure owner's email is in sharedWith
+                        const data = ownedDoc.data();
+                        if (!data.sharedWith || !data.sharedWith.includes(userEmail)) {
                             console.log(`[Init] Adding owner email to sharedWith...`);
-                            await listsRef.doc(doc.id).update({
-                                sharedWith: firebase.firestore.FieldValue.arrayUnion(currentUser.email.toLowerCase())
+                            await listsRef.doc(ownedDoc.id).update({
+                                sharedWith: firebase.firestore.FieldValue.arrayUnion(userEmail)
                             });
                         }
 
-                        return doc.id;
+                        return ownedDoc.id;
                     }
 
-                    // THIRD: Create new list
-                    console.log(`[Init] Creating NEW ${type} list for:`, currentUser.email);
+                    // Create new list if none found
+                    console.log(`[Init] Creating NEW ${type} list for:`, userEmail);
                     const docRef = await listsRef.add({
                         type: type,
                         name: type === 'tasks' ? 'Tasks' : 'Shopping',
                         ownerId: currentUser.uid,
                         ownerEmail: currentUser.email,
-                        sharedWith: [currentUser.email.toLowerCase()], // Include creator's email!
+                        sharedWith: [userEmail],
                         collaborators: {},
                         createdAt: firebase.firestore.FieldValue.serverTimestamp()
                     });
@@ -4491,7 +4493,8 @@ Respond ONLY with valid JSON:
 
                 } catch (error) {
                     console.error(`[Init] ERROR finding/creating ${type} list:`, error);
-                    showToast(`Error loading ${type} list. Please refresh.`);
+                    console.error(`[Init] Error details:`, error.code, error.message);
+                    showToast(`Error loading ${type} list: ${error.message}`);
                     return null;
                 }
             }
@@ -4500,7 +4503,13 @@ Respond ONLY with valid JSON:
             lists.tasks = await findOrCreateList('tasks');
             lists.shopping = await findOrCreateList('shopping');
 
-            console.log('[Init] Final lists:', { tasks: lists.tasks, shopping: lists.shopping });
+            console.log('[Init] ========================================');
+            console.log('[Init] Final lists:', JSON.stringify(lists));
+
+            if (!lists.tasks || !lists.shopping) {
+                console.error('[Init] CRITICAL: One or more lists failed to initialize!');
+                showToast('Failed to load lists. Please check console and refresh.');
+            }
         }
 
         // =====================================================
@@ -5988,6 +5997,185 @@ Respond ONLY with valid JSON:
             document.body.appendChild(modal);
         }
 
+        // Simple share modal - shares both lists together
+        function showSimpleShareModal() {
+            console.log('[Share] showSimpleShareModal called');
+            console.log('[Share] lists:', JSON.stringify(lists));
+
+            if (!lists.tasks && !lists.shopping) {
+                showToast('Lists not loaded. Please refresh.');
+                return;
+            }
+
+            const modal = document.createElement('div');
+            modal.className = 'share-modal-overlay';
+            modal.id = 'simpleShareModal';
+            modal.onclick = (e) => {
+                if (e.target === modal) closeSimpleShareModal();
+            };
+
+            modal.innerHTML = `
+                <div class="new-share-modal">
+                    <div class="share-modal-header">
+                        <h3>Share Mysa</h3>
+                        <button class="close-modal-btn" onclick="closeSimpleShareModal()">×</button>
+                    </div>
+
+                    <p style="color: #6b7280; font-size: 13px; margin: 0 0 16px 0;">
+                        Invite family members to share your Tasks and Shopping lists.
+                    </p>
+
+                    <div class="share-invite-section">
+                        <label>Invite by email</label>
+                        <div class="invite-input-row">
+                            <input type="email" id="simpleInviteEmail" placeholder="Enter email address" />
+                            <button class="new-invite-btn" onclick="simpleInviteCollaborator()">Invite</button>
+                        </div>
+                    </div>
+
+                    <div class="share-collaborators-section">
+                        <label>Collaborators</label>
+                        <div id="simpleCollaboratorsList" class="collaborators-list">
+                            Loading...
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            document.body.appendChild(modal);
+            loadSimpleCollaborators();
+
+            setTimeout(() => {
+                document.getElementById('simpleInviteEmail')?.focus();
+            }, 100);
+        }
+
+        function closeSimpleShareModal() {
+            document.getElementById('simpleShareModal')?.remove();
+        }
+
+        async function loadSimpleCollaborators() {
+            console.log('[Share] Loading collaborators...');
+            const container = document.getElementById('simpleCollaboratorsList');
+            if (!container) return;
+
+            try {
+                // Get all unique emails from both lists
+                const allEmails = new Set();
+                allEmails.add(currentUser.email.toLowerCase());
+
+                if (lists.tasks) {
+                    const taskDoc = await db.collection('lists').doc(lists.tasks).get();
+                    if (taskDoc.exists) {
+                        (taskDoc.data().sharedWith || []).forEach(e => allEmails.add(e.toLowerCase()));
+                    }
+                }
+
+                if (lists.shopping) {
+                    const shopDoc = await db.collection('lists').doc(lists.shopping).get();
+                    if (shopDoc.exists) {
+                        (shopDoc.data().sharedWith || []).forEach(e => allEmails.add(e.toLowerCase()));
+                    }
+                }
+
+                console.log('[Share] Collaborators:', Array.from(allEmails));
+
+                if (allEmails.size === 1) {
+                    container.innerHTML = `
+                        <div style="color: #9ca3af; font-size: 13px; text-align: center; padding: 20px;">
+                            No one else yet. Invite someone above!
+                        </div>
+                    `;
+                    return;
+                }
+
+                container.innerHTML = Array.from(allEmails).map(email => {
+                    const isCurrentUser = email === currentUser.email.toLowerCase();
+                    const initial = email.charAt(0).toUpperCase();
+
+                    return `
+                        <div class="collaborator-item" style="display: flex; align-items: center; padding: 10px; border-bottom: 1px solid #f3f4f6;">
+                            <div style="width: 36px; height: 36px; border-radius: 50%; background: ${isCurrentUser ? '#8b5cf6' : '#14b8a6'}; color: white; display: flex; align-items: center; justify-content: center; font-weight: 600; margin-right: 12px;">
+                                ${initial}
+                            </div>
+                            <div style="flex: 1;">
+                                <div style="font-weight: 500; color: #1f2937;">${email}</div>
+                                <div style="font-size: 12px; color: #9ca3af;">${isCurrentUser ? 'You' : 'Collaborator'}</div>
+                            </div>
+                            ${!isCurrentUser ? `<button onclick="simpleRemoveCollaborator('${email}')" style="background: #fef2f2; color: #ef4444; border: none; padding: 6px 12px; border-radius: 6px; font-size: 12px; cursor: pointer;">Remove</button>` : ''}
+                        </div>
+                    `;
+                }).join('');
+
+            } catch (error) {
+                console.error('[Share] Error loading collaborators:', error);
+                container.innerHTML = '<div style="color: #ef4444;">Failed to load</div>';
+            }
+        }
+
+        async function simpleInviteCollaborator() {
+            const input = document.getElementById('simpleInviteEmail');
+            const email = input?.value?.trim()?.toLowerCase();
+
+            console.log('[Share] Inviting:', email);
+
+            if (!email || !email.includes('@')) {
+                showToast('Enter a valid email');
+                return;
+            }
+
+            if (email === currentUser.email.toLowerCase()) {
+                showToast('That\'s you!');
+                return;
+            }
+
+            try {
+                // Add to BOTH lists
+                if (lists.tasks) {
+                    await db.collection('lists').doc(lists.tasks).update({
+                        sharedWith: firebase.firestore.FieldValue.arrayUnion(email)
+                    });
+                }
+                if (lists.shopping) {
+                    await db.collection('lists').doc(lists.shopping).update({
+                        sharedWith: firebase.firestore.FieldValue.arrayUnion(email)
+                    });
+                }
+
+                input.value = '';
+                showToast(`Invited ${email}!`);
+                loadSimpleCollaborators();
+
+            } catch (error) {
+                console.error('[Share] Error inviting:', error);
+                showToast('Failed to invite');
+            }
+        }
+
+        async function simpleRemoveCollaborator(email) {
+            if (!confirm(`Remove ${email} from your lists?`)) return;
+
+            try {
+                if (lists.tasks) {
+                    await db.collection('lists').doc(lists.tasks).update({
+                        sharedWith: firebase.firestore.FieldValue.arrayRemove(email)
+                    });
+                }
+                if (lists.shopping) {
+                    await db.collection('lists').doc(lists.shopping).update({
+                        sharedWith: firebase.firestore.FieldValue.arrayRemove(email)
+                    });
+                }
+
+                showToast(`Removed ${email}`);
+                loadSimpleCollaborators();
+
+            } catch (error) {
+                console.error('[Share] Error removing:', error);
+                showToast('Failed to remove');
+            }
+        }
+
         function showNewShareModal(listType) {
             console.log('[Share] showNewShareModal called for:', listType);
             console.log('[Share] lists:', JSON.stringify(lists));
@@ -6423,8 +6611,8 @@ Respond ONLY with valid JSON:
         });
 
         document.getElementById('manageSharingBtn').addEventListener('click', () => {
-            // Show list picker to choose which list to share
-            showShareListPicker();
+            // Show simple sharing modal (both lists shared together)
+            showSimpleShareModal();
         });
 
         document.getElementById('clearAllCompletedBtn').addEventListener('click', async () => {
