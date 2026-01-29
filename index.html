@@ -2008,6 +2008,39 @@
             border-top-color: #fef08a;
         }
 
+        /* Auto-delete fade animation for completed items */
+        .fading-out {
+            animation: fadeOutAndSlide 3s ease forwards;
+            pointer-events: none; /* Disable interactions except... */
+        }
+
+        .fading-out .item-checkbox {
+            pointer-events: auto !important; /* Keep checkbox tappable to rescue */
+            cursor: pointer !important;
+        }
+
+        @keyframes fadeOutAndSlide {
+            0% {
+                opacity: 1;
+                transform: translateX(0);
+                max-height: 100px;
+            }
+            70% {
+                opacity: 0.4;
+                transform: translateX(0);
+                max-height: 100px;
+            }
+            100% {
+                opacity: 0;
+                transform: translateX(30px);
+                max-height: 0;
+                padding-top: 0;
+                padding-bottom: 0;
+                margin: 0;
+                border: none;
+            }
+        }
+
         /* =====================================================
            AUTOCORRECT MODAL
            ===================================================== */
@@ -2576,7 +2609,7 @@
                 </div>
 
                 <div class="profile-version" style="text-align: center; padding: 10px 20px; color: #9ca3af; font-size: 12px;">
-                    <div>Mysa v4.6.6</div>
+                    <div>Mysa v4.7.0</div>
                     <div style="margin-top: 4px;">Made with &#10084;&#65039;</div>
                 </div>
             </div>
@@ -3647,6 +3680,7 @@ Respond ONLY with valid JSON:
         let completedCounts = { tasks: 0, shopping: 0 };
         let unsubscribeItems = null;
         let unsubscribeList = null;
+        const pendingDeletions = new Map(); // itemId -> timeoutId for auto-delete
 
         // DOM Elements
         const authContainer = document.getElementById('authContainer');
@@ -4358,16 +4392,7 @@ Respond ONLY with valid JSON:
                 `;
             }
 
-            // Add clear completed button if there are completed items
-            if (completedCount > 0) {
-                html += `
-                    <li>
-                        <button class="clear-completed-btn visible" id="clearCompletedBtn">
-                            Clear completed (${completedCount})
-                        </button>
-                    </li>
-                `;
-            }
+            // Clear completed button removed - items auto-delete after 3 seconds
 
             // Add personality message footer
             const message = getPersonalityMessage();
@@ -4490,16 +4515,7 @@ Respond ONLY with valid JSON:
                 `;
             });
 
-            // Add clear completed button if there are completed items
-            if (completedCount > 0) {
-                html += `
-                    <li>
-                        <button class="clear-completed-btn visible" id="clearCompletedBtn">
-                            Clear completed (${completedCount})
-                        </button>
-                    </li>
-                `;
-            }
+            // Clear completed button removed - items auto-delete after 3 seconds
 
             // Add personality message footer
             const message = getPersonalityMessage();
@@ -5226,21 +5242,56 @@ Respond ONLY with valid JSON:
                 const doc = await itemRef.get();
                 if (doc.exists) {
                     const wasNotDone = !doc.data().done;
-                    const card = document.querySelector(`.item-card[data-id="${itemId}"]`);
+                    const willBeDone = wasNotDone;
 
-                    if (card && wasNotDone) {
-                        // Add completion animation
-                        card.classList.add('completing-swipe');
-                        setTimeout(() => card.classList.remove('completing-swipe'), 400);
+                    // Find the card element (could be .item-card, .task-item, or .shopping-item)
+                    const card = document.querySelector(`.item-card[data-id="${itemId}"]`) ||
+                                 document.querySelector(`.task-item[data-id="${itemId}"]`) ||
+                                 document.querySelector(`.shopping-item[data-id="${itemId}"]`);
 
-                        // Trigger confetti celebration
-                        if (triggerConfetti) {
-                            const rect = card.getBoundingClientRect();
-                            confetti(rect.left + rect.width / 2, rect.top + rect.height / 2);
+                    if (willBeDone) {
+                        // Item is being CHECKED - start fade out and schedule deletion
+                        if (card) {
+                            card.classList.add('completing-swipe');
+                            setTimeout(() => card.classList.remove('completing-swipe'), 400);
+
+                            // Trigger confetti celebration
+                            if (triggerConfetti) {
+                                const rect = card.getBoundingClientRect();
+                                confetti(rect.left + rect.width / 2, rect.top + rect.height / 2);
+                            }
+
+                            // Start fade-out animation after a brief moment
+                            setTimeout(() => {
+                                if (card) card.classList.add('fading-out');
+                            }, 500);
+                        }
+
+                        // Schedule auto-delete after 3 seconds
+                        const timeoutId = setTimeout(async () => {
+                            pendingDeletions.delete(itemId);
+                            try {
+                                await db.collection('lists').doc(listId).collection('items').doc(itemId).delete();
+                            } catch (err) {
+                                console.error('Error auto-deleting item:', err);
+                            }
+                        }, 3500); // 3.5s to match animation
+
+                        pendingDeletions.set(itemId, timeoutId);
+
+                    } else {
+                        // Item is being UNCHECKED - cancel pending deletion (rescue!)
+                        if (pendingDeletions.has(itemId)) {
+                            clearTimeout(pendingDeletions.get(itemId));
+                            pendingDeletions.delete(itemId);
+                        }
+
+                        if (card) {
+                            card.classList.remove('fading-out');
                         }
                     }
 
-                    await itemRef.update({ done: !doc.data().done });
+                    await itemRef.update({ done: willBeDone });
                 }
             } catch (error) {
                 console.error('Error toggling item:', error);
