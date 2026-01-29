@@ -2010,7 +2010,7 @@
 
         /* Auto-delete fade animation for completed items */
         .fading-out {
-            animation: fadeOutAndSlide 3s ease forwards;
+            animation: fadeOutAndSlide 1.5s ease forwards;
             pointer-events: none; /* Disable interactions except... */
         }
 
@@ -2609,7 +2609,7 @@
                 </div>
 
                 <div class="profile-version" style="text-align: center; padding: 10px 20px; color: #9ca3af; font-size: 12px;">
-                    <div>Mysa v4.7.0</div>
+                    <div>Mysa v4.7.1</div>
                     <div style="margin-top: 4px;">Made with &#10084;&#65039;</div>
                 </div>
             </div>
@@ -5267,7 +5267,7 @@ Respond ONLY with valid JSON:
                             }, 500);
                         }
 
-                        // Schedule auto-delete after 3 seconds
+                        // Schedule auto-delete after 2 seconds
                         const timeoutId = setTimeout(async () => {
                             pendingDeletions.delete(itemId);
                             try {
@@ -5275,7 +5275,7 @@ Respond ONLY with valid JSON:
                             } catch (err) {
                                 console.error('Error auto-deleting item:', err);
                             }
-                        }, 3500); // 3.5s to match animation
+                        }, 2000); // 2s to match 1.5s animation
 
                         pendingDeletions.set(itemId, timeoutId);
 
