@@ -400,9 +400,8 @@
         }
 
         .item-checkbox {
-            width: 22px;
-            height: 22px;
-            min-width: 22px;
+            width: 24px;
+            height: 24px;
             border: 2px solid #d1d5db;
             border-radius: 50%;
             cursor: pointer;
@@ -411,25 +410,22 @@
             justify-content: center;
             transition: all 0.2s ease;
             flex-shrink: 0;
-            font-size: 12px;
-            color: transparent;
-            margin-right: 10px;
+            margin-top: 2px;
         }
 
         .item-checkbox:hover {
-            border-color: #10b981;
+            border-color: var(--accent-success);
         }
 
-        .item-checkbox.checked,
         .item-card.done .item-checkbox {
-            background: #10b981;
-            border-color: #10b981;
-            color: white;
+            background: var(--accent-success);
+            border-color: var(--accent-success);
+            transform: scale(1.05);
         }
 
         .item-checkbox-icon {
             color: white;
-            font-size: 12px;
+            font-size: 14px;
             opacity: 0;
             transition: opacity 0.2s ease;
         }
@@ -458,19 +454,18 @@
         }
 
         .priority-dot {
-            width: 12px;
-            height: 12px;
+            width: 16px;
+            height: 16px;
             border-radius: 50%;
             transition: transform 0.15s ease, background-color 0.2s ease;
-            display: inline-block;
         }
 
         .priority-dot.priority-high {
-            background: #ef4444;
+            background: #fca5a5;
         }
 
         .priority-dot.priority-medium {
-            background: #f97316;
+            background: #fcd34d;
         }
 
         .priority-dot.priority-none {
@@ -594,21 +589,22 @@
         }
 
         .item-text {
-            font-size: 14px;
+            font-size: 16px;
             font-weight: 500;
             color: var(--text-primary);
             word-break: break-word;
             transition: all 0.2s ease;
-            line-height: 1.3;
         }
 
         .item-card.done .item-text {
             text-decoration: line-through;
-            color: #9ca3af;
+            opacity: 0.5;
         }
 
         .item-meta {
-            display: none; /* Hidden - using color border instead */
+            font-size: 12px;
+            color: var(--text-muted);
+            margin-top: 4px;
         }
 
 
@@ -1455,244 +1451,19 @@
             padding: 6px 12px;
         }
 
+        .owner-badge {
+            background: var(--bg-secondary);
+            color: var(--text-muted);
+            font-size: 12px;
+            padding: 4px 10px;
+            border-radius: 20px;
+        }
+
         .no-collaborators {
             color: var(--text-muted);
             font-size: 14px;
             text-align: center;
             padding: 20px;
-        }
-
-        /* New Share Modal */
-        .share-modal-overlay {
-            position: fixed;
-            top: 0; left: 0; right: 0; bottom: 0;
-            background: rgba(0,0,0,0.5);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            z-index: 9999;
-            padding: 20px;
-        }
-
-        .new-share-modal {
-            background: white;
-            border-radius: 16px;
-            width: 100%;
-            max-width: 400px;
-            max-height: 80vh;
-            overflow: hidden;
-            display: flex;
-            flex-direction: column;
-        }
-
-        .share-modal-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 16px 20px;
-            border-bottom: 1px solid #e5e7eb;
-        }
-
-        .share-modal-header h3 {
-            margin: 0;
-            font-size: 18px;
-            color: #1f2937;
-        }
-
-        .close-modal-btn {
-            background: none;
-            border: none;
-            font-size: 24px;
-            color: #6b7280;
-            cursor: pointer;
-            padding: 0;
-            line-height: 1;
-        }
-
-        .share-invite-section {
-            padding: 20px;
-            border-bottom: 1px solid #e5e7eb;
-        }
-
-        .share-invite-section label {
-            display: block;
-            font-size: 14px;
-            font-weight: 600;
-            color: #374151;
-            margin-bottom: 10px;
-        }
-
-        .invite-input-row {
-            display: flex;
-            gap: 10px;
-        }
-
-        .invite-input-row input {
-            flex: 1;
-            padding: 12px 14px;
-            border: 2px solid #e5e7eb;
-            border-radius: 10px;
-            font-size: 15px;
-            outline: none;
-        }
-
-        .invite-input-row input:focus {
-            border-color: #8b5cf6;
-        }
-
-        .new-invite-btn {
-            padding: 12px 20px;
-            background: #8b5cf6;
-            color: white;
-            border: none;
-            border-radius: 10px;
-            font-size: 15px;
-            font-weight: 600;
-            cursor: pointer;
-            white-space: nowrap;
-        }
-
-        .new-invite-btn:active {
-            opacity: 0.9;
-        }
-
-        .share-collaborators-section {
-            padding: 20px;
-            overflow-y: auto;
-            flex: 1;
-        }
-
-        .share-collaborators-section label {
-            display: block;
-            font-size: 14px;
-            font-weight: 600;
-            color: #374151;
-            margin-bottom: 12px;
-        }
-
-        .collaborators-list {
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-        }
-
-        .new-collaborator-item {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            padding: 12px;
-            background: #f9fafb;
-            border-radius: 10px;
-        }
-
-        .new-collaborator-avatar {
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            background: linear-gradient(135deg, #8b5cf6, #ec4899);
-            color: white;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: 600;
-            font-size: 16px;
-            flex-shrink: 0;
-        }
-
-        .new-collaborator-info {
-            flex: 1;
-            min-width: 0;
-        }
-
-        .new-collaborator-email {
-            display: block;
-            font-size: 14px;
-            color: #1f2937;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-
-        .new-collaborator-role {
-            display: block;
-            font-size: 12px;
-            color: #6b7280;
-        }
-
-        .remove-collaborator-btn {
-            padding: 6px 12px;
-            background: none;
-            border: 1px solid #ef4444;
-            color: #ef4444;
-            border-radius: 6px;
-            font-size: 13px;
-            cursor: pointer;
-            flex-shrink: 0;
-        }
-
-        .remove-collaborator-btn:active {
-            background: #fef2f2;
-        }
-
-        /* Share Picker Modal */
-        .share-picker-overlay {
-            position: fixed;
-            top: 0; left: 0; right: 0; bottom: 0;
-            background: rgba(0,0,0,0.5);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            z-index: 9999;
-            padding: 20px;
-        }
-
-        .share-picker-modal {
-            background: white;
-            border-radius: 16px;
-            padding: 24px;
-            width: 100%;
-            max-width: 300px;
-            text-align: center;
-        }
-
-        .share-picker-modal h3 {
-            margin: 0 0 20px 0;
-            font-size: 18px;
-        }
-
-        .share-picker-options {
-            display: flex;
-            gap: 12px;
-            margin-bottom: 16px;
-        }
-
-        .share-picker-btn {
-            flex: 1;
-            padding: 20px;
-            border: 2px solid #e5e7eb;
-            border-radius: 12px;
-            background: white;
-            cursor: pointer;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 8px;
-            transition: all 0.2s;
-        }
-
-        .share-picker-btn:active {
-            border-color: #8b5cf6;
-            background: #f3e8ff;
-        }
-
-        .picker-icon {
-            font-size: 32px;
-        }
-
-        .picker-label {
-            font-size: 14px;
-            font-weight: 600;
-            color: #374151;
         }
 
         /* Hide elements based on state */
@@ -1939,7 +1710,15 @@
            PERSONALITY MESSAGES FOOTER
            ===================================================== */
         .personality-footer {
-            display: none !important; /* Hidden - cleaner UI */
+            text-align: center;
+            padding: 16px 20px;
+            color: var(--text-muted);
+            font-size: 13px;
+            font-style: italic;
+            min-height: 50px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
 
         .personality-message {
@@ -2089,8 +1868,8 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 12px 14px;
-            background: #f9fafb;
+            padding: 14px 16px;
+            background: linear-gradient(135deg, #f8f9fa 0%, #f3f4f6 100%);
             cursor: pointer;
             user-select: none;
             -webkit-user-select: none;
@@ -2103,21 +1882,21 @@
         .category-info {
             display: flex;
             align-items: center;
-            gap: 8px;
+            gap: 10px;
         }
 
         .category-emoji {
-            font-size: 18px;
+            font-size: 20px;
         }
 
         .category-name {
             font-weight: 600;
-            font-size: 14px;
+            font-size: 15px;
             color: var(--text-primary);
         }
 
         .category-count {
-            font-size: 12px;
+            font-size: 13px;
             color: var(--text-secondary);
             font-weight: 500;
         }
@@ -2139,72 +1918,61 @@
             opacity: 0;
         }
 
-        .shopping-item,
-        .task-item {
+        .shopping-item {
             display: flex;
             align-items: center;
-            padding: 10px 12px;
+            padding: 12px 16px;
             border-top: 1px solid #f3f4f6;
-            gap: 10px;
-            background: white;
+            gap: 12px;
         }
 
-        .shopping-item:active,
-        .task-item:active {
+        .shopping-item:active {
             background: #f9fafb;
         }
 
-        .shopping-item.done,
-        .task-item.done {
-            opacity: 0.7;
+        .shopping-item.done {
+            background: #fafafa;
         }
 
-        .shopping-item.done .item-text,
-        .task-item.done .item-text {
+        .shopping-item.done .item-text {
             text-decoration: line-through;
-            color: #9ca3af;
+            color: var(--text-muted);
         }
 
-        .shopping-item .item-checkbox,
-        .task-item .item-checkbox {
-            width: 22px;
-            height: 22px;
-            min-width: 22px;
+        .shopping-item .item-checkbox {
+            width: 24px;
+            height: 24px;
             border: 2px solid #d1d5db;
             border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 12px;
-            color: transparent;
+            font-size: 14px;
+            color: white;
             cursor: pointer;
             transition: all 0.2s;
             flex-shrink: 0;
         }
 
-        .shopping-item .item-checkbox.checked,
-        .task-item .item-checkbox.checked {
-            background: #10b981;
-            border-color: #10b981;
-            color: white;
+        .shopping-item .item-checkbox.checked {
+            background: var(--accent-success);
+            border-color: var(--accent-success);
         }
 
-        .shopping-item .item-content,
-        .task-item .item-content {
+        .shopping-item .item-content {
             flex: 1;
             min-width: 0;
         }
 
-        .shopping-item .item-text,
-        .task-item .item-text {
-            font-size: 14px;
-            color: #1f2937;
-            line-height: 1.3;
+        .shopping-item .item-text {
+            font-size: 15px;
+            color: var(--text-primary);
         }
 
-        .shopping-item .item-meta,
-        .task-item .item-meta {
-            display: none;
+        .shopping-item .item-meta {
+            font-size: 12px;
+            color: var(--text-muted);
+            margin-top: 2px;
         }
 
         /* =====================================================
@@ -2742,12 +2510,6 @@
                             <span id="apiKeySettingLabel">Claude API Key</span>
                         </button>
                     </li>
-                    <li class="profile-menu-item">
-                        <button class="profile-menu-btn" id="completedBehaviorBtn">
-                            <span class="profile-menu-icon">&#10003;</span>
-                            <span id="completedBehaviorLabel">Completed: Strikethrough</span>
-                        </button>
-                    </li>
                 </ul>
 
                 <div class="profile-section-title">Lists</div>
@@ -2781,7 +2543,7 @@
                 </div>
 
                 <div class="profile-version" style="text-align: center; padding: 10px 20px; color: #9ca3af; font-size: 12px;">
-                    <div>Mysa v4.8.2</div>
+                    <div>Mysa v4.6.0</div>
                     <div style="margin-top: 4px;">Made with &#10084;&#65039;</div>
                 </div>
             </div>
@@ -2905,7 +2667,7 @@
         const db = firebase.firestore();
 
         // App Version
-        const APP_VERSION = '4.7.0';
+        const APP_VERSION = '4.6.0';
         console.log(`[App] Mysa Version ${APP_VERSION}`);
 
         // =====================================================
@@ -3579,17 +3341,6 @@ Respond ONLY with valid JSON:
                 personalityLabel.textContent = personalityLabels[userProfile.personality] || personalityLabels.subtle;
             }
 
-            // Update completed behavior label
-            const completedLabel = document.getElementById('completedBehaviorLabel');
-            const completedLabels = {
-                'strikethrough': 'Completed: Strikethrough',
-                'hide-3s': 'Completed: Hide after 3s',
-                'hide-instant': 'Completed: Hide instantly'
-            };
-            if (completedLabel) {
-                completedLabel.textContent = completedLabels[userProfile.completedBehavior] || completedLabels.strikethrough;
-            }
-
             updatePersonalityFooter();
         }
 
@@ -3603,8 +3354,7 @@ Respond ONLY with valid JSON:
                     userProfile = {
                         displayName: data.displayName || '',
                         avatar: data.avatar || '&#128512;',
-                        personality: data.personality || 'subtle',
-                        completedBehavior: data.completedBehavior || 'strikethrough'
+                        personality: data.personality || 'subtle'
                     };
                     console.log('[Profile] userProfile set to:', userProfile);
                     return data.onboardingComplete || false;
@@ -3684,26 +3434,14 @@ Respond ONLY with valid JSON:
         }
 
         function cyclePersonality() {
-            console.log('[Profile] cyclePersonality called');
             const order = ['off', 'subtle', 'fun'];
             const currentIdx = order.indexOf(userProfile.personality);
             const nextIdx = (currentIdx + 1) % order.length;
-            console.log('[Profile] Personality:', order[currentIdx], '->', order[nextIdx]);
             updateUserProfile({ personality: order[nextIdx] });
-        }
-
-        function cycleCompletedBehavior() {
-            console.log('[Profile] cycleCompletedBehavior called');
-            const order = ['strikethrough', 'hide-3s', 'hide-instant'];
-            const currentIdx = order.indexOf(userProfile.completedBehavior || 'strikethrough');
-            const nextIdx = (currentIdx + 1) % order.length;
-            console.log('[Profile] Completed behavior:', order[currentIdx], '->', order[nextIdx]);
-            updateUserProfile({ completedBehavior: order[nextIdx] });
         }
 
         // API Key prompt
         function showApiKeyPrompt() {
-            console.log('[Profile] showApiKeyPrompt called');
             const currentKey = getClaudeApiKey();
             const maskedKey = currentKey ? `${currentKey.substring(0, 12)}...${currentKey.substring(currentKey.length - 4)}` : '(not set)';
 
@@ -3821,12 +3559,8 @@ Respond ONLY with valid JSON:
         }
 
         function initProfileHandlers() {
-            console.log('[Profile] Initializing profile handlers...');
-
             // Avatar click to open modal
-            const avatarEl = document.getElementById('profileAvatarLarge');
-            console.log('[Profile] profileAvatarLarge:', avatarEl ? 'found' : 'NOT FOUND');
-            avatarEl?.addEventListener('click', showAvatarModal);
+            document.getElementById('profileAvatarLarge')?.addEventListener('click', showAvatarModal);
 
             // Avatar grid selection
             document.getElementById('avatarGrid')?.addEventListener('click', (e) => {
@@ -3845,38 +3579,13 @@ Respond ONLY with valid JSON:
             });
 
             // Edit name button
-            const editNameBtn = document.getElementById('editNameBtn');
-            console.log('[Profile] editNameBtn:', editNameBtn ? 'found' : 'NOT FOUND');
-            editNameBtn?.addEventListener('click', () => {
-                console.log('[Profile] Edit name button clicked');
-                showEditNamePrompt();
-            });
+            document.getElementById('editNameBtn')?.addEventListener('click', showEditNamePrompt);
 
             // Personality setting button
-            const personalityBtn = document.getElementById('personalitySettingBtn');
-            console.log('[Profile] personalitySettingBtn:', personalityBtn ? 'found' : 'NOT FOUND');
-            personalityBtn?.addEventListener('click', () => {
-                console.log('[Profile] Personality button clicked');
-                cyclePersonality();
-            });
+            document.getElementById('personalitySettingBtn')?.addEventListener('click', cyclePersonality);
 
             // API key setting button
-            const apiKeyBtn = document.getElementById('apiKeySettingBtn');
-            console.log('[Profile] apiKeySettingBtn:', apiKeyBtn ? 'found' : 'NOT FOUND');
-            apiKeyBtn?.addEventListener('click', () => {
-                console.log('[Profile] API key button clicked');
-                showApiKeyPrompt();
-            });
-
-            // Completed behavior setting button
-            const completedBtn = document.getElementById('completedBehaviorBtn');
-            console.log('[Profile] completedBehaviorBtn:', completedBtn ? 'found' : 'NOT FOUND');
-            completedBtn?.addEventListener('click', () => {
-                console.log('[Profile] Completed behavior button clicked');
-                cycleCompletedBehavior();
-            });
-
-            console.log('[Profile] ✓ Profile handlers initialized');
+            document.getElementById('apiKeySettingBtn')?.addEventListener('click', showApiKeyPrompt);
         }
 
         // =====================================================
@@ -4102,34 +3811,6 @@ Respond ONLY with valid JSON:
             return text.replace(/\\/g, '\\\\').replace(/'/g, "\\'").replace(/"/g, '&quot;').replace(/\n/g, ' ');
         }
 
-        // Generate consistent color for a user based on their ID
-        function getUserColor(userId) {
-            const colors = [
-                '#8b5cf6', // Purple (current user)
-                '#14b8a6', // Teal
-                '#f97316', // Orange
-                '#ec4899', // Pink
-                '#3b82f6', // Blue
-                '#10b981', // Green
-            ];
-
-            // If it's current user, always purple
-            if (userId === currentUser?.uid) {
-                return colors[0];
-            }
-
-            // For others, hash their ID to get consistent color
-            if (!userId) return colors[1];
-            let hash = 0;
-            for (let i = 0; i < userId.length; i++) {
-                hash = ((hash << 5) - hash) + userId.charCodeAt(i);
-                hash = hash & hash;
-            }
-
-            // Start from index 1 (skip purple, that's for current user)
-            return colors[1 + (Math.abs(hash) % (colors.length - 1))];
-        }
-
         function showError(message) {
             authError.textContent = message;
             authError.classList.add('show');
@@ -4330,7 +4011,7 @@ Respond ONLY with valid JSON:
 
             const sharedSnapshot = await listsRef
                 .where('type', '==', 'shopping')
-                .where('sharedWith', 'array-contains', currentUser.email.toLowerCase())
+                .where('sharedWith', 'array-contains', currentUser.uid)
                 .get();
 
             const ownedLists = ownedSnapshot.docs;
@@ -4423,93 +4104,56 @@ Respond ONLY with valid JSON:
         // =====================================================
         async function initializeLists() {
             const listsRef = db.collection('lists');
-            const userEmail = currentUser.email.toLowerCase();
 
-            console.log('[Init] ========================================');
-            console.log('[Init] Initializing lists for user:', userEmail);
-            console.log('[Init] User UID:', currentUser.uid);
+            console.log('[Init] Initializing lists for user:', currentUser.email);
 
             // Helper function to find or create a list
             async function findOrCreateList(type) {
-                console.log(`[Init] Looking for ${type} list...`);
+                // FIRST: Check if user has a SHARED list (prioritize collaboration)
+                let sharedQuery = await listsRef
+                    .where('sharedWith', 'array-contains', currentUser.uid)
+                    .where('type', '==', type)
+                    .limit(1)
+                    .get();
 
-                try {
-                    // Query 1: Find lists where user's email is in sharedWith
-                    // Using single-field query to avoid composite index requirement
-                    console.log(`[Init] Query: sharedWith contains "${userEmail}"`);
-                    let query = await listsRef
-                        .where('sharedWith', 'array-contains', userEmail)
-                        .get();
-
-                    console.log(`[Init] Found ${query.size} lists with user in sharedWith`);
-
-                    // Filter by type client-side
-                    let matchingDoc = query.docs.find(doc => doc.data().type === type);
-
-                    if (matchingDoc) {
-                        console.log(`[Init] ✓ Found ${type} list:`, matchingDoc.id);
-                        return matchingDoc.id;
-                    }
-
-                    // Query 2: Find lists owned by user (fallback)
-                    console.log(`[Init] Query 2: ownerId == "${currentUser.uid}"`);
-                    let ownedQuery = await listsRef
-                        .where('ownerId', '==', currentUser.uid)
-                        .get();
-
-                    console.log(`[Init] Found ${ownedQuery.size} lists owned by user`);
-
-                    // Filter by type client-side
-                    let ownedDoc = ownedQuery.docs.find(doc => doc.data().type === type);
-
-                    if (ownedDoc) {
-                        console.log(`[Init] ✓ Found OWNED ${type} list:`, ownedDoc.id);
-
-                        // Make sure owner's email is in sharedWith
-                        const data = ownedDoc.data();
-                        if (!data.sharedWith || !data.sharedWith.includes(userEmail)) {
-                            console.log(`[Init] Adding owner email to sharedWith...`);
-                            await listsRef.doc(ownedDoc.id).update({
-                                sharedWith: firebase.firestore.FieldValue.arrayUnion(userEmail)
-                            });
-                        }
-
-                        return ownedDoc.id;
-                    }
-
-                    // Create new list if none found
-                    console.log(`[Init] Creating NEW ${type} list for:`, userEmail);
-                    const docRef = await listsRef.add({
-                        type: type,
-                        name: type === 'tasks' ? 'Tasks' : 'Shopping',
-                        ownerId: currentUser.uid,
-                        ownerEmail: currentUser.email,
-                        sharedWith: [userEmail],
-                        collaborators: {},
-                        createdAt: firebase.firestore.FieldValue.serverTimestamp()
-                    });
-                    console.log(`[Init] ✓ Created NEW ${type} list:`, docRef.id);
-                    return docRef.id;
-
-                } catch (error) {
-                    console.error(`[Init] ERROR finding/creating ${type} list:`, error);
-                    console.error(`[Init] Error details:`, error.code, error.message);
-                    showToast(`Error loading ${type} list: ${error.message}`);
-                    return null;
+                if (!sharedQuery.empty) {
+                    const doc = sharedQuery.docs[0];
+                    console.log(`[Init] Found SHARED ${type} list:`, doc.id, 'owner:', doc.data().ownerEmail);
+                    return doc.id;
                 }
+
+                // SECOND: Check if user OWNS a list
+                let ownedQuery = await listsRef
+                    .where('ownerId', '==', currentUser.uid)
+                    .where('type', '==', type)
+                    .limit(1)
+                    .get();
+
+                if (!ownedQuery.empty) {
+                    const doc = ownedQuery.docs[0];
+                    console.log(`[Init] Found OWNED ${type} list:`, doc.id, 'sharedWith:', doc.data().sharedWith);
+                    return doc.id;
+                }
+
+                // THIRD: Create new list
+                console.log(`[Init] Creating NEW ${type} list for:`, currentUser.email);
+                const docRef = await listsRef.add({
+                    type: type,
+                    name: type === 'tasks' ? 'Tasks' : 'Shopping',
+                    ownerId: currentUser.uid,
+                    ownerEmail: currentUser.email,
+                    sharedWith: [],
+                    collaborators: {},
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                });
+                return docRef.id;
             }
 
             // Initialize both lists
             lists.tasks = await findOrCreateList('tasks');
             lists.shopping = await findOrCreateList('shopping');
 
-            console.log('[Init] ========================================');
-            console.log('[Init] Final lists:', JSON.stringify(lists));
-
-            if (!lists.tasks || !lists.shopping) {
-                console.error('[Init] CRITICAL: One or more lists failed to initialize!');
-                showToast('Failed to load lists. Please check console and refresh.');
-            }
+            console.log('[Init] Final lists:', { tasks: lists.tasks, shopping: lists.shopping });
         }
 
         // =====================================================
@@ -4634,7 +4278,6 @@ Respond ONLY with valid JSON:
                         <div class="category-items ${isCollapsed ? 'collapsed' : ''}">
                             ${categoryItems.map(item => `
                                 <div class="task-item ${item.done ? 'done' : ''}" data-id="${item.id}"
-                                     style="border-left: 3px solid ${getUserColor(item.createdBy)};"
                                      ontouchstart="startTaskLongPress(event, '${item.id}', '${escapeForAttr(item.text)}', '${item.category || 'other'}')"
                                      ontouchend="cancelTaskLongPress()" ontouchmove="cancelTaskLongPress()">
                                     <div class="item-checkbox ${item.done ? 'checked' : ''}" data-action="toggle">
@@ -4642,6 +4285,7 @@ Respond ONLY with valid JSON:
                                     </div>
                                     <div class="item-content">
                                         <span class="item-text">${escapeHtml(item.text)}</span>
+                                        <div class="item-meta" data-creator-id="${item.createdBy || ''}" data-creator-email="${item.createdByEmail || ''}">${getAddedByText(item)}</div>
                                     </div>
                                     <button class="priority-btn" data-action="priority" title="Change priority">
                                         <span class="priority-dot ${getPriorityClass(item.priority)}"></span>
@@ -4796,7 +4440,6 @@ Respond ONLY with valid JSON:
                         <div class="category-items ${isCollapsed ? 'collapsed' : ''}">
                             ${categoryItems.map(item => `
                                 <div class="shopping-item ${item.done ? 'done' : ''}" data-id="${item.id}"
-                                     style="border-left: 3px solid ${getUserColor(item.createdBy)};"
                                      ontouchstart="startLongPress(event, '${item.id}', '${escapeForAttr(item.text)}', '${item.category || 'other'}')"
                                      ontouchend="cancelLongPress()" ontouchmove="cancelLongPress()">
                                     <div class="item-checkbox ${item.done ? 'checked' : ''}" data-action="toggle">
@@ -4804,6 +4447,7 @@ Respond ONLY with valid JSON:
                                     </div>
                                     <div class="item-content">
                                         <span class="item-text">${escapeHtml(item.text)}</span>
+                                        <div class="item-meta" data-creator-id="${item.createdBy || ''}" data-creator-email="${item.createdByEmail || ''}">${getAddedByText(item)}</div>
                                     </div>
                                     <button class="priority-btn" data-action="priority" title="Change priority">
                                         <span class="priority-dot ${getPriorityClass(item.priority)}"></span>
@@ -4860,22 +4504,11 @@ Respond ONLY with valid JSON:
         // SUBSCRIBE TO ITEMS
         // =====================================================
         function subscribeToItems() {
-            console.log('[Subscribe] subscribeToItems called for tab:', currentTab);
-            console.log('[Subscribe] lists:', JSON.stringify(lists));
-
             if (unsubscribeItems) unsubscribeItems();
             if (unsubscribeList) unsubscribeList();
 
             const listId = lists[currentTab];
-            console.log('[Subscribe] listId:', listId);
-
-            if (!listId) {
-                console.error('[Subscribe] ERROR: No listId for', currentTab);
-                hideSkeletons();
-                document.getElementById('itemList').innerHTML =
-                    '<li class="empty-state"><h3>List not loaded</h3><p>Please refresh the page.</p></li>';
-                return;
-            }
+            if (!listId) return;
 
             const listRef = db.collection('lists').doc(listId);
             const itemsRef = listRef.collection('items');
@@ -4905,31 +4538,11 @@ Respond ONLY with valid JSON:
         // ITEM ACTIONS
         // =====================================================
         async function addItem() {
-            console.log('[AddItem] Function called');
-            console.log('[AddItem] currentTab:', currentTab);
-            console.log('[AddItem] lists:', JSON.stringify(lists));
-
             const text = itemInput.value.trim();
-            console.log('[AddItem] Input text:', text);
-
-            if (!text) {
-                console.log('[AddItem] Empty text, returning');
-                return;
-            }
-            if (!currentUser) {
-                console.log('[AddItem] No current user, returning');
-                showToast('Please sign in first');
-                return;
-            }
+            if (!text || !currentUser) return;
 
             const listId = lists[currentTab];
-            console.log('[AddItem] listId for', currentTab, ':', listId);
-
-            if (!listId) {
-                console.error('[AddItem] ERROR: No listId found for', currentTab);
-                showToast('List not loaded. Please refresh the page.');
-                return;
-            }
+            if (!listId) return;
 
             // For tasks tab, use category-based add
             if (currentTab !== 'shopping') {
@@ -5594,15 +5207,6 @@ Respond ONLY with valid JSON:
                             const rect = card.getBoundingClientRect();
                             confetti(rect.left + rect.width / 2, rect.top + rect.height / 2);
                         }
-
-                        // Handle completed item based on user setting
-                        const behavior = userProfile.completedBehavior || 'strikethrough';
-                        if (behavior === 'hide-instant') {
-                            hideCompletedItem(card, 0);
-                        } else if (behavior === 'hide-3s') {
-                            hideCompletedItem(card, 3000);
-                        }
-                        // 'strikethrough' just stays visible with strikethrough styling
                     }
 
                     await itemRef.update({ done: !doc.data().done });
@@ -5610,21 +5214,6 @@ Respond ONLY with valid JSON:
             } catch (error) {
                 console.error('Error toggling item:', error);
             }
-        }
-
-        function hideCompletedItem(card, delay) {
-            setTimeout(() => {
-                card.style.transition = 'all 0.3s ease';
-                card.style.opacity = '0';
-                card.style.transform = 'translateX(100%)';
-                card.style.maxHeight = card.offsetHeight + 'px';
-                setTimeout(() => {
-                    card.style.maxHeight = '0';
-                    card.style.padding = '0';
-                    card.style.margin = '0';
-                    card.style.overflow = 'hidden';
-                }, 300);
-            }, delay);
         }
 
         async function deleteItem(itemId, animate = false) {
@@ -5964,453 +5553,6 @@ Respond ONLY with valid JSON:
         }
 
         // =====================================================
-        // NEW SHARING SYSTEM (Equal Collaborators)
-        // =====================================================
-        let currentShareListType = 'tasks';
-        let collaboratorsUnsubscribe = null;
-
-        function showShareListPicker() {
-            const modal = document.createElement('div');
-            modal.className = 'share-picker-overlay';
-            modal.id = 'sharePickerModal';
-            modal.onclick = (e) => {
-                if (e.target === modal) modal.remove();
-            };
-
-            modal.innerHTML = `
-                <div class="share-picker-modal">
-                    <h3>Which list to manage?</h3>
-                    <div class="share-picker-options">
-                        <button class="share-picker-btn" onclick="document.getElementById('sharePickerModal').remove(); showNewShareModal('tasks')">
-                            <span class="picker-icon">📋</span>
-                            <span class="picker-label">Tasks</span>
-                        </button>
-                        <button class="share-picker-btn" onclick="document.getElementById('sharePickerModal').remove(); showNewShareModal('shopping')">
-                            <span class="picker-icon">🛒</span>
-                            <span class="picker-label">Shopping</span>
-                        </button>
-                    </div>
-                    <button class="cancel-btn" onclick="document.getElementById('sharePickerModal').remove()">Cancel</button>
-                </div>
-            `;
-
-            document.body.appendChild(modal);
-        }
-
-        // Simple share modal - shares both lists together
-        function showSimpleShareModal() {
-            console.log('[Share] showSimpleShareModal called');
-            console.log('[Share] lists:', JSON.stringify(lists));
-
-            if (!lists.tasks && !lists.shopping) {
-                showToast('Lists not loaded. Please refresh.');
-                return;
-            }
-
-            const modal = document.createElement('div');
-            modal.className = 'share-modal-overlay';
-            modal.id = 'simpleShareModal';
-            modal.onclick = (e) => {
-                if (e.target === modal) closeSimpleShareModal();
-            };
-
-            modal.innerHTML = `
-                <div class="new-share-modal">
-                    <div class="share-modal-header">
-                        <h3>Share Mysa</h3>
-                        <button class="close-modal-btn" onclick="closeSimpleShareModal()">×</button>
-                    </div>
-
-                    <p style="color: #6b7280; font-size: 13px; margin: 0 0 16px 0;">
-                        Invite family members to share your Tasks and Shopping lists.
-                    </p>
-
-                    <div class="share-invite-section">
-                        <label>Invite by email</label>
-                        <div class="invite-input-row">
-                            <input type="email" id="simpleInviteEmail" placeholder="Enter email address" />
-                            <button class="new-invite-btn" onclick="simpleInviteCollaborator()">Invite</button>
-                        </div>
-                    </div>
-
-                    <div class="share-collaborators-section">
-                        <label>Collaborators</label>
-                        <div id="simpleCollaboratorsList" class="collaborators-list">
-                            Loading...
-                        </div>
-                    </div>
-                </div>
-            `;
-
-            document.body.appendChild(modal);
-            loadSimpleCollaborators();
-
-            setTimeout(() => {
-                document.getElementById('simpleInviteEmail')?.focus();
-            }, 100);
-        }
-
-        function closeSimpleShareModal() {
-            document.getElementById('simpleShareModal')?.remove();
-        }
-
-        async function loadSimpleCollaborators() {
-            console.log('[Share] Loading collaborators...');
-            const container = document.getElementById('simpleCollaboratorsList');
-            if (!container) return;
-
-            try {
-                // Get all unique emails from both lists
-                const allEmails = new Set();
-                allEmails.add(currentUser.email.toLowerCase());
-
-                if (lists.tasks) {
-                    const taskDoc = await db.collection('lists').doc(lists.tasks).get();
-                    if (taskDoc.exists) {
-                        (taskDoc.data().sharedWith || []).forEach(e => allEmails.add(e.toLowerCase()));
-                    }
-                }
-
-                if (lists.shopping) {
-                    const shopDoc = await db.collection('lists').doc(lists.shopping).get();
-                    if (shopDoc.exists) {
-                        (shopDoc.data().sharedWith || []).forEach(e => allEmails.add(e.toLowerCase()));
-                    }
-                }
-
-                console.log('[Share] Collaborators:', Array.from(allEmails));
-
-                if (allEmails.size === 1) {
-                    container.innerHTML = `
-                        <div style="color: #9ca3af; font-size: 13px; text-align: center; padding: 20px;">
-                            No one else yet. Invite someone above!
-                        </div>
-                    `;
-                    return;
-                }
-
-                container.innerHTML = Array.from(allEmails).map(email => {
-                    const isCurrentUser = email === currentUser.email.toLowerCase();
-                    const initial = email.charAt(0).toUpperCase();
-
-                    return `
-                        <div class="collaborator-item" style="display: flex; align-items: center; padding: 10px; border-bottom: 1px solid #f3f4f6;">
-                            <div style="width: 36px; height: 36px; border-radius: 50%; background: ${isCurrentUser ? '#8b5cf6' : '#14b8a6'}; color: white; display: flex; align-items: center; justify-content: center; font-weight: 600; margin-right: 12px;">
-                                ${initial}
-                            </div>
-                            <div style="flex: 1;">
-                                <div style="font-weight: 500; color: #1f2937;">${email}</div>
-                                <div style="font-size: 12px; color: #9ca3af;">${isCurrentUser ? 'You' : 'Collaborator'}</div>
-                            </div>
-                            ${!isCurrentUser ? `<button onclick="simpleRemoveCollaborator('${email}')" style="background: #fef2f2; color: #ef4444; border: none; padding: 6px 12px; border-radius: 6px; font-size: 12px; cursor: pointer;">Remove</button>` : ''}
-                        </div>
-                    `;
-                }).join('');
-
-            } catch (error) {
-                console.error('[Share] Error loading collaborators:', error);
-                container.innerHTML = '<div style="color: #ef4444;">Failed to load</div>';
-            }
-        }
-
-        async function simpleInviteCollaborator() {
-            const input = document.getElementById('simpleInviteEmail');
-            const email = input?.value?.trim()?.toLowerCase();
-
-            console.log('[Share] Inviting:', email);
-
-            if (!email || !email.includes('@')) {
-                showToast('Enter a valid email');
-                return;
-            }
-
-            if (email === currentUser.email.toLowerCase()) {
-                showToast('That\'s you!');
-                return;
-            }
-
-            try {
-                // Add to BOTH lists
-                if (lists.tasks) {
-                    await db.collection('lists').doc(lists.tasks).update({
-                        sharedWith: firebase.firestore.FieldValue.arrayUnion(email)
-                    });
-                }
-                if (lists.shopping) {
-                    await db.collection('lists').doc(lists.shopping).update({
-                        sharedWith: firebase.firestore.FieldValue.arrayUnion(email)
-                    });
-                }
-
-                input.value = '';
-                showToast(`Invited ${email}!`);
-                loadSimpleCollaborators();
-
-            } catch (error) {
-                console.error('[Share] Error inviting:', error);
-                showToast('Failed to invite');
-            }
-        }
-
-        async function simpleRemoveCollaborator(email) {
-            if (!confirm(`Remove ${email} from your lists?`)) return;
-
-            try {
-                if (lists.tasks) {
-                    await db.collection('lists').doc(lists.tasks).update({
-                        sharedWith: firebase.firestore.FieldValue.arrayRemove(email)
-                    });
-                }
-                if (lists.shopping) {
-                    await db.collection('lists').doc(lists.shopping).update({
-                        sharedWith: firebase.firestore.FieldValue.arrayRemove(email)
-                    });
-                }
-
-                showToast(`Removed ${email}`);
-                loadSimpleCollaborators();
-
-            } catch (error) {
-                console.error('[Share] Error removing:', error);
-                showToast('Failed to remove');
-            }
-        }
-
-        function showNewShareModal(listType) {
-            console.log('[Share] showNewShareModal called for:', listType);
-            console.log('[Share] lists:', JSON.stringify(lists));
-
-            currentShareListType = listType;
-            const listId = lists[listType];
-
-            console.log('[Share] listId:', listId);
-
-            if (!listId) {
-                console.error('[Share] ERROR: No list found for', listType);
-                showToast('No list found - please refresh the page');
-                return;
-            }
-
-            const modal = document.createElement('div');
-            modal.className = 'share-modal-overlay';
-            modal.id = 'newShareModal';
-            modal.onclick = (e) => {
-                if (e.target === modal) closeNewShareModal();
-            };
-
-            const listName = listType === 'tasks' ? 'Tasks' : 'Shopping';
-
-            modal.innerHTML = `
-                <div class="new-share-modal">
-                    <div class="share-modal-header">
-                        <h3>Share ${listName} List</h3>
-                        <button class="close-modal-btn" onclick="closeNewShareModal()">×</button>
-                    </div>
-
-                    <div class="share-invite-section">
-                        <label>Invite by email</label>
-                        <div class="invite-input-row">
-                            <input type="email" id="newInviteEmailInput" placeholder="Enter email address" />
-                            <button class="new-invite-btn" onclick="inviteCollaborator()">Invite</button>
-                        </div>
-                    </div>
-
-                    <div class="share-collaborators-section">
-                        <label>Collaborators</label>
-                        <div id="newCollaboratorsList" class="collaborators-list">
-                            Loading...
-                        </div>
-                    </div>
-                </div>
-            `;
-
-            document.body.appendChild(modal);
-
-            // Load collaborators with real-time updates
-            loadNewCollaborators(listType);
-
-            // Focus on input
-            setTimeout(() => {
-                document.getElementById('newInviteEmailInput')?.focus();
-            }, 100);
-        }
-
-        function closeNewShareModal() {
-            // Unsubscribe from listener
-            if (collaboratorsUnsubscribe) {
-                collaboratorsUnsubscribe();
-                collaboratorsUnsubscribe = null;
-            }
-            document.getElementById('newShareModal')?.remove();
-        }
-
-        function loadNewCollaborators(listType) {
-            const listId = lists[listType];
-            const container = document.getElementById('newCollaboratorsList');
-
-            if (!container || !listId) return;
-
-            // Unsubscribe from previous listener
-            if (collaboratorsUnsubscribe) {
-                collaboratorsUnsubscribe();
-            }
-
-            // Listen for real-time updates
-            collaboratorsUnsubscribe = db.collection('lists').doc(listId)
-                .onSnapshot(doc => {
-                    if (!doc.exists) {
-                        container.innerHTML = '<p class="no-collaborators">No collaborators yet</p>';
-                        return;
-                    }
-
-                    const data = doc.data();
-                    const sharedWith = data.sharedWith || [];
-
-                    // Always include current user's email
-                    const currentEmail = currentUser.email.toLowerCase();
-                    const allEmails = [...new Set([currentEmail, ...sharedWith.map(e => e.toLowerCase())])];
-
-                    if (allEmails.length === 0) {
-                        container.innerHTML = '<p class="no-collaborators">No collaborators yet</p>';
-                        return;
-                    }
-
-                    container.innerHTML = renderNewCollaborators(allEmails);
-                }, error => {
-                    console.error('[Collaborators] Error:', error);
-                    container.innerHTML = '<p class="no-collaborators">Failed to load collaborators</p>';
-                });
-        }
-
-        function renderNewCollaborators(emails) {
-            const currentEmail = currentUser.email.toLowerCase();
-
-            return emails.map(email => {
-                const isCurrentUser = email.toLowerCase() === currentEmail;
-                const initial = email.charAt(0).toUpperCase();
-
-                return `
-                    <div class="new-collaborator-item">
-                        <div class="new-collaborator-avatar">${initial}</div>
-                        <div class="new-collaborator-info">
-                            <span class="new-collaborator-email">${escapeHtml(email)}</span>
-                            <span class="new-collaborator-role">${isCurrentUser ? 'You' : 'Collaborator'}</span>
-                        </div>
-                        ${!isCurrentUser ? `
-                            <button class="remove-collaborator-btn" onclick="removeNewCollaborator('${escapeForAttr(email)}')">
-                                Remove
-                            </button>
-                        ` : ''}
-                    </div>
-                `;
-            }).join('');
-        }
-
-        async function inviteCollaborator() {
-            console.log('[Invite] inviteCollaborator called');
-            console.log('[Invite] currentShareListType:', currentShareListType);
-            console.log('[Invite] lists:', JSON.stringify(lists));
-
-            const input = document.getElementById('newInviteEmailInput');
-            const email = input.value.trim().toLowerCase();
-
-            console.log('[Invite] Email to invite:', email);
-
-            if (!email) {
-                showToast('Please enter an email address');
-                return;
-            }
-
-            // Basic email validation
-            if (!email.includes('@') || !email.includes('.')) {
-                showToast('Please enter a valid email');
-                return;
-            }
-
-            // Can't add yourself
-            if (email === currentUser.email.toLowerCase()) {
-                showToast('You are already a collaborator');
-                return;
-            }
-
-            const listId = lists[currentShareListType];
-            console.log('[Invite] listId:', listId);
-
-            if (!listId) {
-                console.error('[Invite] ERROR: No listId for', currentShareListType);
-                showToast('List not found. Please refresh.');
-                return;
-            }
-
-            try {
-                const listDoc = await db.collection('lists').doc(listId).get();
-                const currentSharedWith = listDoc.data()?.sharedWith || [];
-
-                // Check if already added
-                if (currentSharedWith.map(e => e.toLowerCase()).includes(email)) {
-                    showToast('This person is already a collaborator');
-                    return;
-                }
-
-                // Add to sharedWith array (using email, not UID)
-                await db.collection('lists').doc(listId).update({
-                    sharedWith: firebase.firestore.FieldValue.arrayUnion(email)
-                });
-
-                // ALSO add to the OTHER list (tasks <-> shopping are linked)
-                const otherType = currentShareListType === 'tasks' ? 'shopping' : 'tasks';
-                const otherListId = lists[otherType];
-
-                if (otherListId) {
-                    await db.collection('lists').doc(otherListId).update({
-                        sharedWith: firebase.firestore.FieldValue.arrayUnion(email)
-                    });
-                }
-
-                // Clear input
-                input.value = '';
-
-                // Show success (list will update automatically via listener)
-                showToast(`✓ Added ${email}! They can now access your lists.`, 3000);
-
-            } catch (error) {
-                console.error('[Invite] Error:', error);
-                showToast('Failed to add collaborator');
-            }
-        }
-
-        async function removeNewCollaborator(email) {
-            if (!confirm(`Remove ${email} from this list?`)) return;
-
-            const listId = lists[currentShareListType];
-            if (!listId) return;
-
-            try {
-                // Remove from sharedWith array
-                await db.collection('lists').doc(listId).update({
-                    sharedWith: firebase.firestore.FieldValue.arrayRemove(email)
-                });
-
-                // ALSO remove from the OTHER list
-                const otherType = currentShareListType === 'tasks' ? 'shopping' : 'tasks';
-                const otherListId = lists[otherType];
-
-                if (otherListId) {
-                    await db.collection('lists').doc(otherListId).update({
-                        sharedWith: firebase.firestore.FieldValue.arrayRemove(email)
-                    });
-                }
-
-                // Show success (list will update automatically via listener)
-                showToast(`✓ Removed ${email}`);
-
-            } catch (error) {
-                console.error('[Remove] Error:', error);
-                showToast('Failed to remove collaborator');
-            }
-        }
-
-        // =====================================================
         // AUTH EVENT LISTENERS
         // =====================================================
         document.querySelectorAll('.auth-tab').forEach(tab => {
@@ -6485,21 +5627,15 @@ Respond ONLY with valid JSON:
         // AUTH STATE OBSERVER
         // =====================================================
         auth.onAuthStateChanged(async (user) => {
-            console.log('[Auth] ========================================');
-            console.log('[Auth] State changed:', user ? user.email : 'LOGGED OUT');
-
             currentUser = user;
 
             if (user) {
-                console.log('[Auth] User logged in:', user.email, 'UID:', user.uid);
                 authContainer.style.display = 'none';
                 appContainer.classList.add('active');
 
-                console.log('[Auth] Saving user profile...');
                 await SharingModule.saveUserProfile(user);
 
                 // Load user profile and check onboarding status
-                console.log('[Auth] Loading user profile...');
                 const onboardingComplete = await loadUserProfile();
                 updateProfileUI();
 
@@ -6510,24 +5646,16 @@ Respond ONLY with valid JSON:
                 }
 
                 // Run one-time migration to merge duplicate shopping lists
-                console.log('[Auth] Running migration check...');
                 await migrateShoppingLists();
 
-                console.log('[Auth] Initializing lists...');
                 await initializeLists();
 
-                console.log('[Auth] Lists after init:', JSON.stringify(lists));
-
                 // Initialize delight features
-                console.log('[Auth] Initializing UI handlers...');
                 initPullToRefresh();
                 initOnboarding();
                 initProfileHandlers();
 
-                console.log('[Auth] Switching to tasks tab...');
                 switchTab('tasks');
-
-                console.log('[Auth] ✓ App initialization complete!');
             } else {
                 authContainer.style.display = 'block';
                 appContainer.classList.remove('active');
@@ -6564,19 +5692,10 @@ Respond ONLY with valid JSON:
         // =====================================================
         // ITEM EVENT LISTENERS
         // =====================================================
-        const addBtn = document.getElementById('addBtn');
-        console.log('[Init] addBtn element:', addBtn ? 'found' : 'NOT FOUND');
-        addBtn?.addEventListener('click', () => {
-            console.log('[UI] Add button clicked');
-            addItem();
-        });
+        document.getElementById('addBtn').addEventListener('click', addItem);
 
-        console.log('[Init] itemInput element:', itemInput ? 'found' : 'NOT FOUND');
-        itemInput?.addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') {
-                console.log('[UI] Enter key pressed in input');
-                addItem();
-            }
+        itemInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') addItem();
         });
 
         document.getElementById('itemList').addEventListener('click', (e) => {
@@ -6606,13 +5725,25 @@ Respond ONLY with valid JSON:
         // SHARE MODAL EVENT LISTENERS
         // =====================================================
         shareBtn.addEventListener('click', () => {
-            // Open the new share modal for the current tab
-            showNewShareModal(currentTab);
+            const data = listData[currentTab];
+            if (data) {
+                renderCollaborators(data);
+            }
+            shareModal.classList.add('active');
+            inviteEmail.value = '';
+            shareMessage.className = 'share-message';
         });
 
         document.getElementById('manageSharingBtn').addEventListener('click', () => {
-            // Show simple sharing modal (both lists shared together)
-            showSimpleShareModal();
+            // Switch to tasks tab and open share modal
+            switchTab('tasks');
+            setTimeout(() => {
+                const data = listData[currentTab];
+                if (data) {
+                    renderCollaborators(data);
+                }
+                shareModal.classList.add('active');
+            }, 100);
         });
 
         document.getElementById('clearAllCompletedBtn').addEventListener('click', async () => {
