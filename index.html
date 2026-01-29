@@ -894,6 +894,189 @@
             cursor: pointer;
         }
 
+        /* Task Action Menu */
+        .task-action-menu-overlay {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.5);
+            display: flex;
+            align-items: flex-end;
+            justify-content: center;
+            z-index: 9999;
+        }
+
+        .task-action-menu {
+            background: white;
+            border-radius: 20px 20px 0 0;
+            padding: 20px;
+            width: 100%;
+            max-width: 500px;
+        }
+
+        .task-action-header {
+            text-align: center;
+            padding-bottom: 16px;
+            border-bottom: 1px solid #e5e7eb;
+            margin-bottom: 16px;
+        }
+
+        .task-action-text {
+            font-size: 16px;
+            color: #374151;
+            font-style: italic;
+        }
+
+        .task-action-options {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .task-action-btn {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            padding: 16px;
+            border: none;
+            border-radius: 12px;
+            background: #f9fafb;
+            cursor: pointer;
+            text-align: left;
+            transition: background 0.2s;
+        }
+
+        .task-action-btn:active {
+            background: #f3f4f6;
+        }
+
+        .task-action-btn .action-icon {
+            font-size: 24px;
+        }
+
+        .task-action-btn .action-label {
+            flex: 1;
+            font-size: 16px;
+            font-weight: 600;
+            color: #1f2937;
+        }
+
+        .task-action-btn .action-desc {
+            font-size: 12px;
+            color: #6b7280;
+        }
+
+        .task-action-btn.fuckit {
+            background: #fef3c7;
+        }
+
+        .task-action-btn.fuckit:active {
+            background: #fde68a;
+        }
+
+        .task-action-btn.delete {
+            background: #fee2e2;
+        }
+
+        .task-action-btn.delete:active {
+            background: #fecaca;
+        }
+
+        /* Fuck It Bucket section styling */
+        .fuckit-section {
+            margin-top: 24px;
+            opacity: 0.85;
+        }
+
+        .fuckit-header {
+            background: linear-gradient(135deg, #fef3c7, #fde68a) !important;
+        }
+
+        .fuckit-item {
+            background: #fffbeb !important;
+        }
+
+        .fuckit-item .item-text {
+            text-decoration: line-through;
+            color: #9ca3af !important;
+        }
+
+        .restore-btn {
+            background: none;
+            border: none;
+            font-size: 18px;
+            padding: 8px;
+            cursor: pointer;
+        }
+
+        /* Old task prompt */
+        .old-task-prompt-overlay {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+            padding: 20px;
+        }
+
+        .old-task-prompt {
+            background: white;
+            border-radius: 20px;
+            padding: 24px;
+            text-align: center;
+            max-width: 340px;
+            width: 100%;
+        }
+
+        .old-task-icon {
+            font-size: 48px;
+            margin-bottom: 12px;
+        }
+
+        .old-task-prompt h3 {
+            margin: 0 0 16px 0;
+            font-size: 20px;
+        }
+
+        .old-task-text {
+            font-size: 16px;
+            color: #374151;
+            font-style: italic;
+            margin-bottom: 8px;
+        }
+
+        .old-task-age {
+            font-size: 14px;
+            color: #6b7280;
+            margin-bottom: 24px;
+        }
+
+        .old-task-actions {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .old-task-actions button {
+            padding: 14px 20px;
+            border: none;
+            border-radius: 12px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        .btn-keep {
+            background: #10b981;
+            color: white;
+        }
+
+        .btn-fuckit {
+            background: #fef3c7;
+            color: #92400e;
+        }
+
         /* Bottom Navigation */
         .bottom-nav {
             position: fixed;
@@ -2360,7 +2543,7 @@
                 </div>
 
                 <div class="profile-version" style="text-align: center; padding: 10px 20px; color: #9ca3af; font-size: 12px;">
-                    <div>Mysa v4.5.0</div>
+                    <div>Mysa v4.6.0</div>
                     <div style="margin-top: 4px;">Made with &#10084;&#65039;</div>
                 </div>
             </div>
@@ -2369,6 +2552,9 @@
             <div class="add-input-container" id="addInputContainer">
                 <div class="add-input-wrapper" id="addInputWrapper">
                     <input type="text" class="add-input" id="itemInput" placeholder="Add a task...">
+                    <button class="category-picker-btn" id="taskCategoryPickerBtn" onclick="showTaskCategoryPicker()" style="display: flex;">
+                        <span id="selectedTaskCategoryEmoji">🏠</span>
+                    </button>
                     <button class="category-picker-btn" id="categoryPickerBtn" onclick="showAddCategoryPicker()" style="display: none;">
                         <span id="selectedCategoryEmoji">🤖</span>
                     </button>
@@ -2481,7 +2667,7 @@
         const db = firebase.firestore();
 
         // App Version
-        const APP_VERSION = '4.5.0';
+        const APP_VERSION = '4.6.0';
         console.log(`[App] Mysa Version ${APP_VERSION}`);
 
         // =====================================================
@@ -2521,6 +2707,18 @@
             { id: 'baby', name: 'Baby', emoji: '👶' },
             { id: 'pet', name: 'Pet', emoji: '🐾' },
             { id: 'other', name: 'Other', emoji: '📦' }
+        ];
+
+        // =====================================================
+        // TASK CATEGORIES
+        // =====================================================
+        const TASK_CATEGORIES = [
+            { id: 'home', name: 'Home', emoji: '🏠' },
+            { id: 'kids', name: 'Kids', emoji: '👶' },
+            { id: 'projects', name: 'Projects', emoji: '🏗️' },
+            { id: 'calls_bookings', name: 'Calls & Bookings', emoji: '📞' },
+            { id: 'other', name: 'Other', emoji: '📦' },
+            { id: 'fuckit', name: 'Fuck It Bucket', emoji: '🪣' }
         ];
 
         const CATEGORY_KEYWORDS = {
@@ -3750,10 +3948,15 @@ Respond ONLY with valid JSON:
             const placeholder = currentTab === 'tasks' ? 'Add a task...' : 'Add an item...';
             itemInput.placeholder = placeholder;
 
-            // Show/hide category picker button for shopping tab
-            const categoryBtn = document.getElementById('categoryPickerBtn');
-            if (categoryBtn) {
-                categoryBtn.style.display = currentTab === 'shopping' ? 'flex' : 'none';
+            // Show/hide category picker buttons based on tab
+            const shoppingCategoryBtn = document.getElementById('categoryPickerBtn');
+            const taskCategoryBtn = document.getElementById('taskCategoryPickerBtn');
+
+            if (shoppingCategoryBtn) {
+                shoppingCategoryBtn.style.display = currentTab === 'shopping' ? 'flex' : 'none';
+            }
+            if (taskCategoryBtn) {
+                taskCategoryBtn.style.display = currentTab === 'tasks' ? 'flex' : 'none';
             }
         }
 
@@ -3991,11 +4194,13 @@ Respond ONLY with valid JSON:
             completedCounts[currentTab] = completedCount;
             updateHeader();
 
-            // Use category view for shopping, flat list for tasks
+            // Use category view for both tabs
             if (currentTab === 'shopping') {
                 renderShoppingWithCategories(listEl, items, completedCount);
             } else {
-                renderFlatList(listEl, items, completedCount);
+                renderTasksWithCategories(listEl, items, completedCount);
+                // Check for old tasks that might need attention
+                checkOldTasks(items);
             }
 
             // Update display names asynchronously
@@ -4005,19 +4210,38 @@ Respond ONLY with valid JSON:
             initSwipeHandlers();
         }
 
-        // Render flat list (for Tasks tab)
-        function renderFlatList(listEl, items, completedCount) {
-            // Sort: incomplete first, then by priority (high > medium > none), then by date
-            const priorityOrder = { high: 0, medium: 1, none: 2, undefined: 2 };
-            items.sort((a, b) => {
-                if (a.done !== b.done) return a.done ? 1 : -1;
-                const aPriority = priorityOrder[a.priority] ?? 2;
-                const bPriority = priorityOrder[b.priority] ?? 2;
-                if (aPriority !== bPriority) return aPriority - bPriority;
-                const aTime = a.createdAt?.toMillis() || 0;
-                const bTime = b.createdAt?.toMillis() || 0;
-                return aTime - bTime;
+        // Render tasks with category sections
+        function renderTasksWithCategories(listEl, items, completedCount) {
+            // Group items by category
+            const grouped = {};
+            TASK_CATEGORIES.forEach(cat => {
+                grouped[cat.id] = [];
             });
+
+            items.forEach(item => {
+                const cat = item.category || 'other';
+                if (grouped[cat]) {
+                    grouped[cat].push(item);
+                } else {
+                    grouped['other'].push(item);
+                }
+            });
+
+            // Sort items within each category by: incomplete first, then priority, then date
+            const priorityOrder = { high: 0, medium: 1, none: 2, undefined: 2 };
+            for (const catItems of Object.values(grouped)) {
+                catItems.sort((a, b) => {
+                    if (a.done !== b.done) return a.done ? 1 : -1;
+                    const aPriority = priorityOrder[a.priority] ?? 2;
+                    const bPriority = priorityOrder[b.priority] ?? 2;
+                    if (aPriority !== bPriority) return aPriority - bPriority;
+                    const aTime = a.createdAt?.toMillis() || 0;
+                    const bTime = b.createdAt?.toMillis() || 0;
+                    return aTime - bTime;
+                });
+            }
+
+            const taskCollapsed = JSON.parse(localStorage.getItem('taskCollapsedSections') || '{}');
 
             const getPriorityClass = (priority) => {
                 if (priority === 'high') return 'priority-high';
@@ -4025,28 +4249,86 @@ Respond ONLY with valid JSON:
                 return 'priority-none';
             };
 
-            listEl.innerHTML = items.map(item => `
-                <li class="swipe-container" data-id="${item.id}">
-                    <div class="swipe-reveal swipe-reveal-complete">&#10003;</div>
-                    <div class="swipe-reveal swipe-reveal-delete">&#128465;</div>
-                    <div class="item-card ${item.done ? 'done' : ''}" data-id="${item.id}" data-priority="${item.priority || 'none'}">
-                        <div class="item-checkbox" data-action="toggle">
-                            <span class="item-checkbox-icon">&#10003;</span>
+            let html = '';
+            let hasItems = false;
+
+            // Render regular categories (not fuckit)
+            const regularCategories = TASK_CATEGORIES.filter(c => c.id !== 'fuckit');
+
+            regularCategories.forEach(category => {
+                const categoryItems = grouped[category.id];
+                if (categoryItems.length === 0) return;
+                hasItems = true;
+
+                const doneCount = categoryItems.filter(i => i.done).length;
+                const remaining = categoryItems.length - doneCount;
+                const isCollapsed = taskCollapsed[category.id] || false;
+                const allDone = remaining === 0;
+
+                html += `
+                    <li class="category-section ${allDone ? 'all-done' : ''}" data-category="${category.id}">
+                        <div class="category-header" onclick="toggleTaskSection('${category.id}')">
+                            <div class="category-info">
+                                <span class="category-emoji">${category.emoji}</span>
+                                <span class="category-name">${category.name}</span>
+                                <span class="category-count">${allDone ? '✓' : remaining + ' left'}</span>
+                            </div>
+                            <span class="category-toggle">${isCollapsed ? '▶' : '▼'}</span>
                         </div>
-                        <div class="item-content">
-                            <div class="item-text">${escapeHtml(item.text)}</div>
-                            <div class="item-meta" data-creator-id="${item.createdBy || ''}" data-creator-email="${item.createdByEmail || ''}">${getAddedByText(item)}</div>
+                        <div class="category-items ${isCollapsed ? 'collapsed' : ''}">
+                            ${categoryItems.map(item => `
+                                <div class="task-item ${item.done ? 'done' : ''}" data-id="${item.id}"
+                                     ontouchstart="startTaskLongPress(event, '${item.id}', '${escapeForAttr(item.text)}', '${item.category || 'other'}')"
+                                     ontouchend="cancelTaskLongPress()" ontouchmove="cancelTaskLongPress()">
+                                    <div class="item-checkbox ${item.done ? 'checked' : ''}" data-action="toggle">
+                                        ${item.done ? '✓' : ''}
+                                    </div>
+                                    <div class="item-content">
+                                        <span class="item-text">${escapeHtml(item.text)}</span>
+                                        <div class="item-meta" data-creator-id="${item.createdBy || ''}" data-creator-email="${item.createdByEmail || ''}">${getAddedByText(item)}</div>
+                                    </div>
+                                    <button class="priority-btn" data-action="priority" title="Change priority">
+                                        <span class="priority-dot ${getPriorityClass(item.priority)}"></span>
+                                    </button>
+                                </div>
+                            `).join('')}
                         </div>
-                        <button class="priority-btn" data-action="priority" title="Change priority">
-                            <span class="priority-dot ${getPriorityClass(item.priority)}"></span>
-                        </button>
-                    </div>
-                </li>
-            `).join('');
+                    </li>
+                `;
+            });
+
+            // Render Fuck It Bucket separately at the bottom (if has items)
+            const fuckitItems = grouped['fuckit'];
+            if (fuckitItems.length > 0) {
+                const isCollapsed = taskCollapsed['fuckit'] || false;
+                html += `
+                    <li class="category-section fuckit-section" data-category="fuckit">
+                        <div class="category-header fuckit-header" onclick="toggleTaskSection('fuckit')">
+                            <div class="category-info">
+                                <span class="category-emoji">🪣</span>
+                                <span class="category-name">Fuck It Bucket</span>
+                                <span class="category-count">${fuckitItems.length} released</span>
+                            </div>
+                            <span class="category-toggle">${isCollapsed ? '▶' : '▼'}</span>
+                        </div>
+                        <div class="category-items ${isCollapsed ? 'collapsed' : ''}">
+                            ${fuckitItems.map(item => `
+                                <div class="task-item fuckit-item" data-id="${item.id}">
+                                    <div class="item-content">
+                                        <span class="item-text">${escapeHtml(item.text)}</span>
+                                        <span class="item-meta">let go ${formatTimeAgo(item.fuckitAt)}</span>
+                                    </div>
+                                    <button class="restore-btn" onclick="restoreFromFuckit('${item.id}')" title="Restore task">↩️</button>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </li>
+                `;
+            }
 
             // Add clear completed button if there are completed items
             if (completedCount > 0) {
-                listEl.innerHTML += `
+                html += `
                     <li>
                         <button class="clear-completed-btn visible" id="clearCompletedBtn">
                             Clear completed (${completedCount})
@@ -4055,15 +4337,43 @@ Respond ONLY with valid JSON:
                 `;
             }
 
-            // Add personality message footer to list view
+            // Add personality message footer
             const message = getPersonalityMessage();
-            if (message && items.length > 0) {
-                listEl.innerHTML += `
+            if (message && (hasItems || fuckitItems.length > 0)) {
+                html += `
                     <li class="personality-footer">
                         <span class="personality-message">"${message}"</span>
                     </li>
                 `;
             }
+
+            listEl.innerHTML = html;
+        }
+
+        function toggleTaskSection(catId) {
+            const collapsed = JSON.parse(localStorage.getItem('taskCollapsedSections') || '{}');
+            collapsed[catId] = !collapsed[catId];
+            localStorage.setItem('taskCollapsedSections', JSON.stringify(collapsed));
+
+            const section = document.querySelector(`[data-category="${catId}"]`);
+            if (!section) return;
+            const items = section.querySelector('.category-items');
+            const toggle = section.querySelector('.category-toggle');
+            items?.classList.toggle('collapsed');
+            if (toggle) toggle.textContent = collapsed[catId] ? '▶' : '▼';
+        }
+
+        function formatTimeAgo(timestamp) {
+            if (!timestamp) return 'recently';
+            const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
+            const now = new Date();
+            const diffDays = Math.floor((now - date) / (1000 * 60 * 60 * 24));
+
+            if (diffDays === 0) return 'today';
+            if (diffDays === 1) return 'yesterday';
+            if (diffDays < 7) return `${diffDays} days ago`;
+            if (diffDays < 30) return `${Math.floor(diffDays / 7)} weeks ago`;
+            return `${Math.floor(diffDays / 30)} months ago`;
         }
 
         // Render shopping list with category sections
@@ -4234,17 +4544,22 @@ Respond ONLY with valid JSON:
             const listId = lists[currentTab];
             if (!listId) return;
 
-            // For tasks tab, use simple add
+            // For tasks tab, use category-based add
             if (currentTab !== 'shopping') {
                 try {
                     await db.collection('lists').doc(listId).collection('items').add({
                         text: text,
                         done: false,
+                        category: selectedTaskCategory,
                         priority: 'none',
                         createdBy: currentUser.uid,
                         createdByEmail: currentUser.email,
                         createdAt: firebase.firestore.FieldValue.serverTimestamp()
                     });
+
+                    const cat = TASK_CATEGORIES.find(c => c.id === selectedTaskCategory);
+                    showToast(`${cat?.emoji || '📦'} Added to ${cat?.name || 'Other'}`, 1500);
+
                     itemInput.value = '';
                 } catch (error) {
                     console.error('Error adding item:', error);
@@ -4472,6 +4787,344 @@ Respond ONLY with valid JSON:
             selectedAddCategory = categoryId;
             document.getElementById('selectedCategoryEmoji').textContent = emoji;
             closeAddCategoryPicker();
+        }
+
+        // =====================================================
+        // TASK CATEGORY PICKER (for add bar)
+        // =====================================================
+        let selectedTaskCategory = 'home'; // Default to Home
+
+        function showTaskCategoryPicker() {
+            const modal = document.createElement('div');
+            modal.className = 'add-category-picker-overlay';
+            modal.id = 'taskCategoryPickerModal';
+            modal.onclick = (e) => {
+                if (e.target === modal) closeTaskCategoryPicker();
+            };
+
+            // Exclude 'fuckit' from add picker - that's only for moving tasks TO
+            const addableCategories = TASK_CATEGORIES.filter(c => c.id !== 'fuckit');
+
+            modal.innerHTML = `
+                <div class="add-category-picker-modal">
+                    <h3>Select Category</h3>
+                    <div class="add-category-options">
+                        ${addableCategories.map(cat => `
+                            <button class="add-category-option ${selectedTaskCategory === cat.id ? 'selected' : ''}"
+                                    onclick="selectTaskCategory('${cat.id}', '${cat.emoji}')">
+                                <span class="cat-emoji">${cat.emoji}</span>
+                                <span class="cat-name">${cat.name}</span>
+                                ${selectedTaskCategory === cat.id ? '<span class="check">✓</span>' : ''}
+                            </button>
+                        `).join('')}
+                    </div>
+                    <button class="cancel-btn" onclick="closeTaskCategoryPicker()">Cancel</button>
+                </div>
+            `;
+
+            document.body.appendChild(modal);
+        }
+
+        function closeTaskCategoryPicker() {
+            document.getElementById('taskCategoryPickerModal')?.remove();
+        }
+
+        function selectTaskCategory(categoryId, emoji) {
+            selectedTaskCategory = categoryId;
+            document.getElementById('selectedTaskCategoryEmoji').textContent = emoji;
+            closeTaskCategoryPicker();
+        }
+
+        // =====================================================
+        // TASK LONG-PRESS ACTION MENU
+        // =====================================================
+        let taskLongPressTimer = null;
+
+        function startTaskLongPress(e, itemId, itemText, itemCategory) {
+            taskLongPressTimer = setTimeout(() => {
+                if (navigator.vibrate) navigator.vibrate(30);
+                showTaskActionMenu(itemId, itemText, itemCategory);
+            }, 500);
+        }
+
+        function cancelTaskLongPress() {
+            if (taskLongPressTimer) {
+                clearTimeout(taskLongPressTimer);
+                taskLongPressTimer = null;
+            }
+        }
+
+        function showTaskActionMenu(itemId, itemText, itemCategory) {
+            const modal = document.createElement('div');
+            modal.className = 'task-action-menu-overlay';
+            modal.id = 'taskActionMenuModal';
+            modal.onclick = (e) => {
+                if (e.target === modal) closeTaskActionMenu();
+            };
+
+            modal.innerHTML = `
+                <div class="task-action-menu">
+                    <div class="task-action-header">
+                        <span class="task-action-text">"${escapeHtml(itemText)}"</span>
+                    </div>
+                    <div class="task-action-options">
+                        <button class="task-action-btn edit" onclick="editTaskFromMenu('${itemId}', '${escapeForAttr(itemText)}', '${itemCategory}')">
+                            <span class="action-icon">✏️</span>
+                            <span class="action-label">Edit Task</span>
+                        </button>
+                        <button class="task-action-btn fuckit" onclick="moveToFuckitBucket('${itemId}')">
+                            <span class="action-icon">🪣</span>
+                            <span class="action-label">Fuck It - Not Doing This</span>
+                            <span class="action-desc">Let it go guilt-free</span>
+                        </button>
+                        <button class="task-action-btn delete" onclick="deleteTaskFromMenu('${itemId}')">
+                            <span class="action-icon">🗑️</span>
+                            <span class="action-label">Delete</span>
+                        </button>
+                    </div>
+                    <button class="cancel-btn" onclick="closeTaskActionMenu()">Cancel</button>
+                </div>
+            `;
+
+            document.body.appendChild(modal);
+        }
+
+        function closeTaskActionMenu() {
+            document.getElementById('taskActionMenuModal')?.remove();
+        }
+
+        function editTaskFromMenu(itemId, itemText, itemCategory) {
+            closeTaskActionMenu();
+            showEditTaskModal(itemId, itemText, itemCategory);
+        }
+
+        async function moveToFuckitBucket(itemId) {
+            const listId = lists['tasks'];
+            if (!listId) return;
+
+            try {
+                await db.collection('lists').doc(listId).collection('items').doc(itemId).update({
+                    category: 'fuckit',
+                    done: false, // Reset done status
+                    fuckitAt: firebase.firestore.FieldValue.serverTimestamp()
+                });
+
+                closeTaskActionMenu();
+
+                // Celebration message!
+                const messages = [
+                    "🎉 Freedom! You've released yourself from this task!",
+                    "🪣 Into the bucket it goes! Zero guilt!",
+                    "✨ Letting go is a superpower. Well done!",
+                    "🙌 One less thing to pretend you'll do!",
+                    "💆 Ahhhh... feel that weight lift off!",
+                    "🎊 The Fuck It Bucket welcomes another!"
+                ];
+                const msg = messages[Math.floor(Math.random() * messages.length)];
+                showToast(msg, 3000);
+
+            } catch (error) {
+                console.error('[Fuckit] Error:', error);
+                showToast('Failed to move task');
+            }
+        }
+
+        async function restoreFromFuckit(itemId) {
+            const listId = lists['tasks'];
+            if (!listId) return;
+
+            try {
+                await db.collection('lists').doc(listId).collection('items').doc(itemId).update({
+                    category: 'other',
+                    fuckitAt: null
+                });
+                showToast('Task restored! Back to work 💪');
+            } catch (error) {
+                console.error('[Restore] Error:', error);
+                showToast('Failed to restore');
+            }
+        }
+
+        async function deleteTaskFromMenu(itemId) {
+            if (!confirm('Delete this task permanently?')) return;
+
+            const listId = lists['tasks'];
+            if (!listId) return;
+
+            try {
+                await db.collection('lists').doc(listId).collection('items').doc(itemId).delete();
+                closeTaskActionMenu();
+                showToast('Task deleted');
+            } catch (error) {
+                console.error('[Delete] Error:', error);
+                showToast('Failed to delete');
+            }
+        }
+
+        // =====================================================
+        // EDIT TASK MODAL
+        // =====================================================
+        let currentEditingTaskId = null;
+
+        function showEditTaskModal(itemId, itemText, itemCategory) {
+            currentEditingTaskId = itemId;
+
+            const modal = document.createElement('div');
+            modal.className = 'edit-item-modal-overlay';
+            modal.id = 'editTaskModal';
+            modal.onclick = (e) => {
+                if (e.target === modal) closeEditTaskModal();
+            };
+
+            const categoryOptions = TASK_CATEGORIES
+                .filter(c => c.id !== 'fuckit')
+                .map(c => `<option value="${c.id}" ${c.id === itemCategory ? 'selected' : ''}>${c.emoji} ${c.name}</option>`)
+                .join('');
+
+            modal.innerHTML = `
+                <div class="edit-item-modal">
+                    <div class="edit-modal-header">
+                        <span class="edit-modal-icon">✏️</span>
+                        <h3>Edit Task</h3>
+                    </div>
+                    <div class="edit-modal-field">
+                        <label>Task:</label>
+                        <input type="text" id="editTaskText" value="${escapeHtml(itemText)}" />
+                    </div>
+                    <div class="edit-modal-field">
+                        <label>Category:</label>
+                        <select id="editTaskCategory">${categoryOptions}</select>
+                    </div>
+                    <div class="edit-modal-buttons">
+                        <button class="edit-modal-cancel" onclick="closeEditTaskModal()">Cancel</button>
+                        <button class="edit-modal-save" onclick="saveEditedTask()">Save</button>
+                    </div>
+                </div>
+            `;
+
+            document.body.appendChild(modal);
+
+            setTimeout(() => {
+                document.getElementById('editTaskText')?.focus();
+                document.getElementById('editTaskText')?.select();
+            }, 100);
+        }
+
+        function closeEditTaskModal() {
+            document.getElementById('editTaskModal')?.remove();
+            currentEditingTaskId = null;
+        }
+
+        async function saveEditedTask() {
+            if (!currentEditingTaskId) return;
+
+            const newText = document.getElementById('editTaskText').value.trim();
+            const newCategory = document.getElementById('editTaskCategory').value;
+
+            if (!newText) {
+                showToast('Please enter a task');
+                return;
+            }
+
+            const listId = lists['tasks'];
+            if (!listId) return;
+
+            try {
+                await db.collection('lists').doc(listId).collection('items').doc(currentEditingTaskId).update({
+                    text: newText,
+                    category: newCategory
+                });
+
+                closeEditTaskModal();
+
+                const cat = TASK_CATEGORIES.find(c => c.id === newCategory);
+                showToast(`✓ Updated! ${cat?.emoji || '📦'} ${cat?.name || 'Other'}`);
+
+            } catch (error) {
+                console.error('[Edit] Error:', error);
+                showToast('Failed to save');
+            }
+        }
+
+        // =====================================================
+        // OLD TASK PROMPT (30+ days)
+        // =====================================================
+        function checkOldTasks(items) {
+            const now = new Date();
+            const thirtyDaysAgo = new Date(now - 30 * 24 * 60 * 60 * 1000);
+
+            // Find old incomplete tasks not in fuckit bucket
+            const oldTasks = items.filter(item => {
+                if (item.done || item.category === 'fuckit') return false;
+                if (!item.createdAt) return false;
+                const createdDate = item.createdAt.toDate ? item.createdAt.toDate() : new Date(item.createdAt);
+                return createdDate < thirtyDaysAgo;
+            });
+
+            // Check if we've already prompted for these recently
+            const prompted = JSON.parse(localStorage.getItem('oldTasksPrompted') || '{}');
+            const today = new Date().toDateString();
+
+            if (prompted.date === today) return; // Only prompt once per day
+
+            // Find one task to prompt about
+            const taskToPrompt = oldTasks.find(t => !prompted.ids?.includes(t.id));
+
+            if (taskToPrompt) {
+                const createdDate = taskToPrompt.createdAt.toDate ? taskToPrompt.createdAt.toDate() : new Date(taskToPrompt.createdAt);
+                const daysOld = Math.floor((now - createdDate) / (1000 * 60 * 60 * 24));
+
+                setTimeout(() => {
+                    showOldTaskPrompt(taskToPrompt, daysOld);
+                }, 2000); // Delay so it doesn't interrupt loading
+
+                // Mark as prompted
+                prompted.date = today;
+                prompted.ids = [...(prompted.ids || []), taskToPrompt.id];
+                localStorage.setItem('oldTasksPrompted', JSON.stringify(prompted));
+            }
+        }
+
+        function showOldTaskPrompt(task, daysOld) {
+            const modal = document.createElement('div');
+            modal.className = 'old-task-prompt-overlay';
+            modal.id = 'oldTaskPromptModal';
+            modal.onclick = (e) => {
+                if (e.target === modal) closeOldTaskPrompt();
+            };
+
+            modal.innerHTML = `
+                <div class="old-task-prompt">
+                    <div class="old-task-icon">🤔</div>
+                    <h3>Still happening?</h3>
+                    <p class="old-task-text">"${escapeHtml(task.text)}"</p>
+                    <p class="old-task-age">This task is <strong>${daysOld} days old</strong></p>
+                    <div class="old-task-actions">
+                        <button class="btn-keep" onclick="keepOldTask('${task.id}')">
+                            ✅ Yes, I'll do it
+                        </button>
+                        <button class="btn-fuckit" onclick="fuckitOldTask('${task.id}')">
+                            🪣 Fuck it, let it go
+                        </button>
+                    </div>
+                </div>
+            `;
+
+            document.body.appendChild(modal);
+        }
+
+        function closeOldTaskPrompt() {
+            document.getElementById('oldTaskPromptModal')?.remove();
+        }
+
+        function keepOldTask(itemId) {
+            closeOldTaskPrompt();
+            showToast("Alright, it stays! You've got this 💪");
+        }
+
+        async function fuckitOldTask(itemId) {
+            closeOldTaskPrompt();
+            await moveToFuckitBucket(itemId);
         }
 
         function showCategoryPicker(itemId, currentCat) {
