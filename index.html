@@ -472,6 +472,138 @@
             background: #e5e7eb;
         }
 
+        /* Edit Item Button */
+        .edit-item-btn {
+            background: none;
+            border: none;
+            font-size: 16px;
+            padding: 8px;
+            cursor: pointer;
+            opacity: 0.5;
+            transition: opacity 0.2s;
+            flex-shrink: 0;
+        }
+
+        .edit-item-btn:hover,
+        .edit-item-btn:active {
+            opacity: 1;
+        }
+
+        .shopping-item .edit-item-btn {
+            margin-right: 4px;
+        }
+
+        /* Edit Item Modal */
+        .edit-item-modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+            padding: 20px;
+        }
+
+        .edit-item-modal {
+            background: white;
+            border-radius: 20px;
+            padding: 24px;
+            width: 100%;
+            max-width: 360px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        }
+
+        .edit-modal-header {
+            text-align: center;
+            margin-bottom: 24px;
+        }
+
+        .edit-modal-icon {
+            font-size: 40px;
+            display: block;
+            margin-bottom: 8px;
+        }
+
+        .edit-modal-header h3 {
+            margin: 0;
+            font-size: 20px;
+            color: #1f2937;
+        }
+
+        .edit-modal-field {
+            margin-bottom: 20px;
+        }
+
+        .edit-modal-field label {
+            display: block;
+            font-size: 14px;
+            font-weight: 600;
+            color: #374151;
+            margin-bottom: 8px;
+        }
+
+        .edit-modal-field input,
+        .edit-modal-field select {
+            width: 100%;
+            padding: 14px 16px;
+            font-size: 16px;
+            border: 2px solid #e5e7eb;
+            border-radius: 12px;
+            background: white;
+            color: #1f2937;
+            box-sizing: border-box;
+        }
+
+        .edit-modal-field input:focus,
+        .edit-modal-field select:focus {
+            outline: none;
+            border-color: #8b5cf6;
+        }
+
+        .edit-modal-field select {
+            cursor: pointer;
+            appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%236b7280' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 16px center;
+            padding-right: 40px;
+        }
+
+        .edit-modal-buttons {
+            display: flex;
+            gap: 12px;
+            margin-top: 24px;
+        }
+
+        .edit-modal-buttons button {
+            flex: 1;
+            padding: 14px 20px;
+            font-size: 16px;
+            font-weight: 600;
+            border: none;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        .edit-modal-buttons button:active {
+            transform: scale(0.98);
+        }
+
+        .edit-modal-cancel {
+            background: #f3f4f6;
+            color: #4b5563;
+        }
+
+        .edit-modal-save {
+            background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
+            color: white;
+        }
+
         .item-content {
             flex: 1;
             min-width: 0;
@@ -2119,7 +2251,7 @@
                 </div>
 
                 <div class="profile-version" style="text-align: center; padding: 10px 20px; color: #9ca3af; font-size: 12px;">
-                    <div>Mysa v4.3.0</div>
+                    <div>Mysa v4.4.0</div>
                     <div style="margin-top: 4px;">Made with &#10084;&#65039;</div>
                 </div>
             </div>
@@ -2145,6 +2277,45 @@
                     <span class="nav-label">Profile</span>
                 </button>
             </nav>
+        </div>
+    </div>
+
+    <!-- Edit Item Modal -->
+    <div class="edit-item-modal-overlay" id="editItemModal" style="display: none;">
+        <div class="edit-item-modal">
+            <div class="edit-modal-header">
+                <span class="edit-modal-icon">✏️</span>
+                <h3>Edit Item</h3>
+            </div>
+
+            <div class="edit-modal-field">
+                <label for="editItemText">Item name:</label>
+                <input type="text" id="editItemText" placeholder="Enter item name" />
+            </div>
+
+            <div class="edit-modal-field">
+                <label for="editItemCategory">Category:</label>
+                <select id="editItemCategory">
+                    <option value="produce">🥬 Produce</option>
+                    <option value="dairy_eggs">🥛 Dairy & Eggs</option>
+                    <option value="meat_seafood">🍖 Meat & Seafood</option>
+                    <option value="bakery">🍞 Bakery & Bread</option>
+                    <option value="pantry">🥫 Pantry Staples</option>
+                    <option value="frozen">🧊 Frozen</option>
+                    <option value="beverages">🥤 Beverages</option>
+                    <option value="snacks">🍿 Snacks</option>
+                    <option value="household">🏠 Household</option>
+                    <option value="personal_care">🧴 Personal Care</option>
+                    <option value="baby">👶 Baby</option>
+                    <option value="pet">🐾 Pet</option>
+                    <option value="other">📦 Other</option>
+                </select>
+            </div>
+
+            <div class="edit-modal-buttons">
+                <button class="edit-modal-cancel" onclick="closeEditItemModal()">Cancel</button>
+                <button class="edit-modal-save" onclick="saveEditedItem()">Save</button>
+            </div>
         </div>
     </div>
 
@@ -2196,7 +2367,7 @@
         const db = firebase.firestore();
 
         // App Version
-        const APP_VERSION = '4.3.0';
+        const APP_VERSION = '4.4.0';
         console.log(`[App] Mysa Version ${APP_VERSION}`);
 
         // =====================================================
@@ -2411,23 +2582,55 @@
                     },
                     body: JSON.stringify({
                         model: CLAUDE_MODEL,
-                        max_tokens: 150,
+                        max_tokens: 200,
                         messages: [{
                             role: 'user',
-                            content: `You are a grocery shopping assistant. Analyze this item and respond with JSON only.
+                            content: `You are a multilingual grocery shopping assistant. You understand ALL languages including Danish, Norwegian, Swedish, German, Spanish, French, and more.
 
-Item: "${itemText}"
+Item entered by user: "${itemText}"
+
+IMPORTANT: Users may enter items in ANY language. Recognize the language and categorize correctly.
+
+Common Danish examples:
+- "mælk" = milk = dairy_eggs
+- "æg" = eggs = dairy_eggs
+- "brød" = bread = bakery
+- "kylling" = chicken = meat_seafood
+- "ost" = cheese = dairy_eggs
+- "smør" = butter = dairy_eggs
+- "frugt" = fruit = produce
+- "grøntsager" = vegetables = produce
+- "kaffe" = coffee = beverages
+- "te" = tea = beverages
+- "øl" = beer = beverages
+- "vin" = wine = beverages
+- "slik" = candy = snacks
+- "chips" = chips = snacks
+- "rengøring" = cleaning = household
+- "Ovnrens" = oven cleaner = household
+- "Glas keramisk" = glass ceramic cleaner = household
+- "Glad keramisk" = ceramic cleaner = household
+- "Vel ultra" = dish soap = household
+- "Ajax" = cleaning product = household
+- "Zewa" = paper towels = household
+- "toiletpapir" = toilet paper = household
+- "shampoo" = shampoo = personal_care
+- "tandpasta" = toothpaste = personal_care
+- "bleer" = diapers = baby
+- "hundemad" = dog food = pet
+- "kattemad" = cat food = pet
 
 Tasks:
-1. Check spelling. If misspelled, provide correction (e.g., "punpkin" → "pumpkin", "brocoli" → "broccoli")
-2. Note: "rucola" is correct (arugula), "ricola" is a cough drop brand
-3. Categorize into ONE of: ${categoryList}
-4. Confidence: high (certain), medium (likely), low (guessing)
+1. Identify the language (might be English, Danish, or any other)
+2. Understand what the item is
+3. Check spelling in the ORIGINAL language. If misspelled, correct it in the same language.
+4. Categorize into ONE of: ${categoryList}
+5. Rate confidence: high, medium, or low
 
 Respond ONLY with valid JSON:
 {
   "original": "${itemText}",
-  "corrected": "corrected spelling or same if correct",
+  "corrected": "corrected spelling in ORIGINAL language, or same if correct",
   "category": "category_id",
   "confidence": "high/medium/low"
 }`
@@ -2946,6 +3149,87 @@ Respond ONLY with valid JSON:
             }
         }
 
+        // =====================================================
+        // EDIT ITEM MODAL
+        // =====================================================
+        let currentEditingItemId = null;
+
+        function showEditItemModal(itemId, itemText, itemCategory) {
+            currentEditingItemId = itemId;
+
+            // Populate fields
+            document.getElementById('editItemText').value = itemText;
+            document.getElementById('editItemCategory').value = itemCategory || 'other';
+
+            // Show modal
+            document.getElementById('editItemModal').style.display = 'flex';
+
+            // Focus on text input
+            setTimeout(() => {
+                document.getElementById('editItemText').focus();
+                document.getElementById('editItemText').select();
+            }, 100);
+        }
+
+        function closeEditItemModal() {
+            document.getElementById('editItemModal').style.display = 'none';
+            currentEditingItemId = null;
+        }
+
+        async function saveEditedItem() {
+            if (!currentEditingItemId) return;
+
+            const newText = document.getElementById('editItemText').value.trim();
+            const newCategory = document.getElementById('editItemCategory').value;
+
+            if (!newText) {
+                showToast('Please enter an item name');
+                return;
+            }
+
+            try {
+                // Update Firestore
+                await db.collection('lists').doc(lists.shopping)
+                    .collection('items').doc(currentEditingItemId)
+                    .update({
+                        text: newText,
+                        category: newCategory
+                    });
+
+                // Save user preference for future items
+                userCategoryPrefs[newText.toLowerCase().trim()] = {
+                    corrected: newText,
+                    category: newCategory
+                };
+                saveUserCategoryPrefs();
+
+                // Also update AI cache so this exact text uses this category
+                categoryCache[newText.toLowerCase().trim()] = {
+                    original: newText,
+                    corrected: newText,
+                    category: newCategory,
+                    confidence: 'high'
+                };
+                saveCategoryCache();
+
+                closeEditItemModal();
+
+                const cat = SHOPPING_CATEGORIES.find(c => c.id === newCategory);
+                showToast(`Moved to ${cat.emoji} ${cat.name}`);
+
+            } catch (error) {
+                console.error('[Edit] Error saving:', error);
+                showToast('Failed to save changes');
+            }
+        }
+
+        // Close edit modal when clicking outside
+        document.getElementById('editItemModal')?.addEventListener('click', (e) => {
+            if (e.target.classList.contains('edit-item-modal-overlay')) {
+                closeEditItemModal();
+            }
+        });
+
         // Avatar modal
         function showAvatarModal() {
             const modal = document.getElementById('avatarModal');
@@ -3207,6 +3491,12 @@ Respond ONLY with valid JSON:
             const div = document.createElement('div');
             div.textContent = text;
             return div.innerHTML;
+        }
+
+        // Escape text for use in onclick attributes
+        function escapeForAttr(text) {
+            if (!text) return '';
+            return text.replace(/\\/g, '\\\\').replace(/'/g, "\\'").replace(/"/g, '&quot;');
         }
 
         function showError(message) {
@@ -3729,6 +4019,9 @@ Respond ONLY with valid JSON:
                                         <span class="item-text">${escapeHtml(item.text)}</span>
                                         <div class="item-meta" data-creator-id="${item.createdBy || ''}" data-creator-email="${item.createdByEmail || ''}">${getAddedByText(item)}</div>
                                     </div>
+                                    <button class="edit-item-btn" onclick="event.stopPropagation(); showEditItemModal('${item.id}', '${escapeForAttr(item.text)}', '${item.category || 'other'}')" title="Edit item">
+                                        ✏️
+                                    </button>
                                     <button class="priority-btn" data-action="priority" title="Change priority">
                                         <span class="priority-dot ${getPriorityClass(item.priority)}"></span>
                                     </button>
