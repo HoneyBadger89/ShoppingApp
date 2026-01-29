@@ -785,13 +785,15 @@
             background: var(--color-slate);
             color: white;
             border: none;
-            padding: 12px 24px;
+            padding: 12px 20px;
             border-radius: var(--radius-pill);
             font-size: 16px;
             font-weight: 600;
             cursor: pointer;
             transition: all 0.2s ease;
             box-shadow: var(--shadow-sm);
+            margin-right: 2px;
+            flex-shrink: 0;
         }
 
         .add-btn:hover {
@@ -2646,7 +2648,7 @@
                 </div>
 
                 <div class="profile-version" style="text-align: center; padding: 10px 20px; color: #9ca3af; font-size: 12px;">
-                    <div>Mysa v4.8.0</div>
+                    <div>Mysa v4.8.1</div>
                     <div style="margin-top: 4px;">Made with &#10084;&#65039;</div>
                 </div>
             </div>
@@ -2770,7 +2772,7 @@
         const db = firebase.firestore();
 
         // App Version
-        const APP_VERSION = '4.8.0';
+        const APP_VERSION = '4.8.1';
         console.log(`[App] Mysa Version ${APP_VERSION}`);
 
         // =====================================================
@@ -3718,6 +3720,7 @@ Respond ONLY with valid JSON:
         let unsubscribeItems = null;
         let unsubscribeList = null;
         const pendingDeletions = new Map(); // itemId -> timeoutId for auto-delete
+        const pendingPriorityChanges = new Map(); // itemId -> { timeoutId, originalSortKey } for delayed re-sort
 
         // DOM Elements
         const authContainer = document.getElementById('authContainer');
@@ -4332,12 +4335,20 @@ Respond ONLY with valid JSON:
             });
 
             // Sort items within each category by: incomplete first, then priority, then date
+            // Items with pending priority changes keep their original sort position
             const priorityOrder = { high: 0, medium: 1, none: 2, undefined: 2 };
+            const getPriorityForSort = (item) => {
+                if (pendingPriorityChanges.has(item.id)) {
+                    const pending = pendingPriorityChanges.get(item.id);
+                    return priorityOrder[pending.originalPriority] ?? 2;
+                }
+                return priorityOrder[item.priority] ?? 2;
+            };
             for (const catItems of Object.values(grouped)) {
                 catItems.sort((a, b) => {
                     if (a.done !== b.done) return a.done ? 1 : -1;
-                    const aPriority = priorityOrder[a.priority] ?? 2;
-                    const bPriority = priorityOrder[b.priority] ?? 2;
+                    const aPriority = getPriorityForSort(a);
+                    const bPriority = getPriorityForSort(b);
                     if (aPriority !== bPriority) return aPriority - bPriority;
                     const aTime = a.createdAt?.toMillis() || 0;
                     const bTime = b.createdAt?.toMillis() || 0;
@@ -4488,12 +4499,20 @@ Respond ONLY with valid JSON:
             });
 
             // Sort items within each category by: incomplete first, then priority, then date
+            // Items with pending priority changes keep their original sort position
             const priorityOrder = { high: 0, medium: 1, none: 2, undefined: 2 };
+            const getPriorityForSort = (item) => {
+                if (pendingPriorityChanges.has(item.id)) {
+                    const pending = pendingPriorityChanges.get(item.id);
+                    return priorityOrder[pending.originalPriority] ?? 2;
+                }
+                return priorityOrder[item.priority] ?? 2;
+            };
             for (const catItems of Object.values(grouped)) {
                 catItems.sort((a, b) => {
                     if (a.done !== b.done) return a.done ? 1 : -1;
-                    const aPriority = priorityOrder[a.priority] ?? 2;
-                    const bPriority = priorityOrder[b.priority] ?? 2;
+                    const aPriority = getPriorityForSort(a);
+                    const bPriority = getPriorityForSort(b);
                     if (aPriority !== bPriority) return aPriority - bPriority;
                     const aTime = a.createdAt?.toMillis() || 0;
                     const bTime = b.createdAt?.toMillis() || 0;
@@ -4659,24 +4678,59 @@ Respond ONLY with valid JSON:
             addBtn.disabled = true;
 
             try {
+                // Check for comma-separated items
+                const hasCommas = text.includes(',');
+                const itemTexts = hasCommas
+                    ? text.split(',').map(t => t.trim()).filter(t => t.length > 0)
+                    : [text];
+
                 // Check if user manually selected a category
                 if (selectedAddCategory !== 'auto') {
-                    // User manually selected category - skip AI
-                    await saveShoppingItem(text, selectedAddCategory);
+                    // User manually selected category - skip AI, add all items to that category
+                    for (const itemText of itemTexts) {
+                        await saveShoppingItem(itemText, selectedAddCategory, itemTexts.length > 1);
+
+                        // Save user preference for future items
+                        userCategoryPrefs[itemText.toLowerCase().trim()] = {
+                            corrected: itemText,
+                            category: selectedAddCategory
+                        };
+                    }
+                    saveUserCategoryPrefs();
                     itemInput.value = '';
 
-                    // Save user preference for future items
-                    userCategoryPrefs[text.toLowerCase().trim()] = {
-                        corrected: text,
-                        category: selectedAddCategory
-                    };
-                    saveUserCategoryPrefs();
+                    if (itemTexts.length > 1) {
+                        showToast(`Added ${itemTexts.length} items`, 1500);
+                    }
 
                     // Reset to auto-detect for next item
                     selectedAddCategory = 'auto';
                     document.getElementById('selectedCategoryEmoji').textContent = '🤖';
+                } else if (itemTexts.length > 1) {
+                    // Multiple items with AI categorization - process all in parallel
+                    console.log('[Add] Processing multiple items:', itemTexts);
+
+                    const results = await Promise.all(itemTexts.map(t => smartCategorize(t)));
+
+                    for (let i = 0; i < results.length; i++) {
+                        const result = results[i];
+                        const originalText = itemTexts[i];
+                        const needsCorrection = result.corrected.toLowerCase() !== result.original.toLowerCase();
+                        const finalText = (needsCorrection && result.confidence === 'high') ? result.corrected : originalText;
+
+                        await saveShoppingItem(finalText, result.category, true);
+
+                        // Save preference
+                        userCategoryPrefs[originalText.toLowerCase()] = {
+                            corrected: finalText,
+                            category: result.category
+                        };
+                    }
+                    saveUserCategoryPrefs();
+                    itemInput.value = '';
+                    showToast(`Added ${itemTexts.length} items`, 1500);
                 } else {
-                    // Use AI categorization
+                    // Single item - use existing AI categorization with autocorrect modal
                     const result = await smartCategorize(text);
                     console.log('[Add] Smart categorize result:', result);
 
@@ -4721,7 +4775,7 @@ Respond ONLY with valid JSON:
         }
 
         // Save shopping item to Firestore
-        async function saveShoppingItem(text, category) {
+        async function saveShoppingItem(text, category, silent = false) {
             const listId = lists['shopping'];
             if (!listId) return;
 
@@ -4737,7 +4791,9 @@ Respond ONLY with valid JSON:
                 createdAt: firebase.firestore.FieldValue.serverTimestamp()
             });
 
-            showToast(`${cat?.emoji || '📦'} Added to ${cat?.name || 'Other'}`, 1500);
+            if (!silent) {
+                showToast(`${cat?.emoji || '📦'} Added to ${cat?.name || 'Other'}`, 1500);
+            }
         }
 
         // =====================================================
@@ -5355,6 +5411,7 @@ Respond ONLY with valid JSON:
         }
 
         // Cycle priority: none → high → medium → none
+        // With 3-second delay before re-sorting to allow multiple clicks
         async function cyclePriority(itemId) {
             const listId = lists[currentTab];
             if (!listId) return;
@@ -5370,6 +5427,35 @@ Respond ONLY with valid JSON:
                     if (currentPriority === 'none') newPriority = 'high';
                     else if (currentPriority === 'high') newPriority = 'medium';
                     else newPriority = 'none';
+
+                    // Clear existing timeout if user clicks again within 3 seconds
+                    if (pendingPriorityChanges.has(itemId)) {
+                        clearTimeout(pendingPriorityChanges.get(itemId).timeoutId);
+                    } else {
+                        // First click - store the current sort position
+                        const card = document.querySelector(`.item-card[data-id="${itemId}"]`);
+                        const currentIndex = card ? Array.from(card.parentElement.children).indexOf(card.parentElement) : 0;
+                        pendingPriorityChanges.set(itemId, {
+                            timeoutId: null,
+                            originalIndex: currentIndex,
+                            originalPriority: currentPriority
+                        });
+                    }
+
+                    // Set new timeout to allow re-sort after 3 seconds
+                    const timeoutId = setTimeout(() => {
+                        pendingPriorityChanges.delete(itemId);
+                        // Trigger a re-render to apply new sort order
+                        if (unsubscribeItems) {
+                            // The onSnapshot will naturally re-render, just remove from pending
+                            console.log('[Priority] Re-sort delay complete for', itemId);
+                        }
+                    }, 3000);
+
+                    pendingPriorityChanges.set(itemId, {
+                        ...pendingPriorityChanges.get(itemId),
+                        timeoutId: timeoutId
+                    });
 
                     await itemRef.update({ priority: newPriority });
 
