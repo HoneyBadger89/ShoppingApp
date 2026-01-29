@@ -1918,6 +1918,8 @@
             opacity: 0;
         }
 
+        /* Shared item styles for both Tasks and Shopping */
+        .task-item,
         .shopping-item {
             display: flex;
             align-items: center;
@@ -1926,19 +1928,23 @@
             gap: 12px;
         }
 
+        .task-item:active,
         .shopping-item:active {
             background: #f9fafb;
         }
 
+        .task-item.done,
         .shopping-item.done {
             background: #fafafa;
         }
 
+        .task-item.done .item-text,
         .shopping-item.done .item-text {
             text-decoration: line-through;
             color: var(--text-muted);
         }
 
+        .task-item .item-checkbox,
         .shopping-item .item-checkbox {
             width: 24px;
             height: 24px;
@@ -1954,25 +1960,35 @@
             flex-shrink: 0;
         }
 
+        .task-item .item-checkbox.checked,
         .shopping-item .item-checkbox.checked {
             background: var(--accent-success);
             border-color: var(--accent-success);
         }
 
+        .task-item .item-content,
         .shopping-item .item-content {
             flex: 1;
             min-width: 0;
         }
 
+        .task-item .item-text,
         .shopping-item .item-text {
             font-size: 15px;
             color: var(--text-primary);
         }
 
+        .task-item .item-meta,
         .shopping-item .item-meta {
             font-size: 12px;
             color: var(--text-muted);
             margin-top: 2px;
+        }
+
+        /* Fuck It Bucket item override */
+        .task-item.fuckit-item {
+            background: #fefce8;
+            border-top-color: #fef08a;
         }
 
         /* =====================================================
@@ -2543,7 +2559,7 @@
                 </div>
 
                 <div class="profile-version" style="text-align: center; padding: 10px 20px; color: #9ca3af; font-size: 12px;">
-                    <div>Mysa v4.6.0</div>
+                    <div>Mysa v4.6.1</div>
                     <div style="margin-top: 4px;">Made with &#10084;&#65039;</div>
                 </div>
             </div>
