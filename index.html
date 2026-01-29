@@ -2609,7 +2609,7 @@
                 </div>
 
                 <div class="profile-version" style="text-align: center; padding: 10px 20px; color: #9ca3af; font-size: 12px;">
-                    <div>Mysa v4.7.1</div>
+                    <div>Mysa v4.7.2</div>
                     <div style="margin-top: 4px;">Made with &#10084;&#65039;</div>
                 </div>
             </div>
@@ -5787,8 +5787,8 @@ Respond ONLY with valid JSON:
                 return;
             }
 
-            // Handle both flat list (.item-card) and category list (.shopping-item)
-            const card = e.target.closest('.item-card') || e.target.closest('.shopping-item');
+            // Handle flat list (.item-card), shopping (.shopping-item), and tasks (.task-item)
+            const card = e.target.closest('.item-card') || e.target.closest('.shopping-item') || e.target.closest('.task-item');
             if (!card) return;
 
             const itemId = card.dataset.id;
