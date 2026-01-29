@@ -1756,7 +1756,7 @@
                 </div>
 
                 <div class="profile-version" style="text-align: center; padding: 10px 20px; color: #9ca3af; font-size: 12px;">
-                    <div>Mysa v4.1.0</div>
+                    <div>Mysa v4.1.1</div>
                     <div style="margin-top: 4px;">Made with &#10084;&#65039;</div>
                 </div>
             </div>
@@ -1833,7 +1833,7 @@
         const db = firebase.firestore();
 
         // App Version
-        const APP_VERSION = '4.1.0';
+        const APP_VERSION = '4.1.1';
         console.log(`[App] Mysa Version ${APP_VERSION}`);
 
         // =====================================================
@@ -2100,15 +2100,20 @@
 
         async function loadUserProfile() {
             try {
+                console.log('[Profile] Loading profile for:', currentUser.uid);
                 const doc = await db.collection('users').doc(currentUser.uid).get();
                 if (doc.exists) {
                     const data = doc.data();
+                    console.log('[Profile] Loaded from Firestore:', data);
                     userProfile = {
                         displayName: data.displayName || '',
                         avatar: data.avatar || '&#128512;',
                         personality: data.personality || 'subtle'
                     };
+                    console.log('[Profile] userProfile set to:', userProfile);
                     return data.onboardingComplete || false;
+                } else {
+                    console.log('[Profile] No existing profile document');
                 }
             } catch (error) {
                 console.error('[Profile] Error loading:', error);
@@ -2128,11 +2133,57 @@
             }
         }
 
-        function showEditNamePrompt() {
+        async function showEditNamePrompt() {
             const currentName = userProfile.displayName || '';
             const newName = prompt('Enter your display name:', currentName);
-            if (newName !== null && newName.trim() !== currentName) {
-                updateUserProfile({ displayName: newName.trim() });
+
+            console.log('[Profile] Edit name dialog - current:', currentName, 'new:', newName);
+
+            if (newName === null) {
+                console.log('[Profile] User cancelled');
+                return;
+            }
+
+            const trimmedName = newName.trim();
+            if (trimmedName === '') {
+                showToast('Name cannot be empty');
+                return;
+            }
+
+            if (trimmedName === currentName) {
+                console.log('[Profile] Name unchanged');
+                return;
+            }
+
+            console.log('[Profile] Saving new display name:', trimmedName);
+
+            try {
+                // Save to Firestore
+                await db.collection('users').doc(currentUser.uid).set({
+                    displayName: trimmedName
+                }, { merge: true });
+
+                console.log('[Profile] SUCCESS - Display name saved to Firestore');
+
+                // Verify it saved
+                const verify = await db.collection('users').doc(currentUser.uid).get();
+                console.log('[Profile] Verification - Firestore now has:', verify.data());
+
+                // Update local state
+                userProfile.displayName = trimmedName;
+
+                // Update UI
+                updateProfileUI();
+                updateHeader();
+
+                // Clear name cache so other items refresh
+                delete userNameCache[currentUser.uid];
+
+                showToast('Name saved!');
+
+            } catch (error) {
+                console.error('[Profile] FAILED to save:', error);
+                showToast('Failed to save. Try again.');
             }
         }
 
@@ -2248,11 +2299,28 @@
 
             async saveUserProfile(user) {
                 const userRef = db.collection('users').doc(user.uid);
-                await userRef.set({
-                    email: user.email.toLowerCase(),
-                    displayName: user.displayName || null,
-                    lastLogin: firebase.firestore.FieldValue.serverTimestamp()
-                }, { merge: true });
+
+                // Check if user document already exists
+                const existingDoc = await userRef.get();
+
+                if (existingDoc.exists) {
+                    // EXISTING USER - DO NOT overwrite displayName!
+                    // Only update email (if changed) and lastLogin
+                    console.log('[Profile] Existing user, preserving displayName');
+                    await userRef.set({
+                        email: user.email.toLowerCase(),
+                        lastLogin: firebase.firestore.FieldValue.serverTimestamp()
+                    }, { merge: true });
+                } else {
+                    // NEW USER - create profile with Google name as default
+                    console.log('[Profile] New user, setting initial displayName');
+                    await userRef.set({
+                        email: user.email.toLowerCase(),
+                        displayName: user.displayName || user.email.split('@')[0],
+                        lastLogin: firebase.firestore.FieldValue.serverTimestamp(),
+                        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                    });
+                }
             },
 
             async addCollaborator(listId, collaboratorEmail) {
@@ -2415,12 +2483,16 @@
 
             // Fetch from Firestore users collection
             try {
+                console.log('[Profile] Fetching display name for user:', userId);
                 const userDoc = await db.collection('users').doc(userId).get();
                 if (userDoc.exists) {
                     const data = userDoc.data();
                     const name = data.displayName || fallbackEmail?.split('@')[0] || 'Someone';
+                    console.log('[Profile] Found display name:', name, 'for user:', userId);
                     userNameCache[userId] = name;
                     return name;
+                } else {
+                    console.log('[Profile] No user document found for:', userId);
                 }
             } catch (e) {
                 console.error('[Profile] Error fetching user:', e);
