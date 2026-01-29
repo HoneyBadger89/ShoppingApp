@@ -2781,7 +2781,7 @@
                 </div>
 
                 <div class="profile-version" style="text-align: center; padding: 10px 20px; color: #9ca3af; font-size: 12px;">
-                    <div>Mysa v4.8.0</div>
+                    <div>Mysa v4.8.1</div>
                     <div style="margin-top: 4px;">Made with &#10084;&#65039;</div>
                 </div>
             </div>
@@ -3684,21 +3684,26 @@ Respond ONLY with valid JSON:
         }
 
         function cyclePersonality() {
+            console.log('[Profile] cyclePersonality called');
             const order = ['off', 'subtle', 'fun'];
             const currentIdx = order.indexOf(userProfile.personality);
             const nextIdx = (currentIdx + 1) % order.length;
+            console.log('[Profile] Personality:', order[currentIdx], '->', order[nextIdx]);
             updateUserProfile({ personality: order[nextIdx] });
         }
 
         function cycleCompletedBehavior() {
+            console.log('[Profile] cycleCompletedBehavior called');
             const order = ['strikethrough', 'hide-3s', 'hide-instant'];
             const currentIdx = order.indexOf(userProfile.completedBehavior || 'strikethrough');
             const nextIdx = (currentIdx + 1) % order.length;
+            console.log('[Profile] Completed behavior:', order[currentIdx], '->', order[nextIdx]);
             updateUserProfile({ completedBehavior: order[nextIdx] });
         }
 
         // API Key prompt
         function showApiKeyPrompt() {
+            console.log('[Profile] showApiKeyPrompt called');
             const currentKey = getClaudeApiKey();
             const maskedKey = currentKey ? `${currentKey.substring(0, 12)}...${currentKey.substring(currentKey.length - 4)}` : '(not set)';
 
@@ -3816,8 +3821,12 @@ Respond ONLY with valid JSON:
         }
 
         function initProfileHandlers() {
+            console.log('[Profile] Initializing profile handlers...');
+
             // Avatar click to open modal
-            document.getElementById('profileAvatarLarge')?.addEventListener('click', showAvatarModal);
+            const avatarEl = document.getElementById('profileAvatarLarge');
+            console.log('[Profile] profileAvatarLarge:', avatarEl ? 'found' : 'NOT FOUND');
+            avatarEl?.addEventListener('click', showAvatarModal);
 
             // Avatar grid selection
             document.getElementById('avatarGrid')?.addEventListener('click', (e) => {
@@ -3836,16 +3845,38 @@ Respond ONLY with valid JSON:
             });
 
             // Edit name button
-            document.getElementById('editNameBtn')?.addEventListener('click', showEditNamePrompt);
+            const editNameBtn = document.getElementById('editNameBtn');
+            console.log('[Profile] editNameBtn:', editNameBtn ? 'found' : 'NOT FOUND');
+            editNameBtn?.addEventListener('click', () => {
+                console.log('[Profile] Edit name button clicked');
+                showEditNamePrompt();
+            });
 
             // Personality setting button
-            document.getElementById('personalitySettingBtn')?.addEventListener('click', cyclePersonality);
+            const personalityBtn = document.getElementById('personalitySettingBtn');
+            console.log('[Profile] personalitySettingBtn:', personalityBtn ? 'found' : 'NOT FOUND');
+            personalityBtn?.addEventListener('click', () => {
+                console.log('[Profile] Personality button clicked');
+                cyclePersonality();
+            });
 
             // API key setting button
-            document.getElementById('apiKeySettingBtn')?.addEventListener('click', showApiKeyPrompt);
+            const apiKeyBtn = document.getElementById('apiKeySettingBtn');
+            console.log('[Profile] apiKeySettingBtn:', apiKeyBtn ? 'found' : 'NOT FOUND');
+            apiKeyBtn?.addEventListener('click', () => {
+                console.log('[Profile] API key button clicked');
+                showApiKeyPrompt();
+            });
 
             // Completed behavior setting button
-            document.getElementById('completedBehaviorBtn')?.addEventListener('click', cycleCompletedBehavior);
+            const completedBtn = document.getElementById('completedBehaviorBtn');
+            console.log('[Profile] completedBehaviorBtn:', completedBtn ? 'found' : 'NOT FOUND');
+            completedBtn?.addEventListener('click', () => {
+                console.log('[Profile] Completed behavior button clicked');
+                cycleCompletedBehavior();
+            });
+
+            console.log('[Profile] ✓ Profile handlers initialized');
         }
 
         // =====================================================
@@ -4393,48 +4424,76 @@ Respond ONLY with valid JSON:
         async function initializeLists() {
             const listsRef = db.collection('lists');
 
+            console.log('[Init] ========================================');
             console.log('[Init] Initializing lists for user:', currentUser.email);
+            console.log('[Init] User UID:', currentUser.uid);
 
             // Helper function to find or create a list
             async function findOrCreateList(type) {
-                // FIRST: Check if user has a SHARED list (prioritize collaboration)
-                let sharedQuery = await listsRef
-                    .where('sharedWith', 'array-contains', currentUser.email.toLowerCase())
-                    .where('type', '==', type)
-                    .limit(1)
-                    .get();
+                console.log(`[Init] Looking for ${type} list...`);
 
-                if (!sharedQuery.empty) {
-                    const doc = sharedQuery.docs[0];
-                    console.log(`[Init] Found SHARED ${type} list:`, doc.id, 'owner:', doc.data().ownerEmail);
-                    return doc.id;
+                try {
+                    // FIRST: Check if user has a SHARED list (prioritize collaboration)
+                    console.log(`[Init] Query 1: sharedWith contains "${currentUser.email.toLowerCase()}"`);
+                    let sharedQuery = await listsRef
+                        .where('sharedWith', 'array-contains', currentUser.email.toLowerCase())
+                        .where('type', '==', type)
+                        .limit(1)
+                        .get();
+
+                    console.log(`[Init] Query 1 results: ${sharedQuery.size} docs`);
+
+                    if (!sharedQuery.empty) {
+                        const doc = sharedQuery.docs[0];
+                        console.log(`[Init] ✓ Found SHARED ${type} list:`, doc.id, 'owner:', doc.data().ownerEmail);
+                        return doc.id;
+                    }
+
+                    // SECOND: Check if user OWNS a list
+                    console.log(`[Init] Query 2: ownerId == "${currentUser.uid}"`);
+                    let ownedQuery = await listsRef
+                        .where('ownerId', '==', currentUser.uid)
+                        .where('type', '==', type)
+                        .limit(1)
+                        .get();
+
+                    console.log(`[Init] Query 2 results: ${ownedQuery.size} docs`);
+
+                    if (!ownedQuery.empty) {
+                        const doc = ownedQuery.docs[0];
+                        console.log(`[Init] ✓ Found OWNED ${type} list:`, doc.id, 'sharedWith:', doc.data().sharedWith);
+
+                        // Make sure owner's email is in sharedWith for consistency
+                        const data = doc.data();
+                        if (!data.sharedWith || !data.sharedWith.includes(currentUser.email.toLowerCase())) {
+                            console.log(`[Init] Adding owner email to sharedWith...`);
+                            await listsRef.doc(doc.id).update({
+                                sharedWith: firebase.firestore.FieldValue.arrayUnion(currentUser.email.toLowerCase())
+                            });
+                        }
+
+                        return doc.id;
+                    }
+
+                    // THIRD: Create new list
+                    console.log(`[Init] Creating NEW ${type} list for:`, currentUser.email);
+                    const docRef = await listsRef.add({
+                        type: type,
+                        name: type === 'tasks' ? 'Tasks' : 'Shopping',
+                        ownerId: currentUser.uid,
+                        ownerEmail: currentUser.email,
+                        sharedWith: [currentUser.email.toLowerCase()], // Include creator's email!
+                        collaborators: {},
+                        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                    });
+                    console.log(`[Init] ✓ Created NEW ${type} list:`, docRef.id);
+                    return docRef.id;
+
+                } catch (error) {
+                    console.error(`[Init] ERROR finding/creating ${type} list:`, error);
+                    showToast(`Error loading ${type} list. Please refresh.`);
+                    return null;
                 }
-
-                // SECOND: Check if user OWNS a list
-                let ownedQuery = await listsRef
-                    .where('ownerId', '==', currentUser.uid)
-                    .where('type', '==', type)
-                    .limit(1)
-                    .get();
-
-                if (!ownedQuery.empty) {
-                    const doc = ownedQuery.docs[0];
-                    console.log(`[Init] Found OWNED ${type} list:`, doc.id, 'sharedWith:', doc.data().sharedWith);
-                    return doc.id;
-                }
-
-                // THIRD: Create new list
-                console.log(`[Init] Creating NEW ${type} list for:`, currentUser.email);
-                const docRef = await listsRef.add({
-                    type: type,
-                    name: type === 'tasks' ? 'Tasks' : 'Shopping',
-                    ownerId: currentUser.uid,
-                    ownerEmail: currentUser.email,
-                    sharedWith: [currentUser.email.toLowerCase()], // Include creator's email!
-                    collaborators: {},
-                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
-                });
-                return docRef.id;
             }
 
             // Initialize both lists
@@ -4792,11 +4851,22 @@ Respond ONLY with valid JSON:
         // SUBSCRIBE TO ITEMS
         // =====================================================
         function subscribeToItems() {
+            console.log('[Subscribe] subscribeToItems called for tab:', currentTab);
+            console.log('[Subscribe] lists:', JSON.stringify(lists));
+
             if (unsubscribeItems) unsubscribeItems();
             if (unsubscribeList) unsubscribeList();
 
             const listId = lists[currentTab];
-            if (!listId) return;
+            console.log('[Subscribe] listId:', listId);
+
+            if (!listId) {
+                console.error('[Subscribe] ERROR: No listId for', currentTab);
+                hideSkeletons();
+                document.getElementById('itemList').innerHTML =
+                    '<li class="empty-state"><h3>List not loaded</h3><p>Please refresh the page.</p></li>';
+                return;
+            }
 
             const listRef = db.collection('lists').doc(listId);
             const itemsRef = listRef.collection('items');
@@ -4826,11 +4896,31 @@ Respond ONLY with valid JSON:
         // ITEM ACTIONS
         // =====================================================
         async function addItem() {
+            console.log('[AddItem] Function called');
+            console.log('[AddItem] currentTab:', currentTab);
+            console.log('[AddItem] lists:', JSON.stringify(lists));
+
             const text = itemInput.value.trim();
-            if (!text || !currentUser) return;
+            console.log('[AddItem] Input text:', text);
+
+            if (!text) {
+                console.log('[AddItem] Empty text, returning');
+                return;
+            }
+            if (!currentUser) {
+                console.log('[AddItem] No current user, returning');
+                showToast('Please sign in first');
+                return;
+            }
 
             const listId = lists[currentTab];
-            if (!listId) return;
+            console.log('[AddItem] listId for', currentTab, ':', listId);
+
+            if (!listId) {
+                console.error('[AddItem] ERROR: No listId found for', currentTab);
+                showToast('List not loaded. Please refresh the page.');
+                return;
+            }
 
             // For tasks tab, use category-based add
             if (currentTab !== 'shopping') {
@@ -5899,11 +5989,17 @@ Respond ONLY with valid JSON:
         }
 
         function showNewShareModal(listType) {
+            console.log('[Share] showNewShareModal called for:', listType);
+            console.log('[Share] lists:', JSON.stringify(lists));
+
             currentShareListType = listType;
             const listId = lists[listType];
 
+            console.log('[Share] listId:', listId);
+
             if (!listId) {
-                showToast('No list found');
+                console.error('[Share] ERROR: No list found for', listType);
+                showToast('No list found - please refresh the page');
                 return;
             }
 
@@ -6023,8 +6119,14 @@ Respond ONLY with valid JSON:
         }
 
         async function inviteCollaborator() {
+            console.log('[Invite] inviteCollaborator called');
+            console.log('[Invite] currentShareListType:', currentShareListType);
+            console.log('[Invite] lists:', JSON.stringify(lists));
+
             const input = document.getElementById('newInviteEmailInput');
             const email = input.value.trim().toLowerCase();
+
+            console.log('[Invite] Email to invite:', email);
 
             if (!email) {
                 showToast('Please enter an email address');
@@ -6044,7 +6146,13 @@ Respond ONLY with valid JSON:
             }
 
             const listId = lists[currentShareListType];
-            if (!listId) return;
+            console.log('[Invite] listId:', listId);
+
+            if (!listId) {
+                console.error('[Invite] ERROR: No listId for', currentShareListType);
+                showToast('List not found. Please refresh.');
+                return;
+            }
 
             try {
                 const listDoc = await db.collection('lists').doc(listId).get();
@@ -6189,15 +6297,21 @@ Respond ONLY with valid JSON:
         // AUTH STATE OBSERVER
         // =====================================================
         auth.onAuthStateChanged(async (user) => {
+            console.log('[Auth] ========================================');
+            console.log('[Auth] State changed:', user ? user.email : 'LOGGED OUT');
+
             currentUser = user;
 
             if (user) {
+                console.log('[Auth] User logged in:', user.email, 'UID:', user.uid);
                 authContainer.style.display = 'none';
                 appContainer.classList.add('active');
 
+                console.log('[Auth] Saving user profile...');
                 await SharingModule.saveUserProfile(user);
 
                 // Load user profile and check onboarding status
+                console.log('[Auth] Loading user profile...');
                 const onboardingComplete = await loadUserProfile();
                 updateProfileUI();
 
@@ -6208,16 +6322,24 @@ Respond ONLY with valid JSON:
                 }
 
                 // Run one-time migration to merge duplicate shopping lists
+                console.log('[Auth] Running migration check...');
                 await migrateShoppingLists();
 
+                console.log('[Auth] Initializing lists...');
                 await initializeLists();
 
+                console.log('[Auth] Lists after init:', JSON.stringify(lists));
+
                 // Initialize delight features
+                console.log('[Auth] Initializing UI handlers...');
                 initPullToRefresh();
                 initOnboarding();
                 initProfileHandlers();
 
+                console.log('[Auth] Switching to tasks tab...');
                 switchTab('tasks');
+
+                console.log('[Auth] ✓ App initialization complete!');
             } else {
                 authContainer.style.display = 'block';
                 appContainer.classList.remove('active');
@@ -6254,10 +6376,19 @@ Respond ONLY with valid JSON:
         // =====================================================
         // ITEM EVENT LISTENERS
         // =====================================================
-        document.getElementById('addBtn').addEventListener('click', addItem);
+        const addBtn = document.getElementById('addBtn');
+        console.log('[Init] addBtn element:', addBtn ? 'found' : 'NOT FOUND');
+        addBtn?.addEventListener('click', () => {
+            console.log('[UI] Add button clicked');
+            addItem();
+        });
 
-        itemInput.addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') addItem();
+        console.log('[Init] itemInput element:', itemInput ? 'found' : 'NOT FOUND');
+        itemInput?.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                console.log('[UI] Enter key pressed in input');
+                addItem();
+            }
         });
 
         document.getElementById('itemList').addEventListener('click', (e) => {
