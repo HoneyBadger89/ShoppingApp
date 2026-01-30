@@ -2690,7 +2690,7 @@
                 </div>
 
                 <div class="profile-version" style="text-align: center; padding: 10px 20px; color: #9ca3af; font-size: 12px;">
-                    <div>Mysa v4.8.3</div>
+                    <div>Mysa v4.8.4-debug</div>
                     <div style="margin-top: 4px;">Made with &#10084;&#65039;</div>
                 </div>
             </div>
@@ -2823,7 +2823,7 @@
         const db = firebase.firestore();
 
         // App Version
-        const APP_VERSION = '4.8.3';
+        const APP_VERSION = '4.8.4-debug';
         console.log(`[App] Mysa Version ${APP_VERSION}`);
 
         // =====================================================
@@ -3384,6 +3384,7 @@ Respond ONLY with valid JSON:
         function parseQuantity(text) {
             // Returns { text: "cleaned text", quantity: number }
             // Patterns: "milk x2", "milk x 2", "milk ×2", "2 milk", "2x milk", "3× bananas"
+            console.log(`[parseQuantity] INPUT: "${text}"`);
 
             let cleanText = text.trim();
             let quantity = 1;
@@ -3407,6 +3408,7 @@ Respond ONLY with valid JSON:
             }
 
             // No quantity pattern found
+            console.log(`[parseQuantity] OUTPUT: text="${cleanText}", quantity=${quantity}`);
             return { text: cleanText, quantity: 1 };
         }
 
@@ -5015,6 +5017,7 @@ Respond ONLY with valid JSON:
 
                 // Parse quantity from each item (before AI processing)
                 const parsedItems = itemTexts.map(t => parseQuantity(t));
+                console.log('[addItem] Parsed items:', JSON.stringify(parsedItems));
 
                 // Check if user manually selected a category
                 if (selectedAddCategory !== 'auto') {
@@ -5117,6 +5120,7 @@ Respond ONLY with valid JSON:
 
         // Save shopping item to Firestore
         async function saveShoppingItem(text, category, priority = 'none', quantity = 1, silent = false) {
+            console.log(`[saveShoppingItem] text="${text}", category="${category}", priority="${priority}", quantity=${quantity}`);
             const listId = lists['shopping'];
             if (!listId) return;
 
