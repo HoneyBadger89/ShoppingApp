@@ -619,6 +619,41 @@
             color: white;
         }
 
+        .quantity-controls {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .quantity-btn {
+            width: 44px;
+            height: 44px;
+            border: none;
+            border-radius: 50%;
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+            font-size: 24px;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background 0.2s, transform 0.1s;
+        }
+
+        .quantity-btn:active {
+            transform: scale(0.95);
+            background: var(--bg-tertiary);
+        }
+
+        .quantity-display {
+            font-size: 24px;
+            font-weight: 600;
+            min-width: 40px;
+            text-align: center;
+            color: var(--text-primary);
+        }
+
         .item-content {
             flex: 1;
             min-width: 0;
@@ -635,6 +670,13 @@
         .item-card.done .item-text {
             text-decoration: line-through;
             opacity: 0.5;
+        }
+
+        .item-quantity {
+            color: var(--text-muted);
+            font-weight: 400;
+            font-size: 14px;
+            margin-left: 4px;
         }
 
         .item-meta {
@@ -2648,7 +2690,7 @@
                 </div>
 
                 <div class="profile-version" style="text-align: center; padding: 10px 20px; color: #9ca3af; font-size: 12px;">
-                    <div>Mysa v4.8.1</div>
+                    <div>Mysa v4.8.2</div>
                     <div style="margin-top: 4px;">Made with &#10084;&#65039;</div>
                 </div>
             </div>
@@ -2717,6 +2759,15 @@
                 </select>
             </div>
 
+            <div class="edit-modal-field">
+                <label>Quantity:</label>
+                <div class="quantity-controls">
+                    <button type="button" class="quantity-btn" onclick="adjustEditQuantity(-1)">−</button>
+                    <span id="editItemQuantity" class="quantity-display">1</span>
+                    <button type="button" class="quantity-btn" onclick="adjustEditQuantity(1)">+</button>
+                </div>
+            </div>
+
             <div class="edit-modal-buttons">
                 <button class="edit-modal-cancel" onclick="closeEditItemModal()">Cancel</button>
                 <button class="edit-modal-save" onclick="saveEditedItem()">Save</button>
@@ -2772,7 +2823,7 @@
         const db = firebase.firestore();
 
         // App Version
-        const APP_VERSION = '4.8.1';
+        const APP_VERSION = '4.8.2';
         console.log(`[App] Mysa Version ${APP_VERSION}`);
 
         // =====================================================
@@ -3042,13 +3093,20 @@ Tasks:
 2. Understand what the item is
 3. Check spelling in the ORIGINAL language. If misspelled, correct it in the same language.
 4. Categorize into ONE of: ${categoryList}
-5. Rate confidence: high, medium, or low
+5. Detect priority from context:
+   - "high" if user says: urgent, important, asap, critical, must have, need now, "!" at end
+   - "medium" if user implies moderate importance
+   - "none" for normal items (DEFAULT - use this if unsure)
+   - IMPORTANT: "urgent care" is a PLACE, not priority. Context matters!
+6. Remove priority words from corrected text (e.g., "milk urgent" → corrected: "milk")
+7. Rate confidence: high, medium, or low
 
 Respond ONLY with valid JSON:
 {
   "original": "${itemText}",
-  "corrected": "corrected spelling in ORIGINAL language, or same if correct",
+  "corrected": "item name only, priority words removed, spelling fixed",
   "category": "category_id",
+  "priority": "high/medium/none",
   "confidence": "high/medium/low"
 }`
                         }]
@@ -3071,6 +3129,10 @@ Respond ONLY with valid JSON:
                     if (!SHOPPING_CATEGORIES.find(c => c.id === result.category)) {
                         result.category = 'other';
                     }
+                    // Validate priority (default to none if invalid)
+                    if (!['high', 'medium', 'none'].includes(result.priority)) {
+                        result.priority = 'none';
+                    }
                     console.log('[AI] Result:', result);
                     return result;
                 }
@@ -3083,6 +3145,7 @@ Respond ONLY with valid JSON:
                     original: itemText,
                     corrected: itemText,
                     category: 'other',
+                    priority: 'none',
                     confidence: 'low'
                 };
             }
@@ -3099,6 +3162,7 @@ Respond ONLY with valid JSON:
                     original: itemText,
                     corrected: userCategoryPrefs[normalized].corrected || itemText,
                     category: userCategoryPrefs[normalized].category,
+                    priority: userCategoryPrefs[normalized].priority || 'none',
                     confidence: 'high',
                     source: 'user_preference'
                 };
@@ -3110,23 +3174,34 @@ Respond ONLY with valid JSON:
                 return { ...categoryCache[normalized], source: 'cache' };
             }
 
-            // 3. Try keyword matching for known items (no spelling check needed)
-            const keywordMatch = matchKeywords(normalized);
-            if (keywordMatch) {
-                console.log(`[AI] Keyword match: "${itemText}" → ${keywordMatch}`);
-                const result = {
-                    original: itemText,
-                    corrected: itemText,
-                    category: keywordMatch,
-                    confidence: 'high',
-                    source: 'keyword'
-                };
-                categoryCache[normalized] = result;
-                saveCategoryCache();
-                return result;
+            // 3. Check for priority words - if present, skip keywords and use AI
+            const priorityWords = ['urgent', 'important', 'asap', 'critical', 'must have', 'need now'];
+            const hasPriority = priorityWords.some(word => normalized.includes(word)) || itemText.trim().endsWith('!');
+
+            if (hasPriority) {
+                console.log(`[AI] Priority words detected in "${itemText}" - skipping keyword match, using AI`);
             }
 
-            // 4. Call AI for unknown items (includes spelling correction)
+            // 4. Try keyword matching for known items (only if no priority words)
+            if (!hasPriority) {
+                const keywordMatch = matchKeywords(normalized);
+                if (keywordMatch) {
+                    console.log(`[AI] Keyword match: "${itemText}" → ${keywordMatch}`);
+                    const result = {
+                        original: itemText,
+                        corrected: itemText,
+                        category: keywordMatch,
+                        priority: 'none',
+                        confidence: 'high',
+                        source: 'keyword'
+                    };
+                    categoryCache[normalized] = result;
+                    saveCategoryCache();
+                    return result;
+                }
+            }
+
+            // 5. Call AI for unknown items OR items with priority words
             if (navigator.onLine) {
                 const result = await callClaudeForCategorization(itemText);
                 result.source = 'ai';
@@ -3140,6 +3215,7 @@ Respond ONLY with valid JSON:
                 original: itemText,
                 corrected: itemText,
                 category: 'other',
+                priority: 'none',
                 confidence: 'low',
                 source: 'fallback'
             };
@@ -3149,6 +3225,175 @@ Respond ONLY with valid JSON:
         async function categorizeItem(itemText) {
             const result = await smartCategorize(itemText);
             return result.category;
+        }
+
+        // =====================================================
+        // TASK AI CATEGORIZATION
+        // =====================================================
+        const taskCategoryCache = JSON.parse(localStorage.getItem('taskCategoryCache') || '{}');
+
+        function saveTaskCategoryCache() {
+            localStorage.setItem('taskCategoryCache', JSON.stringify(taskCategoryCache));
+        }
+
+        // AI categorization for tasks (category + priority detection)
+        async function callClaudeForTaskCategorization(taskText) {
+            console.log(`[AI-Task] Calling Claude for: "${taskText}"`);
+
+            const apiKey = getClaudeApiKey();
+            if (!apiKey) {
+                console.log('[AI-Task] No API key configured, using fallback');
+                return null;
+            }
+
+            const categoryList = TASK_CATEGORIES
+                .filter(c => c.id !== 'fuckit') // Never auto-assign to fuckit
+                .map(c => `${c.id} (${c.name})`).join(', ');
+
+            try {
+                const response = await fetch(CLAUDE_API_URL, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'x-api-key': apiKey,
+                        'anthropic-version': '2023-06-01',
+                        'anthropic-dangerous-direct-browser-access': 'true'
+                    },
+                    body: JSON.stringify({
+                        model: CLAUDE_MODEL,
+                        max_tokens: 150,
+                        messages: [{
+                            role: 'user',
+                            content: `You are a task categorization assistant. Categorize this task and detect priority.
+
+Task entered: "${taskText}"
+
+Categories (pick ONE):
+- home: Household chores, repairs, maintenance, cleaning, yard work (fix lights, mow lawn, clean garage)
+- kids: Children-related tasks, school, activities, childcare (school pickup, homework help, pediatrician)
+- projects: DIY projects, building, renovating, creative work (build shelf, paint room, assemble furniture)
+- calls_bookings: Phone calls, appointments, reservations, bookings (call mom, doctor appointment, dentist, book hotel)
+- other: Anything that doesn't fit above
+
+NEVER use "fuckit" - that's user-controlled only.
+
+Priority detection:
+- "high" if user says: urgent, important, asap, critical, "!" at end
+- "none" for normal tasks (DEFAULT - use this if unsure)
+- IMPORTANT: "urgent care" is a medical facility, NOT a priority indicator!
+
+Remove priority words from the task text in your response.
+
+Respond ONLY with valid JSON:
+{
+  "text": "task text with priority words removed",
+  "category": "category_id",
+  "priority": "high/medium/none",
+  "confidence": "high/medium/low"
+}`
+                        }]
+                    })
+                });
+
+                if (!response.ok) {
+                    console.error('[AI-Task] API error:', response.status);
+                    throw new Error(`API error: ${response.status}`);
+                }
+
+                const data = await response.json();
+                const content = data.content[0].text;
+
+                // Parse JSON from response
+                const jsonMatch = content.match(/\{[\s\S]*\}/);
+                if (jsonMatch) {
+                    const result = JSON.parse(jsonMatch[0]);
+                    // Validate category
+                    const validCategories = TASK_CATEGORIES.filter(c => c.id !== 'fuckit').map(c => c.id);
+                    if (!validCategories.includes(result.category)) {
+                        result.category = 'other';
+                    }
+                    // Validate priority
+                    if (!['high', 'medium', 'none'].includes(result.priority)) {
+                        result.priority = 'none';
+                    }
+                    console.log('[AI-Task] Result:', result);
+                    return result;
+                }
+
+                throw new Error('No JSON in response');
+
+            } catch (error) {
+                console.error('[AI-Task] Error:', error);
+                return {
+                    text: taskText,
+                    category: 'other',
+                    priority: 'none',
+                    confidence: 'low'
+                };
+            }
+        }
+
+        // Smart task categorization with caching
+        async function smartCategorizeTask(taskText) {
+            const normalized = taskText.toLowerCase().trim();
+
+            // 1. Check cache
+            if (taskCategoryCache[normalized]) {
+                console.log(`[AI-Task] Cache hit: "${taskText}" → ${taskCategoryCache[normalized].category}`);
+                return { ...taskCategoryCache[normalized], source: 'cache' };
+            }
+
+            // 2. Call AI for categorization
+            if (navigator.onLine) {
+                const result = await callClaudeForTaskCategorization(taskText);
+                if (result) {
+                    result.source = 'ai';
+                    taskCategoryCache[normalized] = result;
+                    saveTaskCategoryCache();
+                    return result;
+                }
+            }
+
+            // 3. Fallback (no API key or offline)
+            return {
+                text: taskText,
+                category: 'other',
+                priority: 'none',
+                confidence: 'low',
+                source: 'fallback'
+            };
+        }
+
+        // =====================================================
+        // QUANTITY PARSING (Shopping only, client-side)
+        // =====================================================
+        function parseQuantity(text) {
+            // Returns { text: "cleaned text", quantity: number }
+            // Patterns: "milk x2", "milk x 2", "milk ×2", "2 milk", "2x milk", "3× bananas"
+
+            let cleanText = text.trim();
+            let quantity = 1;
+
+            // Pattern 1: Suffix - "milk x2", "milk x 2", "milk ×2"
+            const suffixMatch = cleanText.match(/^(.+?)\s*[x×]\s*(\d+)$/i);
+            if (suffixMatch) {
+                cleanText = suffixMatch[1].trim();
+                quantity = parseInt(suffixMatch[2], 10);
+                console.log(`[Quantity] Suffix pattern: "${text}" → "${cleanText}" × ${quantity}`);
+                return { text: cleanText, quantity };
+            }
+
+            // Pattern 2: Prefix - "2 milk", "2x milk", "3× bananas"
+            const prefixMatch = cleanText.match(/^(\d+)\s*[x×]?\s+(.+)$/i);
+            if (prefixMatch) {
+                quantity = parseInt(prefixMatch[1], 10);
+                cleanText = prefixMatch[2].trim();
+                console.log(`[Quantity] Prefix pattern: "${text}" → "${cleanText}" × ${quantity}`);
+                return { text: cleanText, quantity };
+            }
+
+            // No quantity pattern found
+            return { text: cleanText, quantity: 1 };
         }
 
         // Collapsed sections state
@@ -3571,12 +3816,16 @@ Respond ONLY with valid JSON:
         // =====================================================
         let currentEditingItemId = null;
 
-        function showEditItemModal(itemId, itemText, itemCategory) {
+        let currentEditingItemQuantity = 1;
+
+        function showEditItemModal(itemId, itemText, itemCategory, itemQuantity = 1) {
             currentEditingItemId = itemId;
+            currentEditingItemQuantity = itemQuantity;
 
             // Populate fields
             document.getElementById('editItemText').value = itemText;
             document.getElementById('editItemCategory').value = itemCategory || 'other';
+            document.getElementById('editItemQuantity').textContent = itemQuantity;
 
             // Show modal
             document.getElementById('editItemModal').style.display = 'flex';
@@ -3586,6 +3835,11 @@ Respond ONLY with valid JSON:
                 document.getElementById('editItemText').focus();
                 document.getElementById('editItemText').select();
             }, 100);
+        }
+
+        function adjustEditQuantity(delta) {
+            currentEditingItemQuantity = Math.max(1, currentEditingItemQuantity + delta);
+            document.getElementById('editItemQuantity').textContent = currentEditingItemQuantity;
         }
 
         function closeEditItemModal() {
@@ -3598,6 +3852,7 @@ Respond ONLY with valid JSON:
 
             const newText = document.getElementById('editItemText').value.trim();
             const newCategory = document.getElementById('editItemCategory').value;
+            const newQuantity = currentEditingItemQuantity;
 
             if (!newText) {
                 showToast('Please enter an item name');
@@ -3610,7 +3865,8 @@ Respond ONLY with valid JSON:
                     .collection('items').doc(currentEditingItemId)
                     .update({
                         text: newText,
-                        category: newCategory
+                        category: newCategory,
+                        quantity: newQuantity
                     });
 
                 // Save user preference for future items
@@ -4553,13 +4809,13 @@ Respond ONLY with valid JSON:
                         <div class="category-items ${isCollapsed ? 'collapsed' : ''}">
                             ${categoryItems.map(item => `
                                 <div class="shopping-item ${item.done ? 'done' : ''}" data-id="${item.id}"
-                                     ontouchstart="startLongPress(event, '${item.id}', '${escapeForAttr(item.text)}', '${item.category || 'other'}')"
+                                     ontouchstart="startLongPress(event, '${item.id}', '${escapeForAttr(item.text)}', '${item.category || 'other'}', ${item.quantity || 1})"
                                      ontouchend="cancelLongPress()" ontouchmove="cancelLongPress()">
                                     <div class="item-checkbox ${item.done ? 'checked' : ''}" data-action="toggle">
                                         ${item.done ? '✓' : ''}
                                     </div>
                                     <div class="item-content">
-                                        <span class="item-text">${escapeHtml(item.text)}</span>
+                                        <span class="item-text">${escapeHtml(item.text)}${(item.quantity || 1) > 1 ? ` <span class="item-quantity">× ${item.quantity}</span>` : ''}</span>
                                     </div>
                                     <button class="priority-btn" data-action="priority" title="Change priority">
                                         <span class="priority-dot ${getPriorityClass(item.priority)}"></span>
@@ -4647,26 +4903,85 @@ Respond ONLY with valid JSON:
             const listId = lists[currentTab];
             if (!listId) return;
 
-            // For tasks tab, use category-based add
+            // For tasks tab - AI categorization with comma support
             if (currentTab !== 'shopping') {
-                try {
-                    await db.collection('lists').doc(listId).collection('items').add({
-                        text: text,
-                        done: false,
-                        category: selectedTaskCategory,
-                        priority: 'none',
-                        createdBy: currentUser.uid,
-                        createdByEmail: currentUser.email,
-                        createdAt: firebase.firestore.FieldValue.serverTimestamp()
-                    });
+                itemInput.disabled = true;
+                const addBtn = document.getElementById('addBtn');
+                addBtn.innerHTML = '<span class="btn-spinner"></span>';
+                addBtn.disabled = true;
 
-                    const cat = TASK_CATEGORIES.find(c => c.id === selectedTaskCategory);
-                    showToast(`${cat?.emoji || '📦'} Added to ${cat?.name || 'Other'}`, 1500);
+                try {
+                    // Check for comma-separated tasks
+                    const hasCommas = text.includes(',');
+                    const taskTexts = hasCommas
+                        ? text.split(',').map(t => t.trim()).filter(t => t.length > 0)
+                        : [text];
+
+                    // Check if user manually selected a category
+                    if (selectedTaskCategory !== 'auto') {
+                        // User manually selected category - use that, but still detect priority via AI
+                        for (const taskText of taskTexts) {
+                            const aiResult = await smartCategorizeTask(taskText);
+                            const finalText = aiResult.text || taskText;
+                            const finalPriority = aiResult.priority || 'none';
+
+                            await db.collection('lists').doc(listId).collection('items').add({
+                                text: finalText,
+                                done: false,
+                                category: selectedTaskCategory,
+                                priority: finalPriority,
+                                createdBy: currentUser.uid,
+                                createdByEmail: currentUser.email,
+                                createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                            });
+                        }
+
+                        const cat = TASK_CATEGORIES.find(c => c.id === selectedTaskCategory);
+                        if (taskTexts.length > 1) {
+                            showToast(`Added ${taskTexts.length} tasks to ${cat?.name || 'Other'}`, 1500);
+                        } else {
+                            showToast(`${cat?.emoji || '📦'} Added to ${cat?.name || 'Other'}`, 1500);
+                        }
+                    } else {
+                        // Auto-categorize with AI
+                        for (const taskText of taskTexts) {
+                            const aiResult = await smartCategorizeTask(taskText);
+                            const finalText = aiResult.text || taskText;
+                            const finalCategory = aiResult.category || 'other';
+                            const finalPriority = aiResult.priority || 'none';
+
+                            await db.collection('lists').doc(listId).collection('items').add({
+                                text: finalText,
+                                done: false,
+                                category: finalCategory,
+                                priority: finalPriority,
+                                createdBy: currentUser.uid,
+                                createdByEmail: currentUser.email,
+                                createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                            });
+
+                            // Cache the result
+                            taskCategoryCache[taskText.toLowerCase().trim()] = aiResult;
+                        }
+                        saveTaskCategoryCache();
+
+                        if (taskTexts.length > 1) {
+                            showToast(`Added ${taskTexts.length} tasks`, 1500);
+                        } else {
+                            const cat = TASK_CATEGORIES.find(c => c.id === (taskCategoryCache[text.toLowerCase().trim()]?.category || 'other'));
+                            showToast(`${cat?.emoji || '📦'} Added to ${cat?.name || 'Other'}`, 1500);
+                        }
+                    }
 
                     itemInput.value = '';
                 } catch (error) {
-                    console.error('Error adding item:', error);
-                    showToast('Failed to add item');
+                    console.error('Error adding task:', error);
+                    showToast('Failed to add task');
+                } finally {
+                    itemInput.disabled = false;
+                    addBtn.innerHTML = 'Add';
+                    addBtn.disabled = false;
+                    itemInput.focus();
                 }
                 return;
             }
@@ -4684,68 +4999,80 @@ Respond ONLY with valid JSON:
                     ? text.split(',').map(t => t.trim()).filter(t => t.length > 0)
                     : [text];
 
+                // Parse quantity from each item (before AI processing)
+                const parsedItems = itemTexts.map(t => parseQuantity(t));
+
                 // Check if user manually selected a category
                 if (selectedAddCategory !== 'auto') {
-                    // User manually selected category - skip AI, add all items to that category
-                    for (const itemText of itemTexts) {
-                        await saveShoppingItem(itemText, selectedAddCategory, itemTexts.length > 1);
+                    // User manually selected category - still use AI for priority detection
+                    for (const parsed of parsedItems) {
+                        const aiResult = await smartCategorize(parsed.text);
+                        const finalText = aiResult.corrected || parsed.text;
+                        const finalPriority = aiResult.priority || 'none';
 
-                        // Save user preference for future items
-                        userCategoryPrefs[itemText.toLowerCase().trim()] = {
-                            corrected: itemText,
-                            category: selectedAddCategory
+                        await saveShoppingItem(finalText, selectedAddCategory, finalPriority, parsed.quantity, parsedItems.length > 1);
+
+                        // Save user preference
+                        userCategoryPrefs[parsed.text.toLowerCase().trim()] = {
+                            corrected: finalText,
+                            category: selectedAddCategory,
+                            priority: finalPriority
                         };
                     }
                     saveUserCategoryPrefs();
                     itemInput.value = '';
 
-                    if (itemTexts.length > 1) {
-                        showToast(`Added ${itemTexts.length} items`, 1500);
+                    if (parsedItems.length > 1) {
+                        showToast(`Added ${parsedItems.length} items`, 1500);
                     }
 
                     // Reset to auto-detect for next item
                     selectedAddCategory = 'auto';
                     document.getElementById('selectedCategoryEmoji').textContent = '🤖';
-                } else if (itemTexts.length > 1) {
+                } else if (parsedItems.length > 1) {
                     // Multiple items with AI categorization - process all in parallel
-                    console.log('[Add] Processing multiple items:', itemTexts);
+                    console.log('[Add] Processing multiple items:', parsedItems);
 
-                    const results = await Promise.all(itemTexts.map(t => smartCategorize(t)));
+                    const results = await Promise.all(parsedItems.map(p => smartCategorize(p.text)));
 
                     for (let i = 0; i < results.length; i++) {
                         const result = results[i];
-                        const originalText = itemTexts[i];
+                        const parsed = parsedItems[i];
                         const needsCorrection = result.corrected.toLowerCase() !== result.original.toLowerCase();
-                        const finalText = (needsCorrection && result.confidence === 'high') ? result.corrected : originalText;
+                        const finalText = (needsCorrection && result.confidence === 'high') ? result.corrected : parsed.text;
+                        const finalPriority = result.priority || 'none';
 
-                        await saveShoppingItem(finalText, result.category, true);
+                        await saveShoppingItem(finalText, result.category, finalPriority, parsed.quantity, true);
 
                         // Save preference
-                        userCategoryPrefs[originalText.toLowerCase()] = {
+                        userCategoryPrefs[parsed.text.toLowerCase()] = {
                             corrected: finalText,
-                            category: result.category
+                            category: result.category,
+                            priority: finalPriority
                         };
                     }
                     saveUserCategoryPrefs();
                     itemInput.value = '';
-                    showToast(`Added ${itemTexts.length} items`, 1500);
+                    showToast(`Added ${parsedItems.length} items`, 1500);
                 } else {
-                    // Single item - use existing AI categorization with autocorrect modal
-                    const result = await smartCategorize(text);
+                    // Single item - use AI categorization with autocorrect modal
+                    const parsed = parsedItems[0];
+                    const result = await smartCategorize(parsed.text);
                     console.log('[Add] Smart categorize result:', result);
 
                     const needsCorrection = result.corrected.toLowerCase() !== result.original.toLowerCase();
                     const shouldAskUser = needsCorrection && result.confidence !== 'high';
+                    const finalPriority = result.priority || 'none';
 
                     if (shouldAskUser) {
                         // Show autocorrect modal for user confirmation
                         showAutocorrectModal(result, async (accepted, finalText, finalCategory) => {
-                            await saveShoppingItem(finalText, finalCategory);
-                            if (accepted && finalText !== text) {
-                                // Save user's preference for future
-                                userCategoryPrefs[text.toLowerCase()] = {
+                            await saveShoppingItem(finalText, finalCategory, finalPriority, parsed.quantity);
+                            if (accepted && finalText !== parsed.text) {
+                                userCategoryPrefs[parsed.text.toLowerCase()] = {
                                     corrected: finalText,
-                                    category: finalCategory
+                                    category: finalCategory,
+                                    priority: finalPriority
                                 };
                                 saveUserCategoryPrefs();
                             }
@@ -4753,8 +5080,8 @@ Respond ONLY with valid JSON:
                         itemInput.value = '';
                     } else {
                         // Auto-add (high confidence or no correction needed)
-                        const finalText = needsCorrection ? result.corrected : text;
-                        await saveShoppingItem(finalText, result.category);
+                        const finalText = needsCorrection ? result.corrected : parsed.text;
+                        await saveShoppingItem(finalText, result.category, finalPriority, parsed.quantity);
                         itemInput.value = '';
 
                         if (needsCorrection) {
@@ -4775,7 +5102,7 @@ Respond ONLY with valid JSON:
         }
 
         // Save shopping item to Firestore
-        async function saveShoppingItem(text, category, silent = false) {
+        async function saveShoppingItem(text, category, priority = 'none', quantity = 1, silent = false) {
             const listId = lists['shopping'];
             if (!listId) return;
 
@@ -4785,14 +5112,16 @@ Respond ONLY with valid JSON:
                 text: text,
                 done: false,
                 category: category,
-                priority: 'none',
+                priority: priority,
+                quantity: quantity,
                 createdBy: currentUser.uid,
                 createdByEmail: currentUser.email,
                 createdAt: firebase.firestore.FieldValue.serverTimestamp()
             });
 
             if (!silent) {
-                showToast(`${cat?.emoji || '📦'} Added to ${cat?.name || 'Other'}`, 1500);
+                const qtyText = quantity > 1 ? ` (×${quantity})` : '';
+                showToast(`${cat?.emoji || '📦'} Added to ${cat?.name || 'Other'}${qtyText}`, 1500);
             }
         }
 
@@ -4867,10 +5196,10 @@ Respond ONLY with valid JSON:
         // =====================================================
         let longPressTimer = null;
 
-        function startLongPress(event, itemId, itemText, category) {
+        function startLongPress(event, itemId, itemText, category, quantity = 1) {
             longPressTimer = setTimeout(() => {
                 if (navigator.vibrate) navigator.vibrate(30);
-                showEditItemModal(itemId, itemText, category);
+                showEditItemModal(itemId, itemText, category, quantity);
             }, 500);
         }
 
