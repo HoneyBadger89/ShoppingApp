@@ -2690,7 +2690,7 @@
                 </div>
 
                 <div class="profile-version" style="text-align: center; padding: 10px 20px; color: #9ca3af; font-size: 12px;">
-                    <div>Mysa v4.9.0</div>
+                    <div>Mysa v4.10.0</div>
                     <div style="margin-top: 4px;">Made with &#10084;&#65039;</div>
                 </div>
             </div>
@@ -2823,7 +2823,7 @@
         const db = firebase.firestore();
 
         // App Version
-        const APP_VERSION = '4.9.0';
+        const APP_VERSION = '4.10.0';
         console.log(`[App] Mysa Version ${APP_VERSION}`);
 
         // =====================================================
@@ -5125,7 +5125,68 @@ Respond ONLY with valid JSON:
             }
         }
 
-        // Save shopping item to Firestore (with duplicate merging)
+        // Find semantic match (AI-powered multilingual duplicate detection)
+        async function findSemanticMatch(newItemText, existingItems) {
+            if (!existingItems.length) return null;
+
+            const apiKey = getClaudeApiKey();
+            if (!apiKey || !navigator.onLine) return null;
+
+            const existingNames = existingItems.map(i => i.text).join(', ');
+
+            try {
+                const response = await fetch(CLAUDE_API_URL, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'x-api-key': apiKey,
+                        'anthropic-version': '2023-06-01',
+                        'anthropic-dangerous-direct-browser-access': 'true'
+                    },
+                    body: JSON.stringify({
+                        model: CLAUDE_MODEL,
+                        max_tokens: 50,
+                        messages: [{
+                            role: 'user',
+                            content: `Is "${newItemText}" the same grocery item as any of these? (could be different language, spelling variation, or singular/plural)
+
+Existing items: ${existingNames}
+
+Rules:
+- "agurk" (Danish) = "Cucumber" (English) → MATCH
+- "mælk" (Danish) = "Milk" (English) → MATCH
+- "tomatoes" = "Tomato" → MATCH (plural/singular)
+- "cheese" ≠ "Milk" → NO MATCH (different items)
+- "ost" (Danish cheese) ≠ "Milk" → NO MATCH
+
+If MATCH exists, respond with ONLY the matching item name exactly as written above.
+If NO MATCH, respond with only: NONE`
+                        }]
+                    })
+                });
+
+                if (!response.ok) return null;
+
+                const data = await response.json();
+                const answer = data.content[0].text.trim();
+
+                console.log(`[SemanticMatch] "${newItemText}" vs [${existingNames}] → "${answer}"`);
+
+                if (answer.toUpperCase() === 'NONE') return null;
+
+                // Find the matching item (case-insensitive)
+                return existingItems.find(i =>
+                    i.text.toLowerCase() === answer.toLowerCase() ||
+                    answer.toLowerCase().includes(i.text.toLowerCase()) ||
+                    i.text.toLowerCase().includes(answer.toLowerCase())
+                );
+            } catch (error) {
+                console.error('[SemanticMatch] Error:', error);
+                return null;
+            }
+        }
+
+        // Save shopping item to Firestore (with smart duplicate merging)
         async function saveShoppingItem(text, category, priority = 'none', quantity = 1, silent = false) {
             const listId = lists['shopping'];
             if (!listId) return;
@@ -5136,32 +5197,44 @@ Respond ONLY with valid JSON:
 
             const cat = SHOPPING_CATEGORIES.find(c => c.id === category);
 
-            // Check for existing item with same name (case-insensitive) that's not completed
+            // Get all uncompleted items for duplicate checking
             const existingSnapshot = await db.collection('lists').doc(listId).collection('items')
                 .where('done', '==', false)
                 .get();
 
-            const existingItem = existingSnapshot.docs.find(doc => {
-                const itemText = doc.data().text || '';
-                return itemText.toLowerCase() === normalizedText.toLowerCase();
-            });
+            // Build list of existing items with their refs
+            const existingItems = existingSnapshot.docs.map(doc => ({
+                text: doc.data().text || '',
+                quantity: doc.data().quantity || 1,
+                priority: doc.data().priority || 'none',
+                ref: doc.ref
+            }));
 
-            if (existingItem) {
+            // 1. First try exact match (fast, no AI)
+            let matchingItem = existingItems.find(i =>
+                i.text.toLowerCase() === normalizedText.toLowerCase()
+            );
+
+            // 2. If no exact match, try semantic match (AI-powered)
+            if (!matchingItem && existingItems.length > 0) {
+                matchingItem = await findSemanticMatch(normalizedText, existingItems);
+            }
+
+            if (matchingItem) {
                 // Merge: Update quantity of existing item
-                const currentQty = existingItem.data().quantity || 1;
-                const newQty = currentQty + quantity;
-                const newPriority = (priority === 'high' || existingItem.data().priority === 'high') ? 'high'
-                    : (priority === 'medium' || existingItem.data().priority === 'medium') ? 'medium'
+                const newQty = matchingItem.quantity + quantity;
+                const newPriority = (priority === 'high' || matchingItem.priority === 'high') ? 'high'
+                    : (priority === 'medium' || matchingItem.priority === 'medium') ? 'medium'
                     : 'none';
 
-                await existingItem.ref.update({
+                await matchingItem.ref.update({
                     quantity: newQty,
                     priority: newPriority
                 });
 
-                console.log(`[saveShoppingItem] Merged with existing: ${normalizedText} × ${newQty}`);
+                console.log(`[saveShoppingItem] Merged "${normalizedText}" with existing "${matchingItem.text}" → × ${newQty}`);
                 if (!silent) {
-                    showToast(`${cat?.emoji || '📦'} ${normalizedText} × ${newQty}`, 1500);
+                    showToast(`${cat?.emoji || '📦'} ${matchingItem.text} × ${newQty}`, 1500);
                 }
             } else {
                 // Add new item
