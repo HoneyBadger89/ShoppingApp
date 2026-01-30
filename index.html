@@ -2690,7 +2690,7 @@
                 </div>
 
                 <div class="profile-version" style="text-align: center; padding: 10px 20px; color: #9ca3af; font-size: 12px;">
-                    <div>Mysa v4.8.4-debug</div>
+                    <div>Mysa v4.9.0</div>
                     <div style="margin-top: 4px;">Made with &#10084;&#65039;</div>
                 </div>
             </div>
@@ -2823,7 +2823,7 @@
         const db = firebase.firestore();
 
         // App Version
-        const APP_VERSION = '4.8.4-debug';
+        const APP_VERSION = '4.9.0';
         console.log(`[App] Mysa Version ${APP_VERSION}`);
 
         // =====================================================
@@ -3379,12 +3379,21 @@ Respond ONLY with valid JSON:
         }
 
         // =====================================================
+        // TEXT NORMALIZATION (Capitalize first letter, lowercase rest)
+        // =====================================================
+        function normalizeItemText(text) {
+            const trimmed = text.trim();
+            if (!trimmed) return trimmed;
+            // "MILK" → "Milk", "milk" → "Milk", "MiLk" → "Milk"
+            return trimmed.charAt(0).toUpperCase() + trimmed.slice(1).toLowerCase();
+        }
+
+        // =====================================================
         // QUANTITY PARSING (Shopping only, client-side)
         // =====================================================
         function parseQuantity(text) {
             // Returns { text: "cleaned text", quantity: number }
             // Patterns: "milk x2", "milk x 2", "milk ×2", "2 milk", "2x milk", "3× bananas"
-            console.log(`[parseQuantity] INPUT: "${text}"`);
 
             let cleanText = text.trim();
             let quantity = 1;
@@ -3408,7 +3417,6 @@ Respond ONLY with valid JSON:
             }
 
             // No quantity pattern found
-            console.log(`[parseQuantity] OUTPUT: text="${cleanText}", quantity=${quantity}`);
             return { text: cleanText, quantity: 1 };
         }
 
@@ -5017,7 +5025,6 @@ Respond ONLY with valid JSON:
 
                 // Parse quantity from each item (before AI processing)
                 const parsedItems = itemTexts.map(t => parseQuantity(t));
-                console.log('[addItem] Parsed items:', JSON.stringify(parsedItems));
 
                 // Check if user manually selected a category
                 if (selectedAddCategory !== 'auto') {
@@ -5118,28 +5125,61 @@ Respond ONLY with valid JSON:
             }
         }
 
-        // Save shopping item to Firestore
+        // Save shopping item to Firestore (with duplicate merging)
         async function saveShoppingItem(text, category, priority = 'none', quantity = 1, silent = false) {
-            console.log(`[saveShoppingItem] text="${text}", category="${category}", priority="${priority}", quantity=${quantity}`);
             const listId = lists['shopping'];
             if (!listId) return;
 
+            // Normalize text: "MILK" → "Milk", "milk" → "Milk"
+            const normalizedText = normalizeItemText(text);
+            console.log(`[saveShoppingItem] text="${text}" → normalized="${normalizedText}", category="${category}", priority="${priority}", quantity=${quantity}`);
+
             const cat = SHOPPING_CATEGORIES.find(c => c.id === category);
 
-            await db.collection('lists').doc(listId).collection('items').add({
-                text: text,
-                done: false,
-                category: category,
-                priority: priority,
-                quantity: quantity,
-                createdBy: currentUser.uid,
-                createdByEmail: currentUser.email,
-                createdAt: firebase.firestore.FieldValue.serverTimestamp()
+            // Check for existing item with same name (case-insensitive) that's not completed
+            const existingSnapshot = await db.collection('lists').doc(listId).collection('items')
+                .where('done', '==', false)
+                .get();
+
+            const existingItem = existingSnapshot.docs.find(doc => {
+                const itemText = doc.data().text || '';
+                return itemText.toLowerCase() === normalizedText.toLowerCase();
             });
 
-            if (!silent) {
-                const qtyText = quantity > 1 ? ` (×${quantity})` : '';
-                showToast(`${cat?.emoji || '📦'} Added to ${cat?.name || 'Other'}${qtyText}`, 1500);
+            if (existingItem) {
+                // Merge: Update quantity of existing item
+                const currentQty = existingItem.data().quantity || 1;
+                const newQty = currentQty + quantity;
+                const newPriority = (priority === 'high' || existingItem.data().priority === 'high') ? 'high'
+                    : (priority === 'medium' || existingItem.data().priority === 'medium') ? 'medium'
+                    : 'none';
+
+                await existingItem.ref.update({
+                    quantity: newQty,
+                    priority: newPriority
+                });
+
+                console.log(`[saveShoppingItem] Merged with existing: ${normalizedText} × ${newQty}`);
+                if (!silent) {
+                    showToast(`${cat?.emoji || '📦'} ${normalizedText} × ${newQty}`, 1500);
+                }
+            } else {
+                // Add new item
+                await db.collection('lists').doc(listId).collection('items').add({
+                    text: normalizedText,
+                    done: false,
+                    category: category,
+                    priority: priority,
+                    quantity: quantity,
+                    createdBy: currentUser.uid,
+                    createdByEmail: currentUser.email,
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                });
+
+                if (!silent) {
+                    const qtyText = quantity > 1 ? ` (×${quantity})` : '';
+                    showToast(`${cat?.emoji || '📦'} Added to ${cat?.name || 'Other'}${qtyText}`, 1500);
+                }
             }
         }
 
