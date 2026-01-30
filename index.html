@@ -2690,7 +2690,7 @@
                 </div>
 
                 <div class="profile-version" style="text-align: center; padding: 10px 20px; color: #9ca3af; font-size: 12px;">
-                    <div>Mysa v4.8.2</div>
+                    <div>Mysa v4.8.3</div>
                     <div style="margin-top: 4px;">Made with &#10084;&#65039;</div>
                 </div>
             </div>
@@ -2823,7 +2823,7 @@
         const db = firebase.firestore();
 
         // App Version
-        const APP_VERSION = '4.8.2';
+        const APP_VERSION = '4.8.3';
         console.log(`[App] Mysa Version ${APP_VERSION}`);
 
         // =====================================================
@@ -3155,7 +3155,31 @@ Respond ONLY with valid JSON:
         async function smartCategorize(itemText) {
             const normalized = itemText.toLowerCase().trim();
 
-            // 1. Check user preferences first (highest priority - user corrections)
+            // 1. FIRST: Check for priority words - if present, skip ALL caches and use AI
+            const priorityWords = ['urgent', 'important', 'asap', 'critical', 'must have', 'need now'];
+            const hasPriority = priorityWords.some(word => normalized.includes(word)) || itemText.trim().endsWith('!');
+
+            if (hasPriority) {
+                console.log(`[AI] Priority words detected in "${itemText}" - forcing AI call (skipping all caches)`);
+                // Go directly to AI - skip user prefs and cache
+                if (navigator.onLine) {
+                    const result = await callClaudeForCategorization(itemText);
+                    result.source = 'ai';
+                    // Don't cache priority items - they should always be processed fresh
+                    return result;
+                }
+                // Offline fallback for priority items
+                return {
+                    original: itemText,
+                    corrected: itemText,
+                    category: 'other',
+                    priority: 'high', // Assume high if they used priority words
+                    confidence: 'low',
+                    source: 'fallback'
+                };
+            }
+
+            // 2. Check user preferences (only for non-priority items)
             if (userCategoryPrefs[normalized]) {
                 console.log(`[AI] User preference hit: "${itemText}" → ${userCategoryPrefs[normalized].category}`);
                 return {
@@ -3168,40 +3192,30 @@ Respond ONLY with valid JSON:
                 };
             }
 
-            // 2. Check AI cache
+            // 3. Check AI cache (only for non-priority items)
             if (categoryCache[normalized] && typeof categoryCache[normalized] === 'object') {
                 console.log(`[AI] Cache hit: "${itemText}" → ${categoryCache[normalized].category}`);
                 return { ...categoryCache[normalized], source: 'cache' };
             }
 
-            // 3. Check for priority words - if present, skip keywords and use AI
-            const priorityWords = ['urgent', 'important', 'asap', 'critical', 'must have', 'need now'];
-            const hasPriority = priorityWords.some(word => normalized.includes(word)) || itemText.trim().endsWith('!');
-
-            if (hasPriority) {
-                console.log(`[AI] Priority words detected in "${itemText}" - skipping keyword match, using AI`);
+            // 4. Try keyword matching for known items
+            const keywordMatch = matchKeywords(normalized);
+            if (keywordMatch) {
+                console.log(`[AI] Keyword match: "${itemText}" → ${keywordMatch}`);
+                const result = {
+                    original: itemText,
+                    corrected: itemText,
+                    category: keywordMatch,
+                    priority: 'none',
+                    confidence: 'high',
+                    source: 'keyword'
+                };
+                categoryCache[normalized] = result;
+                saveCategoryCache();
+                return result;
             }
 
-            // 4. Try keyword matching for known items (only if no priority words)
-            if (!hasPriority) {
-                const keywordMatch = matchKeywords(normalized);
-                if (keywordMatch) {
-                    console.log(`[AI] Keyword match: "${itemText}" → ${keywordMatch}`);
-                    const result = {
-                        original: itemText,
-                        corrected: itemText,
-                        category: keywordMatch,
-                        priority: 'none',
-                        confidence: 'high',
-                        source: 'keyword'
-                    };
-                    categoryCache[normalized] = result;
-                    saveCategoryCache();
-                    return result;
-                }
-            }
-
-            // 5. Call AI for unknown items OR items with priority words
+            // 5. Call AI for unknown items
             if (navigator.onLine) {
                 const result = await callClaudeForCategorization(itemText);
                 result.source = 'ai';
