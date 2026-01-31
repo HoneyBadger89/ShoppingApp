@@ -2690,7 +2690,7 @@
                 </div>
 
                 <div class="profile-version" style="text-align: center; padding: 10px 20px; color: #9ca3af; font-size: 12px;">
-                    <div id="appVersionDisplay">Mysa v5.2.0</div>
+                    <div id="appVersionDisplay">Mysa v5.2.1</div>
                     <div style="margin-top: 4px;">Made with &#10084;&#65039;</div>
                 </div>
             </div>
@@ -2823,7 +2823,7 @@
         const db = firebase.firestore();
 
         // App Version
-        const APP_VERSION = '5.2.0';
+        const APP_VERSION = '5.2.1';
         console.log(`[App] Mysa Version ${APP_VERSION} - Clean Household Model`);
 
         // Update version display in profile
@@ -4153,15 +4153,22 @@ Respond ONLY with valid JSON:
                     throw new Error('You cannot invite yourself.');
                 }
 
+                // Check if OUR household exists
+                let household = await this.getHousehold(householdId);
+                if (!household) {
+                    console.error('[Invite] Our household does not exist! Recreating...');
+                    // Our household is missing - this shouldn't happen but let's recover
+                    throw new Error('Your household data is missing. Please refresh the app and try again.');
+                }
+
                 // Check if invitee is already in this household
-                const household = await this.getHousehold(householdId);
                 if (household.members && household.members[invitee.id]) {
                     throw new Error('Already a member of this household.');
                 }
 
                 // Check if invitee is in another household (with other people)
                 const oldHouseholdId = invitee.householdId;
-                if (oldHouseholdId) {
+                if (oldHouseholdId && oldHouseholdId !== householdId) {
                     const theirHousehold = await this.getHousehold(oldHouseholdId);
                     if (theirHousehold) {
                         const memberCount = Object.keys(theirHousehold.members || {}).length;
@@ -4170,6 +4177,9 @@ Respond ONLY with valid JSON:
                         }
                         // They're in a solo household - we'll merge their items
                         console.log('[Invite] Invitee has solo household:', oldHouseholdId);
+                    } else {
+                        // Their householdId points to a non-existent household - ignore it
+                        console.log('[Invite] Invitee has orphaned householdId, will clean up');
                     }
                 }
 
