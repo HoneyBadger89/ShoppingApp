@@ -2690,7 +2690,7 @@
                 </div>
 
                 <div class="profile-version" style="text-align: center; padding: 10px 20px; color: #9ca3af; font-size: 12px;">
-                    <div id="appVersionDisplay">Mysa v5.1.3</div>
+                    <div id="appVersionDisplay">Mysa v5.1.4</div>
                     <div style="margin-top: 4px;">Made with &#10084;&#65039;</div>
                 </div>
             </div>
@@ -2823,7 +2823,7 @@
         const db = firebase.firestore();
 
         // App Version
-        const APP_VERSION = '5.1.3';
+        const APP_VERSION = '5.1.4';
         console.log(`[App] Mysa Version ${APP_VERSION} - Clean Household Model`);
 
         // Update version display in profile
@@ -4168,9 +4168,11 @@ Respond ONLY with valid JSON:
                 }
 
                 // Migrate invitee's items from their old lists to this household's lists
+                console.log('[Invite] Migrating items for:', invitee.email);
                 await this.migrateUserToHousehold(invitee, householdId);
 
                 // Add invitee to household members
+                console.log('[Invite] Adding to household members...');
                 await db.collection('households').doc(householdId).update({
                     [`members.${invitee.id}`]: {
                         email: invitee.email,
@@ -4178,11 +4180,19 @@ Respond ONLY with valid JSON:
                         joinedAt: firebase.firestore.FieldValue.serverTimestamp()
                     }
                 });
+                console.log('[Invite] Added to members successfully');
 
-                // Update invitee's householdId
-                await db.collection('users').doc(invitee.id).update({
-                    householdId: householdId
-                });
+                // Update invitee's householdId - THIS IS CRITICAL
+                console.log('[Invite] Updating user householdId from', invitee.householdId, 'to', householdId);
+                try {
+                    await db.collection('users').doc(invitee.id).update({
+                        householdId: householdId
+                    });
+                    console.log('[Invite] User householdId updated successfully!');
+                } catch (updateError) {
+                    console.error('[Invite] FAILED to update user householdId:', updateError);
+                    throw updateError;
+                }
 
                 // Update household name if it's now 2 people
                 const updatedHousehold = await this.getHousehold(householdId);
