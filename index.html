@@ -2690,7 +2690,7 @@
                 </div>
 
                 <div class="profile-version" style="text-align: center; padding: 10px 20px; color: #9ca3af; font-size: 12px;">
-                    <div id="appVersionDisplay">Mysa v5.2.1</div>
+                    <div id="appVersionDisplay">Mysa v5.2.2</div>
                     <div style="margin-top: 4px;">Made with &#10084;&#65039;</div>
                 </div>
             </div>
@@ -2823,7 +2823,7 @@
         const db = firebase.firestore();
 
         // App Version
-        const APP_VERSION = '5.2.1';
+        const APP_VERSION = '5.2.2';
         console.log(`[App] Mysa Version ${APP_VERSION} - Clean Household Model`);
 
         // Update version display in profile
@@ -4005,6 +4005,7 @@ Respond ONLY with valid JSON:
         let unsubscribeList = null;
         const pendingDeletions = new Map(); // itemId -> timeoutId for auto-delete
         const pendingPriorityChanges = new Map(); // itemId -> { timeoutId, originalSortKey } for delayed re-sort
+        let inviteInProgress = false; // Prevent double-click on invite button
 
         // DOM Elements
         const authContainer = document.getElementById('authContainer');
@@ -4272,6 +4273,8 @@ Respond ONLY with valid JSON:
             },
 
             // Migrate user's items from their old household to new household
+            // ONLY migrate items - DO NOT delete old household here!
+            // Deletion happens AFTER batch commit is verified in inviteToHousehold
             async migrateUserToHousehold(user, newHouseholdId) {
                 const oldHouseholdId = user.householdId;
                 if (!oldHouseholdId || oldHouseholdId === newHouseholdId) {
@@ -4285,29 +4288,19 @@ Respond ONLY with valid JSON:
                 const oldLists = await this.getHouseholdLists(oldHouseholdId);
                 const newLists = await this.getHouseholdLists(newHouseholdId);
 
-                // Migrate shopping items
+                // Migrate shopping items (copy, don't delete yet)
                 if (oldLists.shopping && newLists.shopping) {
                     await this.migrateItems(oldLists.shopping, newLists.shopping, 'shopping');
                 }
 
-                // Migrate tasks items
+                // Migrate tasks items (copy, don't delete yet)
                 if (oldLists.tasks && newLists.tasks) {
                     await this.migrateItems(oldLists.tasks, newLists.tasks, 'tasks');
                 }
 
-                // Delete old household if it's now empty (solo household)
-                const oldHousehold = await this.getHousehold(oldHouseholdId);
-                if (oldHousehold) {
-                    const memberCount = Object.keys(oldHousehold.members || {}).length;
-                    if (memberCount <= 1) {
-                        console.log('[Migration] Deleting empty old household');
-                        // Delete old lists
-                        if (oldLists.shopping) await db.collection('lists').doc(oldLists.shopping).delete();
-                        if (oldLists.tasks) await db.collection('lists').doc(oldLists.tasks).delete();
-                        // Delete old household
-                        await db.collection('households').doc(oldHouseholdId).delete();
-                    }
-                }
+                // NOTE: Old household cleanup now happens in inviteToHousehold
+                // AFTER the batch commit is verified successful
+                console.log('[Migration] Items migrated. Old household will be cleaned up after batch commit.');
             },
 
             // Migrate items from one list to another
@@ -4629,6 +4622,11 @@ Respond ONLY with valid JSON:
         // PWA VISIBILITY REFRESH
         // =====================================================
         async function refreshCurrentList() {
+            // Don't refresh during invite - it can interfere with batch operations
+            if (inviteInProgress) {
+                console.log('[PWA] Skipping refresh - invite in progress');
+                return;
+            }
             if (!lists[currentTab] || currentTab === 'profile') return;
             console.log('[PWA] Refreshing current list...');
 
@@ -6597,6 +6595,13 @@ If NO MATCH, respond with only: NONE`
         console.log('[Init] Invite button element:', inviteBtn);
         inviteBtn?.addEventListener('click', async () => {
             console.log('[Invite] Button clicked');
+
+            // CRITICAL: Prevent double-click
+            if (inviteInProgress) {
+                console.log('[Invite] Already in progress, ignoring click');
+                return;
+            }
+
             const email = inviteEmail.value.trim().toLowerCase();
 
             if (!email) {
@@ -6616,8 +6621,10 @@ If NO MATCH, respond with only: NONE`
                 return;
             }
 
+            // Lock invite
+            inviteInProgress = true;
             inviteBtn.disabled = true;
-            inviteBtn.textContent = '...';
+            inviteBtn.textContent = 'Inviting...';
 
             try {
                 const member = await SharingModule.addCollaborator(listId, email);
@@ -6633,6 +6640,8 @@ If NO MATCH, respond with only: NONE`
             } catch (error) {
                 showShareMessage(error.message, 'error');
             } finally {
+                // Unlock invite
+                inviteInProgress = false;
                 inviteBtn.disabled = false;
                 inviteBtn.textContent = 'Invite';
             }
