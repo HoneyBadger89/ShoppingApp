@@ -2690,7 +2690,7 @@
                 </div>
 
                 <div class="profile-version" style="text-align: center; padding: 10px 20px; color: #9ca3af; font-size: 12px;">
-                    <div>Mysa v4.10.1</div>
+                    <div>Mysa v4.10.2</div>
                     <div style="margin-top: 4px;">Made with &#10084;&#65039;</div>
                 </div>
             </div>
@@ -2823,7 +2823,7 @@
         const db = firebase.firestore();
 
         // App Version
-        const APP_VERSION = '4.10.1';
+        const APP_VERSION = '4.10.2';
         console.log(`[App] Mysa Version ${APP_VERSION}`);
 
         // =====================================================
@@ -4504,9 +4504,23 @@ Respond ONLY with valid JSON:
                     .get();
 
                 if (!sharedQuery.empty) {
-                    const doc = sharedQuery.docs[0];
-                    console.log(`[Init] Found SHARED ${type} list:`, doc.id, 'owner:', doc.data().ownerEmail);
-                    return doc.id;
+                    const sharedDoc = sharedQuery.docs[0];
+                    console.log(`[Init] Found SHARED ${type} list:`, sharedDoc.id, 'owner:', sharedDoc.data().ownerEmail);
+
+                    // Check if user ALSO has their own list with items to migrate
+                    let ownedQuery = await listsRef
+                        .where('ownerId', '==', currentUser.uid)
+                        .where('type', '==', type)
+                        .limit(1)
+                        .get();
+
+                    if (!ownedQuery.empty) {
+                        const ownedDoc = ownedQuery.docs[0];
+                        // Migrate items from personal list to shared list
+                        await migrateItemsToSharedList(ownedDoc.id, sharedDoc.id, type);
+                    }
+
+                    return sharedDoc.id;
                 }
 
                 // SECOND: Check if user OWNS a list
@@ -4534,6 +4548,66 @@ Respond ONLY with valid JSON:
                     createdAt: firebase.firestore.FieldValue.serverTimestamp()
                 });
                 return docRef.id;
+            }
+
+            // Migrate items from personal list to shared list
+            async function migrateItemsToSharedList(fromListId, toListId, type) {
+                try {
+                    const fromItemsRef = listsRef.doc(fromListId).collection('items');
+                    const toItemsRef = listsRef.doc(toListId).collection('items');
+
+                    const itemsSnapshot = await fromItemsRef.get();
+
+                    if (itemsSnapshot.empty) {
+                        console.log(`[Migration] No items to migrate from personal ${type} list`);
+                        return;
+                    }
+
+                    console.log(`[Migration] Migrating ${itemsSnapshot.size} items from personal ${type} list to shared list`);
+
+                    // Get existing items in shared list to avoid duplicates
+                    const existingSnapshot = await toItemsRef.get();
+                    const existingTexts = new Set(
+                        existingSnapshot.docs.map(doc => (doc.data().text || '').toLowerCase())
+                    );
+
+                    let migratedCount = 0;
+                    const batch = db.batch();
+
+                    for (const doc of itemsSnapshot.docs) {
+                        const itemData = doc.data();
+                        const itemText = (itemData.text || '').toLowerCase();
+
+                        // Skip if item with same text already exists in shared list
+                        if (existingTexts.has(itemText)) {
+                            console.log(`[Migration] Skipping duplicate: ${itemData.text}`);
+                            continue;
+                        }
+
+                        // Add to shared list
+                        const newDocRef = toItemsRef.doc();
+                        batch.set(newDocRef, {
+                            ...itemData,
+                            migratedFrom: fromListId,
+                            migratedAt: firebase.firestore.FieldValue.serverTimestamp()
+                        });
+
+                        // Delete from personal list
+                        batch.delete(doc.ref);
+
+                        existingTexts.add(itemText);
+                        migratedCount++;
+                    }
+
+                    if (migratedCount > 0) {
+                        await batch.commit();
+                        console.log(`[Migration] Successfully migrated ${migratedCount} items to shared ${type} list`);
+                        showToast(`Synced ${migratedCount} ${type} items with shared list`, 2500);
+                    }
+
+                } catch (error) {
+                    console.error('[Migration] Error migrating items:', error);
+                }
             }
 
             // Initialize both lists
