@@ -2690,7 +2690,7 @@
                 </div>
 
                 <div class="profile-version" style="text-align: center; padding: 10px 20px; color: #9ca3af; font-size: 12px;">
-                    <div id="appVersionDisplay">Mysa v5.1.4</div>
+                    <div id="appVersionDisplay">Mysa v5.2.0</div>
                     <div style="margin-top: 4px;">Made with &#10084;&#65039;</div>
                 </div>
             </div>
@@ -2823,7 +2823,7 @@
         const db = firebase.firestore();
 
         // App Version
-        const APP_VERSION = '5.1.4';
+        const APP_VERSION = '5.2.0';
         console.log(`[App] Mysa Version ${APP_VERSION} - Clean Household Model`);
 
         // Update version display in profile
@@ -4137,13 +4137,17 @@ Respond ONLY with valid JSON:
                 return result;
             },
 
-            // Invite someone to household
+            // Invite someone to household (v5.2.0 - bulletproof version)
             async inviteToHousehold(householdId, inviteeEmail) {
+                console.log('[Invite] Starting invite for:', inviteeEmail, 'to household:', householdId);
+
                 const invitee = await this.findUserByEmail(inviteeEmail);
 
                 if (!invitee) {
                     throw new Error('User not found. They need to sign up first.');
                 }
+
+                console.log('[Invite] Found user:', invitee.id, invitee.displayName);
 
                 if (invitee.id === currentUser.uid) {
                     throw new Error('You cannot invite yourself.');
@@ -4156,42 +4160,66 @@ Respond ONLY with valid JSON:
                 }
 
                 // Check if invitee is in another household (with other people)
-                if (invitee.householdId) {
-                    const theirHousehold = await this.getHousehold(invitee.householdId);
+                const oldHouseholdId = invitee.householdId;
+                if (oldHouseholdId) {
+                    const theirHousehold = await this.getHousehold(oldHouseholdId);
                     if (theirHousehold) {
                         const memberCount = Object.keys(theirHousehold.members || {}).length;
                         if (memberCount > 1) {
-                            throw new Error('This person is already in another household.');
+                            throw new Error('This person is already in another household with others.');
                         }
                         // They're in a solo household - we'll merge their items
+                        console.log('[Invite] Invitee has solo household:', oldHouseholdId);
                     }
                 }
 
                 // Migrate invitee's items from their old lists to this household's lists
-                console.log('[Invite] Migrating items for:', invitee.email);
+                console.log('[Invite] Migrating items...');
                 await this.migrateUserToHousehold(invitee, householdId);
 
-                // Add invitee to household members
-                console.log('[Invite] Adding to household members...');
-                await db.collection('households').doc(householdId).update({
+                // CRITICAL: Use batch write to ensure ALL updates happen atomically
+                console.log('[Invite] Performing atomic batch update...');
+                const batch = db.batch();
+
+                // 1. Add invitee to household members
+                const householdRef = db.collection('households').doc(householdId);
+                batch.update(householdRef, {
                     [`members.${invitee.id}`]: {
                         email: invitee.email,
                         displayName: invitee.displayName || invitee.email.split('@')[0],
                         joinedAt: firebase.firestore.FieldValue.serverTimestamp()
                     }
                 });
-                console.log('[Invite] Added to members successfully');
 
-                // Update invitee's householdId - THIS IS CRITICAL
-                console.log('[Invite] Updating user householdId from', invitee.householdId, 'to', householdId);
-                try {
-                    await db.collection('users').doc(invitee.id).update({
+                // 2. Update invitee's householdId - THIS IS THE CRITICAL ONE
+                const inviteeRef = db.collection('users').doc(invitee.id);
+                batch.update(inviteeRef, {
+                    householdId: householdId
+                });
+
+                // Commit the batch
+                await batch.commit();
+                console.log('[Invite] Batch commit successful!');
+
+                // VERIFICATION: Confirm the update actually worked
+                const verifyUser = await db.collection('users').doc(invitee.id).get();
+                const verifiedHouseholdId = verifyUser.data()?.householdId;
+                console.log('[Invite] Verification - user householdId is now:', verifiedHouseholdId);
+
+                if (verifiedHouseholdId !== householdId) {
+                    console.error('[Invite] VERIFICATION FAILED! Expected:', householdId, 'Got:', verifiedHouseholdId);
+                    // Try one more time with a direct update
+                    console.log('[Invite] Retrying with direct update...');
+                    await db.collection('users').doc(invitee.id).set({
                         householdId: householdId
-                    });
-                    console.log('[Invite] User householdId updated successfully!');
-                } catch (updateError) {
-                    console.error('[Invite] FAILED to update user householdId:', updateError);
-                    throw updateError;
+                    }, { merge: true });
+
+                    // Verify again
+                    const retryVerify = await db.collection('users').doc(invitee.id).get();
+                    if (retryVerify.data()?.householdId !== householdId) {
+                        throw new Error('Failed to update user household. Please try again.');
+                    }
+                    console.log('[Invite] Retry successful!');
                 }
 
                 // Update household name if it's now 2 people
@@ -4204,7 +4232,32 @@ Respond ONLY with valid JSON:
                     });
                 }
 
-                console.log('[Household] Added member:', invitee.email);
+                // Clean up old solo household if it exists
+                if (oldHouseholdId && oldHouseholdId !== householdId) {
+                    console.log('[Invite] Cleaning up old household:', oldHouseholdId);
+                    try {
+                        // Delete old lists
+                        const oldLists = await this.getHouseholdLists(oldHouseholdId);
+                        if (oldLists.shopping) {
+                            const items = await db.collection('lists').doc(oldLists.shopping).collection('items').get();
+                            items.forEach(doc => doc.ref.delete());
+                            await db.collection('lists').doc(oldLists.shopping).delete();
+                        }
+                        if (oldLists.tasks) {
+                            const items = await db.collection('lists').doc(oldLists.tasks).collection('items').get();
+                            items.forEach(doc => doc.ref.delete());
+                            await db.collection('lists').doc(oldLists.tasks).delete();
+                        }
+                        // Delete old household
+                        await db.collection('households').doc(oldHouseholdId).delete();
+                        console.log('[Invite] Old household cleaned up');
+                    } catch (cleanupError) {
+                        console.warn('[Invite] Cleanup warning:', cleanupError.message);
+                        // Don't throw - cleanup is not critical
+                    }
+                }
+
+                console.log('[Invite] SUCCESS! Added member:', invitee.email);
                 return invitee;
             },
 
