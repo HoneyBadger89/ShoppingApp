@@ -2690,7 +2690,7 @@
                 </div>
 
                 <div class="profile-version" style="text-align: center; padding: 10px 20px; color: #9ca3af; font-size: 12px;">
-                    <div>Mysa v4.10.0</div>
+                    <div>Mysa v4.10.1</div>
                     <div style="margin-top: 4px;">Made with &#10084;&#65039;</div>
                 </div>
             </div>
@@ -2823,7 +2823,7 @@
         const db = firebase.firestore();
 
         // App Version
-        const APP_VERSION = '4.10.0';
+        const APP_VERSION = '4.10.1';
         console.log(`[App] Mysa Version ${APP_VERSION}`);
 
         // =====================================================
@@ -4541,6 +4541,85 @@ Respond ONLY with valid JSON:
             lists.shopping = await findOrCreateList('shopping');
 
             console.log('[Init] Final lists:', { tasks: lists.tasks, shopping: lists.shopping });
+
+            // Repair sharing: ensure both lists have same collaborators
+            await repairListSharing();
+        }
+
+        // Sync collaborators between Shopping and Tasks lists
+        async function repairListSharing() {
+            try {
+                const shoppingRef = db.collection('lists').doc(lists.shopping);
+                const tasksRef = db.collection('lists').doc(lists.tasks);
+
+                const [shoppingDoc, tasksDoc] = await Promise.all([
+                    shoppingRef.get(),
+                    tasksRef.get()
+                ]);
+
+                if (!shoppingDoc.exists || !tasksDoc.exists) return;
+
+                const shoppingData = shoppingDoc.data();
+                const tasksData = tasksDoc.data();
+
+                // Only repair if current user owns at least one list
+                const ownsShoping = shoppingData.ownerId === currentUser.uid;
+                const ownsTasks = tasksData.ownerId === currentUser.uid;
+
+                if (!ownsShoping && !ownsTasks) {
+                    console.log('[RepairSharing] User does not own either list, skipping');
+                    return;
+                }
+
+                // Get collaborators from both lists
+                const shoppingShared = shoppingData.sharedWith || [];
+                const tasksShared = tasksData.sharedWith || [];
+                const shoppingCollabs = shoppingData.collaborators || {};
+                const tasksCollabs = tasksData.collaborators || {};
+
+                // Find users who are on one list but not the other
+                const missingFromTasks = shoppingShared.filter(uid => !tasksShared.includes(uid));
+                const missingFromShopping = tasksShared.filter(uid => !shoppingShared.includes(uid));
+
+                // Sync Shopping → Tasks (if user owns tasks list)
+                if (ownsTasks && missingFromTasks.length > 0) {
+                    console.log('[RepairSharing] Adding to Tasks:', missingFromTasks);
+                    const updates = {
+                        sharedWith: firebase.firestore.FieldValue.arrayUnion(...missingFromTasks)
+                    };
+                    // Copy collaborator data
+                    for (const uid of missingFromTasks) {
+                        if (shoppingCollabs[uid]) {
+                            updates[`collaborators.${uid}`] = shoppingCollabs[uid];
+                        }
+                    }
+                    await tasksRef.update(updates);
+                }
+
+                // Sync Tasks → Shopping (if user owns shopping list)
+                if (ownsShoping && missingFromShopping.length > 0) {
+                    console.log('[RepairSharing] Adding to Shopping:', missingFromShopping);
+                    const updates = {
+                        sharedWith: firebase.firestore.FieldValue.arrayUnion(...missingFromShopping)
+                    };
+                    // Copy collaborator data
+                    for (const uid of missingFromShopping) {
+                        if (tasksCollabs[uid]) {
+                            updates[`collaborators.${uid}`] = tasksCollabs[uid];
+                        }
+                    }
+                    await shoppingRef.update(updates);
+                }
+
+                if (missingFromTasks.length > 0 || missingFromShopping.length > 0) {
+                    console.log('[RepairSharing] Sharing repaired successfully!');
+                } else {
+                    console.log('[RepairSharing] Both lists already in sync');
+                }
+
+            } catch (error) {
+                console.error('[RepairSharing] Error:', error);
+            }
         }
 
         // =====================================================
