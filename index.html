@@ -2779,12 +2779,12 @@
     <div class="modal-overlay" id="shareModal">
         <div class="share-modal">
             <div class="modal-header">
-                <h2>Share List</h2>
+                <h2>Household</h2>
                 <button class="modal-close" id="modalClose">&times;</button>
             </div>
             <div class="modal-body">
                 <div class="invite-section" id="inviteSection">
-                    <label>Invite by email</label>
+                    <label>Invite family member</label>
                     <div class="invite-input-group">
                         <input type="email" id="inviteEmail" placeholder="Enter email address">
                         <button class="invite-btn" id="inviteBtn">Invite</button>
@@ -2792,9 +2792,9 @@
                     <div class="share-message" id="shareMessage"></div>
                 </div>
                 <div class="collaborators-section">
-                    <h3>Collaborators</h3>
+                    <h3>Household Members</h3>
                     <ul class="collaborator-list" id="collaboratorList">
-                        <li class="no-collaborators">No collaborators yet</li>
+                        <li class="no-collaborators">Just you for now</li>
                     </ul>
                 </div>
             </div>
@@ -2823,8 +2823,8 @@
         const db = firebase.firestore();
 
         // App Version
-        const APP_VERSION = '5.0.1';
-        console.log(`[App] Mysa Version ${APP_VERSION}`);
+        const APP_VERSION = '5.1.0';
+        console.log(`[App] Mysa Version ${APP_VERSION} - Clean Household Model`);
 
         // =====================================================
         // CLAUDE API CONFIGURATION
@@ -4549,84 +4549,6 @@ Respond ONLY with valid JSON:
         }
 
         // =====================================================
-        // SHOPPING LIST MIGRATION (one-time merge of duplicates)
-        // =====================================================
-        async function migrateShoppingLists() {
-            console.log('[Migration] Checking for duplicate shopping lists...');
-
-            // Check if already migrated
-            const userDoc = await db.collection('users').doc(currentUser.uid).get();
-            if (userDoc.data()?.shoppingMigrated) {
-                console.log('[Migration] Already migrated, skipping');
-                return;
-            }
-
-            const listsRef = db.collection('lists');
-
-            // Get all shopping lists user can access
-            const ownedSnapshot = await listsRef
-                .where('type', '==', 'shopping')
-                .where('ownerId', '==', currentUser.uid)
-                .get();
-
-            const sharedSnapshot = await listsRef
-                .where('type', '==', 'shopping')
-                .where('sharedWith', 'array-contains', currentUser.uid)
-                .get();
-
-            const ownedLists = ownedSnapshot.docs;
-            const sharedLists = sharedSnapshot.docs;
-            const allLists = [...sharedLists, ...ownedLists];
-
-            // Remove duplicates by ID
-            const uniqueLists = allLists.filter((doc, index, self) =>
-                index === self.findIndex(d => d.id === doc.id)
-            );
-
-            console.log('[Migration] Found lists:', uniqueLists.length, 'owned:', ownedLists.length, 'shared:', sharedLists.length);
-
-            if (uniqueLists.length <= 1) {
-                await markMigrationComplete();
-                return;
-            }
-
-            // Use shared list as master (so both users see same list), or first owned
-            const masterList = sharedLists[0] || ownedLists[0];
-            console.log('[Migration] Master list:', masterList.id, 'owner:', masterList.data().ownerEmail);
-
-            // Merge all items into master list
-            for (const list of uniqueLists) {
-                if (list.id === masterList.id) continue;
-
-                console.log('[Migration] Merging list:', list.id, 'into master');
-
-                const items = await list.ref.collection('items').get();
-                console.log('[Migration] Moving', items.docs.length, 'items');
-
-                for (const item of items.docs) {
-                    // Add item to master list
-                    await masterList.ref.collection('items').add(item.data());
-                    // Delete from old list
-                    await item.ref.delete();
-                }
-
-                // Delete the duplicate list
-                await list.ref.delete();
-                console.log('[Migration] Deleted duplicate list:', list.id);
-            }
-
-            await markMigrationComplete();
-            console.log('[Migration] Complete!');
-        }
-
-        async function markMigrationComplete() {
-            await db.collection('users').doc(currentUser.uid).set({
-                shoppingMigrated: true,
-                migrationDate: firebase.firestore.FieldValue.serverTimestamp()
-            }, { merge: true });
-        }
-
-        // =====================================================
         // PWA VISIBILITY REFRESH
         // =====================================================
         async function refreshCurrentList() {
@@ -4660,297 +4582,73 @@ Respond ONLY with valid JSON:
         });
 
         // =====================================================
-        // LIST INITIALIZATION (Household Model with Fallback)
+        // CLEAN HOUSEHOLD INITIALIZATION (v5.1.0)
+        // No migration, no fallback - pure Household model
         // =====================================================
         async function initializeLists() {
-            console.log('[Init] Initializing lists for user:', currentUser.email);
+            console.log('[Init v5.1] Initializing for user:', currentUser.email);
 
-            try {
-                // Try household model first
-                let householdId = await HouseholdModule.getUserHouseholdId(currentUser.uid);
-                console.log('[Init] User householdId:', householdId);
+            // Step 1: Check if user has a household
+            let householdId = await HouseholdModule.getUserHouseholdId(currentUser.uid);
+            console.log('[Init v5.1] User householdId:', householdId);
 
-                // Check for old-style lists and migrate if needed
-                if (!householdId) {
-                    console.log('[Init] No householdId, trying migration...');
-                    householdId = await migrateToHouseholdModel();
-                }
+            // Step 2: If no household, create one (fresh start)
+            if (!householdId) {
+                console.log('[Init v5.1] No household - creating fresh household...');
+                const userDoc = await db.collection('users').doc(currentUser.uid).get();
+                const userData = userDoc.data() || {};
+                const displayName = userData.displayName || currentUser.email.split('@')[0];
 
-                // If still no household, create one
-                if (!householdId) {
-                    console.log('[Init] Creating new household...');
-                    const userDoc = await db.collection('users').doc(currentUser.uid).get();
-                    const userData = userDoc.data() || {};
-                    const displayName = userData.displayName || currentUser.email.split('@')[0];
-
-                    householdId = await HouseholdModule.createHousehold(
-                        currentUser.uid,
-                        currentUser.email,
-                        displayName
-                    );
-                }
-
-                if (!householdId) {
-                    throw new Error('Failed to get or create household');
-                }
-
-                // Load household data
-                currentHousehold = await HouseholdModule.getHousehold(householdId);
-                console.log('[Init] Household:', currentHousehold?.name, 'Members:', Object.keys(currentHousehold?.members || {}).length);
-
-                // Get household's lists
-                const householdLists = await HouseholdModule.getHouseholdLists(householdId);
-                console.log('[Init] Household lists:', householdLists);
-
-                // If lists don't exist for some reason, create them
-                if (!householdLists.shopping || !householdLists.tasks) {
-                    console.log('[Init] Creating missing lists for household');
-                    const listsRef = db.collection('lists');
-
-                    if (!householdLists.shopping) {
-                        const ref = await listsRef.add({
-                            type: 'shopping',
-                            householdId: householdId,
-                            createdAt: firebase.firestore.FieldValue.serverTimestamp()
-                        });
-                        householdLists.shopping = ref.id;
-                        console.log('[Init] Created shopping list:', ref.id);
-                    }
-
-                    if (!householdLists.tasks) {
-                        const ref = await listsRef.add({
-                            type: 'tasks',
-                            householdId: householdId,
-                            createdAt: firebase.firestore.FieldValue.serverTimestamp()
-                        });
-                        householdLists.tasks = ref.id;
-                        console.log('[Init] Created tasks list:', ref.id);
-                    }
-                }
-
-                lists.shopping = householdLists.shopping;
-                lists.tasks = householdLists.tasks;
-
-                console.log('[Init] SUCCESS - Final lists:', { shopping: lists.shopping, tasks: lists.tasks });
-
-            } catch (error) {
-                console.error('[Init] ERROR in household init:', error);
-                console.log('[Init] FALLBACK - Trying to find any existing lists...');
-
-                // Emergency fallback: find ANY lists for this user
-                await initializeListsFallback();
+                householdId = await HouseholdModule.createHousehold(
+                    currentUser.uid,
+                    currentUser.email,
+                    displayName
+                );
+                console.log('[Init v5.1] Created new household:', householdId);
             }
-        }
 
-        // Emergency fallback initialization
-        async function initializeListsFallback() {
-            const listsRef = db.collection('lists');
+            // Step 3: Load household data
+            currentHousehold = await HouseholdModule.getHousehold(householdId);
+            if (!currentHousehold) {
+                throw new Error('Household not found: ' + householdId);
+            }
+            console.log('[Init v5.1] Household:', currentHousehold.name, '| Members:', Object.keys(currentHousehold.members || {}).length);
 
-            // Try to find lists by any method
-            console.log('[Fallback] Looking for lists...');
+            // Step 4: Get household's lists
+            const householdLists = await HouseholdModule.getHouseholdLists(householdId);
+            console.log('[Init v5.1] Lists:', householdLists);
 
-            // Method 1: Lists with householdId
-            const userDoc = await db.collection('users').doc(currentUser.uid).get();
-            const householdId = userDoc.data()?.householdId;
+            // Step 5: Create any missing lists (shouldn't happen, but safety net)
+            if (!householdLists.shopping || !householdLists.tasks) {
+                console.log('[Init v5.1] Creating missing lists...');
+                const listsRef = db.collection('lists');
 
-            if (householdId) {
-                const householdLists = await listsRef.where('householdId', '==', householdId).get();
-                if (!householdLists.empty) {
-                    console.log('[Fallback] Found lists by householdId');
-                    householdLists.docs.forEach(doc => {
-                        const data = doc.data();
-                        if (data.type === 'shopping') lists.shopping = doc.id;
-                        if (data.type === 'tasks') lists.tasks = doc.id;
+                if (!householdLists.shopping) {
+                    const ref = await listsRef.add({
+                        type: 'shopping',
+                        householdId: householdId,
+                        createdAt: firebase.firestore.FieldValue.serverTimestamp()
                     });
+                    householdLists.shopping = ref.id;
+                    console.log('[Init v5.1] Created shopping list:', ref.id);
                 }
-            }
 
-            // Method 2: Owned lists (old style)
-            if (!lists.shopping || !lists.tasks) {
-                const ownedLists = await listsRef.where('ownerId', '==', currentUser.uid).get();
-                if (!ownedLists.empty) {
-                    console.log('[Fallback] Found owned lists');
-                    ownedLists.docs.forEach(doc => {
-                        const data = doc.data();
-                        if (data.type === 'shopping' && !lists.shopping) lists.shopping = doc.id;
-                        if (data.type === 'tasks' && !lists.tasks) lists.tasks = doc.id;
+                if (!householdLists.tasks) {
+                    const ref = await listsRef.add({
+                        type: 'tasks',
+                        householdId: householdId,
+                        createdAt: firebase.firestore.FieldValue.serverTimestamp()
                     });
+                    householdLists.tasks = ref.id;
+                    console.log('[Init v5.1] Created tasks list:', ref.id);
                 }
             }
 
-            // Method 3: Shared lists (old style)
-            if (!lists.shopping || !lists.tasks) {
-                const sharedLists = await listsRef.where('sharedWith', 'array-contains', currentUser.uid).get();
-                if (!sharedLists.empty) {
-                    console.log('[Fallback] Found shared lists');
-                    sharedLists.docs.forEach(doc => {
-                        const data = doc.data();
-                        if (data.type === 'shopping' && !lists.shopping) lists.shopping = doc.id;
-                        if (data.type === 'tasks' && !lists.tasks) lists.tasks = doc.id;
-                    });
-                }
-            }
+            // Step 6: Set the active lists
+            lists.shopping = householdLists.shopping;
+            lists.tasks = householdLists.tasks;
 
-            // Method 4: Create new lists if still nothing
-            if (!lists.shopping) {
-                console.log('[Fallback] Creating new shopping list');
-                const ref = await listsRef.add({
-                    type: 'shopping',
-                    ownerId: currentUser.uid,
-                    ownerEmail: currentUser.email,
-                    sharedWith: [],
-                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
-                });
-                lists.shopping = ref.id;
-            }
-
-            if (!lists.tasks) {
-                console.log('[Fallback] Creating new tasks list');
-                const ref = await listsRef.add({
-                    type: 'tasks',
-                    ownerId: currentUser.uid,
-                    ownerEmail: currentUser.email,
-                    sharedWith: [],
-                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
-                });
-                lists.tasks = ref.id;
-            }
-
-            console.log('[Fallback] Final lists:', { shopping: lists.shopping, tasks: lists.tasks });
-        }
-
-        // Migrate old-style lists to household model
-        async function migrateToHouseholdModel() {
-            console.log('[Migration] Checking for old-style lists to migrate...');
-
-            const listsRef = db.collection('lists');
-
-            // Check for old-style owned lists
-            const ownedSnapshot = await listsRef
-                .where('ownerId', '==', currentUser.uid)
-                .limit(2)
-                .get();
-
-            // Check for old-style shared lists
-            const sharedSnapshot = await listsRef
-                .where('sharedWith', 'array-contains', currentUser.uid)
-                .limit(2)
-                .get();
-
-            // If user has no old lists, return null (will create fresh household)
-            if (ownedSnapshot.empty && sharedSnapshot.empty) {
-                console.log('[Migration] No old lists found, will create fresh household');
-                return null;
-            }
-
-            // If user is shared on someone else's lists, check if that owner has a household
-            if (!sharedSnapshot.empty) {
-                const sharedList = sharedSnapshot.docs[0].data();
-                if (sharedList.householdId) {
-                    // Already migrated to household model, join that household
-                    console.log('[Migration] Found shared list with household, joining:', sharedList.householdId);
-                    await db.collection('users').doc(currentUser.uid).update({
-                        householdId: sharedList.householdId
-                    });
-
-                    // Add self to household members if not already there
-                    const household = await HouseholdModule.getHousehold(sharedList.householdId);
-                    if (household && !household.members[currentUser.uid]) {
-                        const userDoc = await db.collection('users').doc(currentUser.uid).get();
-                        const userData = userDoc.data() || {};
-                        await db.collection('households').doc(sharedList.householdId).update({
-                            [`members.${currentUser.uid}`]: {
-                                email: currentUser.email,
-                                displayName: userData.displayName || currentUser.email.split('@')[0],
-                                joinedAt: firebase.firestore.FieldValue.serverTimestamp()
-                            }
-                        });
-                    }
-
-                    return sharedList.householdId;
-                }
-            }
-
-            // Create new household from user's owned lists
-            console.log('[Migration] Creating household from old-style lists');
-
-            const userDoc = await db.collection('users').doc(currentUser.uid).get();
-            const userData = userDoc.data() || {};
-            const displayName = userData.displayName || currentUser.email.split('@')[0];
-
-            // Create household
-            const householdRef = await db.collection('households').add({
-                name: displayName + "'s Home",
-                createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-                createdBy: currentUser.uid,
-                members: {
-                    [currentUser.uid]: {
-                        email: currentUser.email,
-                        displayName: displayName,
-                        joinedAt: firebase.firestore.FieldValue.serverTimestamp()
-                    }
-                }
-            });
-
-            const householdId = householdRef.id;
-
-            // Update user's householdId
-            await db.collection('users').doc(currentUser.uid).update({
-                householdId: householdId
-            });
-
-            // Convert owned lists to household model
-            for (const doc of ownedSnapshot.docs) {
-                const data = doc.data();
-                console.log(`[Migration] Converting ${data.type} list to household model`);
-
-                // Add householdId, keep items
-                await doc.ref.update({
-                    householdId: householdId
-                });
-
-                // If list was shared with others, add them to household
-                if (data.sharedWith && data.sharedWith.length > 0) {
-                    for (const sharedUserId of data.sharedWith) {
-                        try {
-                            const sharedUserDoc = await db.collection('users').doc(sharedUserId).get();
-                            if (sharedUserDoc.exists) {
-                                const sharedUserData = sharedUserDoc.data();
-                                console.log('[Migration] Adding shared user to household:', sharedUserData.email);
-
-                                // Add to household members
-                                await householdRef.update({
-                                    [`members.${sharedUserId}`]: {
-                                        email: sharedUserData.email,
-                                        displayName: sharedUserData.displayName || sharedUserData.email?.split('@')[0],
-                                        joinedAt: firebase.firestore.FieldValue.serverTimestamp()
-                                    }
-                                });
-
-                                // Update their householdId
-                                await db.collection('users').doc(sharedUserId).update({
-                                    householdId: householdId
-                                });
-                            }
-                        } catch (e) {
-                            console.error('[Migration] Error adding shared user:', e);
-                        }
-                    }
-
-                    // Update household name if multiple members
-                    const updatedHousehold = await HouseholdModule.getHousehold(householdId);
-                    const members = Object.values(updatedHousehold?.members || {});
-                    if (members.length === 2) {
-                        const names = members.map(m => m.displayName || m.email?.split('@')[0] || 'Someone');
-                        await householdRef.update({
-                            name: names.join(' & ') + "'s Home"
-                        });
-                    }
-                }
-            }
-
-            console.log('[Migration] Migration complete! Household:', householdId);
-            return householdId;
+            console.log('[Init v5.1] SUCCESS! Shopping:', lists.shopping, '| Tasks:', lists.tasks);
         }
 
         // =====================================================
@@ -6563,60 +6261,39 @@ If NO MATCH, respond with only: NONE`
         }
 
         // =====================================================
-        // COLLABORATORS
+        // HOUSEHOLD MEMBERS (v5.1.0)
         // =====================================================
         function renderCollaborators(data) {
-            const collaborators = SharingModule.getCollaborators(data);
-            const isOwner = SharingModule.isOwner(data);
+            // In household model, everyone can invite and remove
+            inviteSection.style.display = 'block';
 
-            // Show/hide invite section
-            inviteSection.style.display = isOwner ? 'block' : 'none';
+            // Get other household members (not self)
+            const members = SharingModule.getCollaborators(data);
 
-            let html = '';
-
-            // Show owner if not the owner
-            if (!isOwner && data.ownerEmail) {
-                const initial = data.ownerEmail[0].toUpperCase();
-                html += `
-                    <li class="collaborator-item">
-                        <div class="collaborator-info">
-                            <div class="collaborator-avatar">${escapeHtml(initial)}</div>
-                            <div>
-                                <div class="collaborator-email">${escapeHtml(data.ownerEmail)}</div>
-                                <div class="collaborator-role">Owner</div>
-                            </div>
-                        </div>
-                        <span class="owner-badge">Owner</span>
-                    </li>
-                `;
-            }
-
-            if (collaborators.length === 0 && isOwner) {
-                collaboratorList.innerHTML = '<li class="no-collaborators">No collaborators yet</li>';
+            if (members.length === 0) {
+                collaboratorList.innerHTML = '<li class="no-collaborators">Just you for now</li>';
                 return;
             }
 
-            html += collaborators.map(collab => {
-                const initial = (collab.email || '?')[0].toUpperCase();
-                const removeBtn = isOwner
-                    ? `<button class="remove-collaborator" data-id="${collab.id}">Remove</button>`
-                    : '';
+            const html = members.map(member => {
+                const displayName = member.displayName || member.email?.split('@')[0] || 'Unknown';
+                const initial = displayName[0].toUpperCase();
 
                 return `
                     <li class="collaborator-item">
                         <div class="collaborator-info">
                             <div class="collaborator-avatar">${escapeHtml(initial)}</div>
                             <div>
-                                <div class="collaborator-email">${escapeHtml(collab.email || 'Unknown')}</div>
-                                <div class="collaborator-role">Collaborator</div>
+                                <div class="collaborator-email">${escapeHtml(displayName)}</div>
+                                <div class="collaborator-role">${escapeHtml(member.email || '')}</div>
                             </div>
                         </div>
-                        ${removeBtn}
+                        <button class="remove-collaborator" data-id="${member.id}">Remove</button>
                     </li>
                 `;
             }).join('');
 
-            collaboratorList.innerHTML = html || '<li class="no-collaborators">No collaborators</li>';
+            collaboratorList.innerHTML = html;
         }
 
         function showShareMessage(message, type) {
@@ -6720,9 +6397,7 @@ If NO MATCH, respond with only: NONE`
                     showOnboarding();
                 }
 
-                // Run one-time migration to merge duplicate shopping lists
-                await migrateShoppingLists();
-
+                // Initialize household and lists (v5.1.0 clean model)
                 await initializeLists();
 
                 // Initialize delight features
@@ -6858,12 +6533,16 @@ If NO MATCH, respond with only: NONE`
             inviteBtn.textContent = '...';
 
             try {
-                const collaborator = await SharingModule.addCollaborator(listId, email);
-                showShareMessage(`Shared with ${collaborator.email}!`, 'success');
+                const member = await SharingModule.addCollaborator(listId, email);
+                const name = member.displayName || member.email?.split('@')[0] || 'New member';
+                showShareMessage(`${name} joined your household!`, 'success');
                 inviteEmail.value = '';
 
-                const data = listData[currentTab];
-                if (data) renderCollaborators(data);
+                // Refresh household data
+                if (currentHousehold) {
+                    currentHousehold = await HouseholdModule.getHousehold(currentHousehold.id);
+                }
+                renderCollaborators({});
             } catch (error) {
                 showShareMessage(error.message, 'error');
             } finally {
@@ -6890,7 +6569,12 @@ If NO MATCH, respond with only: NONE`
 
             try {
                 await SharingModule.removeCollaborator(listId, collaboratorId);
-                showShareMessage('Collaborator removed.', 'success');
+                // Refresh household data
+                if (currentHousehold) {
+                    currentHousehold = await HouseholdModule.getHousehold(currentHousehold.id);
+                }
+                renderCollaborators({});
+                showShareMessage('Member removed from household.', 'success');
             } catch (error) {
                 showShareMessage(error.message, 'error');
                 removeBtn.disabled = false;
