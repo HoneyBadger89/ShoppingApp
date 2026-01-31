@@ -2823,7 +2823,7 @@
         const db = firebase.firestore();
 
         // App Version
-        const APP_VERSION = '5.1.1';
+        const APP_VERSION = '5.1.2';
         console.log(`[App] Mysa Version ${APP_VERSION} - Clean Household Model`);
 
         // =====================================================
@@ -6442,11 +6442,15 @@ If NO MATCH, respond with only: NONE`
         // =====================================================
         // ITEM EVENT LISTENERS
         // =====================================================
-        document.getElementById('addBtn').addEventListener('click', addItem);
+        console.log('[Init] Setting up event listeners...');
 
-        itemInput.addEventListener('keypress', (e) => {
+        document.getElementById('addBtn')?.addEventListener('click', addItem);
+        console.log('[Init] Add button listener attached');
+
+        itemInput?.addEventListener('keypress', (e) => {
             if (e.key === 'Enter') addItem();
         });
+        console.log('[Init] Item input listener attached');
 
         document.getElementById('itemList').addEventListener('click', (e) => {
             // Handle clear completed button
@@ -6513,7 +6517,9 @@ If NO MATCH, respond with only: NONE`
             }
         });
 
-        inviteBtn.addEventListener('click', async () => {
+        console.log('[Init] Invite button element:', inviteBtn);
+        inviteBtn?.addEventListener('click', async () => {
+            console.log('[Invite] Button clicked');
             const email = inviteEmail.value.trim().toLowerCase();
 
             if (!email) {
@@ -6527,7 +6533,11 @@ If NO MATCH, respond with only: NONE`
             }
 
             const listId = lists[currentTab];
-            if (!listId) return;
+            console.log('[Invite] List ID:', listId);
+            if (!listId) {
+                showShareMessage('No list selected. Please try again.', 'error');
+                return;
+            }
 
             inviteBtn.disabled = true;
             inviteBtn.textContent = '...';
@@ -6581,6 +6591,8 @@ If NO MATCH, respond with only: NONE`
                 removeBtn.textContent = 'Remove';
             }
         });
+
+        console.log('[Init] All event listeners attached successfully');
     </script>
 </body>
 </html>
