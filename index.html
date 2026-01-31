@@ -2823,8 +2823,9 @@
         const db = firebase.firestore();
 
         // App Version
-        const APP_VERSION = '5.2.2';
+        const APP_VERSION = '5.2.3';
         console.log(`[App] Mysa Version ${APP_VERSION} - Clean Household Model`);
+        console.log('[DEBUG] inviteInProgress protection ENABLED - v5.2.3');
 
         // Update version display in profile
         const versionEl = document.getElementById('appVersionDisplay');
@@ -4623,6 +4624,7 @@ Respond ONLY with valid JSON:
         // =====================================================
         async function refreshCurrentList() {
             // Don't refresh during invite - it can interfere with batch operations
+            console.log('[PWA] Checking flag - inviteInProgress =', inviteInProgress);
             if (inviteInProgress) {
                 console.log('[PWA] Skipping refresh - invite in progress');
                 return;
@@ -6595,6 +6597,7 @@ If NO MATCH, respond with only: NONE`
         console.log('[Init] Invite button element:', inviteBtn);
         inviteBtn?.addEventListener('click', async () => {
             console.log('[Invite] Button clicked');
+            console.log('[Invite] Checking flag - inviteInProgress =', inviteInProgress);
 
             // CRITICAL: Prevent double-click
             if (inviteInProgress) {
